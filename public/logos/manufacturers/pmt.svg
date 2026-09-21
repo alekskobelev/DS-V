@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 68" width="240" height="68">
+  <rect x="4" y="14" width="48" height="40" fill="#0f766e" rx="4" />
+  <text x="28" y="41" font-family="'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="900" fill="#ffffff" text-anchor="middle">PMT</text>
+  <text x="62" y="33" font-family="'Segoe UI', Roboto, sans-serif" font-size="21" font-weight="900" fill="#0f172a">PMT ARM</text>
+  <text x="63" y="49" font-family="'Segoe UI', Roboto, sans-serif" font-size="8" font-weight="700" fill="#64748b" letter-spacing="1">Precision Measuring Technology</text>
+</svg>

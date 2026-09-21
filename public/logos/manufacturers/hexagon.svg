@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 68" width="240" height="68">
+  <g transform="translate(6, 6)">
+    <polygon points="26,0 52,14 26,28 0,14" fill="#10b981" />
+    <polygon points="0,14 26,28 26,56 0,42" fill="#06b6d4" />
+    <polygon points="26,28 52,14 52,42 26,56" fill="#2563eb" />
+  </g>
+  <text x="68" y="34" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="25" font-weight="900" fill="#0f172a" letter-spacing="1.5">HEXAGON</text>
+  <text x="69" y="50" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="7.5" font-weight="800" fill="#475569" letter-spacing="2">MANUFACTURING INTELLIGENCE</text>
+</svg>

@@ -1,0 +1,1 @@
+sed -i 's/Подробные характеристики SHINING 3D Inspect →\n                <\/button>\n            {\/\* Card 3: FreeScan \*\/\}/Подробные характеристики SHINING 3D Inspect →\n                <\/button>\n              <\/div>\n            <\/div>\n            {\/\* Card 3: FreeScan \*\/\}/g' src/pages/SoftwarePage.tsx

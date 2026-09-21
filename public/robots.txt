@@ -1,0 +1,69 @@
+# robots.txt для портала «ДС-Инжиниринг» (https://ds-engineering.ru)
+User-agent: *
+Allow: /
+Allow: /main
+Allow: /software
+Allow: /software/*
+Allow: /hardware
+Allow: /hardware/*
+Allow: /services
+Allow: /services/*
+Allow: /calculator
+Allow: /about
+Allow: /contacts
+Allow: /news
+Allow: /news/*
+Allow: /knowledge
+Allow: /knowledge/*
+Allow: /page/*
+Disallow: /cms
+Disallow: /cms/*
+Disallow: /crm
+Disallow: /crm/*
+Disallow: /account
+Disallow: /account/*
+Disallow: /api/
+
+User-agent: Yandex
+Allow: /
+Allow: /main
+Allow: /software
+Allow: /hardware
+Allow: /services
+Allow: /calculator
+Allow: /about
+Allow: /contacts
+Allow: /news
+Allow: /knowledge
+Disallow: /cms
+Disallow: /cms/*
+Disallow: /crm
+Disallow: /crm/*
+Disallow: /account
+Disallow: /account/*
+Disallow: /api/
+Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content /
+Clean-param: yclid&gclid&fbclid /
+
+User-agent: Googlebot
+Allow: /
+Allow: /main
+Allow: /software
+Allow: /hardware
+Allow: /services
+Allow: /calculator
+Allow: /about
+Allow: /contacts
+Allow: /news
+Allow: /knowledge
+Disallow: /cms
+Disallow: /cms/*
+Disallow: /crm
+Disallow: /crm/*
+Disallow: /account
+Disallow: /account/*
+Disallow: /api/
+
+Sitemap: https://ds-engineering.ru/sitemap.xml
+Host: https://ds-engineering.ru
+

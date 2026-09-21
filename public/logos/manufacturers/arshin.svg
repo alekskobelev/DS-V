@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 68" width="240" height="68">
+  <g transform="translate(6, 10)">
+    <rect x="0" y="4" width="48" height="40" rx="6" fill="#0f766e" />
+    <path d="M12,32 L24,14 L36,32" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <line x1="16" y1="26" x2="32" y2="26" stroke="#ffffff" stroke-width="2.5"/>
+  </g>
+  <text x="64" y="32" font-family="'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="900" fill="#0f766e" letter-spacing="1">ФГИС «АРШИН»</text>
+  <text x="65" y="48" font-family="'Segoe UI', Roboto, sans-serif" font-size="8.5" font-weight="700" fill="#64748b" letter-spacing="1.2">РОССТАНДАРТ РОССИИ</text>
+</svg>

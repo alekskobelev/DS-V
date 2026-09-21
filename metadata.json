@@ -1,0 +1,8 @@
+{
+  "name": "ДС-Инжиниринг — 30 лет опыта в CAD/CAM и метрологии",
+  "description": "Официальный сайт инжиниринговой компании ДС-Инжиниринг: поставка CAD/CAM/PDM систем (TopSolid, Polyworks, Geomagic), измерительного оборудования (Hexagon, Leica, PMT, Renishaw), 3D-сканирование и реверс-инжиниринг.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

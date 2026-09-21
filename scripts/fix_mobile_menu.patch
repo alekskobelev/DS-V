@@ -1,0 +1,33 @@
+--- src/components/layout/Header.tsx
++++ src/components/layout/Header.tsx
+@@ -904,6 +904,26 @@
+       {/* Mobile Drawer Menu */}
+       {mobileMenuOpen && (
+         <div className="lg:hidden relative z-40 bg-white border-b border-gray-200 px-4 pt-2 pb-6 shadow-2xl max-h-[85vh] overflow-y-auto">
++          {/* Mobile Auth Quick Access Card */}
++          <div className="mb-3 pb-3 border-b border-gray-100">
++            <button
++              onClick={() => {
++                setMobileMenuOpen(false);
++                handleNav('account');
++              }}
++              className={`w-full p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-all ${
++                currentPage === 'account' 
++                  ? 'bg-blue-50 border-blue-300 text-blue-900' 
++                  : 'bg-gray-50 hover:bg-blue-50 border-gray-200 text-gray-800'
++              }`}
++            >
++              <div className="flex items-center gap-1.5">
++                <User className="w-4 h-4 text-blue-600 shrink-0" />
++                <span className="text-xs font-bold truncate">
++                  {currentUser ? currentUser.fullName.split(' ')[0] : 'Личный кабинет'}
++                </span>
++              </div>
++              <span className="text-[10px] text-gray-500">
++                {currentUser ? (isAdmin ? 'Администратор' : 'Клиент') : 'Войти в профиль'}
++              </span>
++            </button>
++          </div>
++
+           <div className="flex flex-col space-y-1 text-sm font-medium">
+             <button

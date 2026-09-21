@@ -1,0 +1,147 @@
+[
+  {
+    "id": "CHAT-2026-623",
+    "visitorId": "visitor-test-1789918646728",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-20T15:37:26.729Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-20T15:37:26.729Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-20T15:37:26.733Z",
+    "updatedAt": "2026-09-20T15:37:26.733Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-8148",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-20T15:37:26.733Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-515",
+    "visitorId": "visitor-test-1789404751296",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-14T16:52:31.296Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-14T16:52:31.296Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-14T16:52:31.301Z",
+    "updatedAt": "2026-09-14T16:52:31.301Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-6767",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-14T16:52:31.301Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-157",
+    "visitorId": "visitor-test-1788660407125",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-06T02:06:47.126Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-06T02:06:47.126Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-06T02:06:47.129Z",
+    "updatedAt": "2026-09-06T02:06:47.129Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-6581",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-06T02:06:47.129Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-001",
+    "visitorId": "vis-init-demo",
+    "visitorName": "Сергей Николаевич (ОДК-Кузнецов)",
+    "contactPhone": "+7 (927) 700-11-22",
+    "contactEmail": "s.nekrasov.client@odk.ru",
+    "companyName": "ПАО «ОДК-Кузнецов»",
+    "currentPage": "software",
+    "currentPath": "/software",
+    "status": "handover_requested",
+    "unreadByManager": true,
+    "urgentAlert": true,
+    "leadId": "RFQ-2026-CH-001",
+    "createdAt": "2026-09-02T22:15:00.000Z",
+    "updatedAt": "2026-09-02T22:18:00.000Z",
+    "lastMessageText": "Интересует демонстрация модуля 5-осевого фрезерования лопаток в TopSolid 7 Cam. Прошу связаться.",
+    "messages": [
+      {
+        "id": "msg-1",
+        "sender": "engineer",
+        "text": "Здравствуйте! Я дежурный инженер-технолог «ДС-Инжиниринг». Чем могу помочь: подобрать CAD/CAM систему, 3D-сканер или рассчитать услугу?",
+        "time": "22:15",
+        "timestamp": 1788415462656
+      },
+      {
+        "id": "msg-2",
+        "sender": "user",
+        "text": "Интересует демонстрация модуля 5-осевого фрезерования лопаток в TopSolid 7 Cam. Прошу связаться.",
+        "time": "22:16",
+        "timestamp": 1788415562656
+      },
+      {
+        "id": "msg-3",
+        "sender": "engineer",
+        "text": "TopSolid 7 Cam идеально оптимизирован под многоосевую обработку сложных моноколес и лопаток турбин с полной кинематической симуляцией станка. Переключаю вас на ведущего инженера-технолога.",
+        "time": "22:17",
+        "timestamp": 1788415662656
+      }
+    ]
+  }
+]

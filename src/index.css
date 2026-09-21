@@ -1,0 +1,1026 @@
+@import "tailwindcss";
+
+/* --- Corporate Unified Theme --- */
+@theme {
+  --color-primary: #1E3A8A;
+  --color-primary-light: #2563EB;
+  --color-primary-dark: #172554;
+  --color-accent: #F59E0B;
+  --color-accent-hover: #D97706;
+  --color-bg-light: #F8FAFC;
+  --color-bg-dark: #111827;
+  --color-text-main: #1E293B;
+  --color-text-muted: #64748B;
+}
+
+
+
+
+
+
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer utilities {
+  .tabular-data {
+    font-variant-numeric: tabular-nums;
+    @apply text-right font-mono tracking-tight;
+  }
+  
+  .data-dense-table th,
+  .data-dense-table td {
+    @apply px-3 py-2 text-sm border-b border-slate-100 dark:border-slate-800;
+  }
+  
+  .data-dense-table tbody tr {
+    @apply transition-colors duration-150 hover:bg-slate-50 dark:hover:bg-slate-800/50;
+  }
+
+  .data-dense-table tbody tr:nth-child(even) {
+    @apply bg-slate-50/50 dark:bg-slate-900/30;
+  }
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
+  html {
+    margin: 0;
+    padding: 0;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+    scroll-padding-top: 84px;
+    overflow-x: clip;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+  @media (max-width: 768px) {
+    html {
+      scroll-padding-top: 70px;
+    }
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background-color: #F3F4F6;
+    color: #111827;
+    overflow-x: clip;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  html.dark body {
+    background-color: #0B0F17;
+    color: #F3F4F6;
+  }
+  #root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
+/* ------------------------------------------------------------- */
+/*  DARK MODE COLOR PALETTE & COMPONENT STYLING                   */
+/*  Refined dark slate/navy theme for industrial engineering UI  */
+/*  Ensures WCAG AA compliance and crisp readability             */
+/* ------------------------------------------------------------- */
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------- */
+/* Background surfaces & cards fallback (only for elements       */
+/* lacking explicit dark: variants)                             */
+/* ------------------------------------------------------------- */
+html.dark .bg-white:not([class*="dark:bg-"]) {
+  background-color: #131B2A;
+}
+
+/* Translucent white surfaces (cards with backdrop blur, floating bars, drawers) */
+html.dark .bg-white\/95:not([class*="dark:bg-"]) {
+  background-color: rgba(19, 27, 42, 0.95);
+}
+html.dark .bg-white\/90:not([class*="dark:bg-"]) {
+  background-color: rgba(19, 27, 42, 0.90);
+}
+html.dark .bg-white\/85:not([class*="dark:bg-"]) {
+  background-color: rgba(19, 27, 42, 0.85);
+}
+html.dark .bg-white\/80:not([class*="dark:bg-"]) {
+  background-color: rgba(19, 27, 42, 0.80);
+}
+html.dark .bg-white\/70:not([class*="dark:bg-"]) {
+  background-color: rgba(19, 27, 42, 0.70);
+}
+html.dark .bg-white\/60:not([class*="dark:bg-"]) {
+  background-color: rgba(19, 27, 42, 0.60);
+}
+html.dark .bg-white\/50:not([class*="dark:bg-"]) {
+  background-color: rgba(19, 27, 42, 0.50);
+}
+html.dark .bg-white\/40:not([class*="dark:bg-"]) {
+  background-color: rgba(19, 27, 42, 0.40);
+}
+
+/* Secondary & elevated background surfaces */
+html.dark .bg-gray-50:not([class*="dark:bg-"]),
+html.dark .bg-slate-50:not([class*="dark:bg-"]),
+html.dark .bg-zinc-50:not([class*="dark:bg-"]) {
+  background-color: #0D1522;
+}
+
+html.dark .bg-gray-100:not([class*="dark:bg-"]),
+html.dark .bg-slate-100:not([class*="dark:bg-"]),
+html.dark .bg-zinc-100:not([class*="dark:bg-"]) {
+  background-color: #182234;
+}
+
+html.dark .bg-gray-200:not([class*="dark:bg-"]),
+html.dark .bg-slate-200:not([class*="dark:bg-"]),
+html.dark .bg-zinc-200:not([class*="dark:bg-"]) {
+  background-color: #212F45;
+}
+
+html.dark .bg-gray-300:not([class*="dark:bg-"]),
+html.dark .bg-slate-300:not([class*="dark:bg-"]),
+html.dark .bg-zinc-300:not([class*="dark:bg-"]) {
+  background-color: #2E3E5B;
+}
+
+/* Translucent secondary backgrounds */
+html.dark .bg-gray-50\/50:not([class*="dark:bg-"]),
+html.dark .bg-gray-50\/60:not([class*="dark:bg-"]),
+html.dark .bg-gray-50\/70:not([class*="dark:bg-"]),
+html.dark .bg-gray-50\/80:not([class*="dark:bg-"]),
+html.dark .bg-gray-50\/90:not([class*="dark:bg-"]),
+html.dark .bg-slate-50\/50:not([class*="dark:bg-"]),
+html.dark .bg-slate-50\/60:not([class*="dark:bg-"]),
+html.dark .bg-slate-50\/70:not([class*="dark:bg-"]),
+html.dark .bg-slate-50\/80:not([class*="dark:bg-"]),
+html.dark .bg-slate-50\/90:not([class*="dark:bg-"]) {
+  background-color: rgba(13, 21, 34, 0.8);
+}
+
+html.dark .bg-gray-100\/50:not([class*="dark:bg-"]),
+html.dark .bg-gray-100\/60:not([class*="dark:bg-"]),
+html.dark .bg-gray-100\/70:not([class*="dark:bg-"]),
+html.dark .bg-gray-100\/80:not([class*="dark:bg-"]),
+html.dark .bg-gray-100\/90:not([class*="dark:bg-"]),
+html.dark .bg-slate-100\/50:not([class*="dark:bg-"]),
+html.dark .bg-slate-100\/60:not([class*="dark:bg-"]),
+html.dark .bg-slate-100\/70:not([class*="dark:bg-"]),
+html.dark .bg-slate-100\/80:not([class*="dark:bg-"]),
+html.dark .bg-slate-100\/90:not([class*="dark:bg-"]),
+html.dark .bg-slate-100\/95:not([class*="dark:bg-"]) {
+  background-color: rgba(24, 34, 52, 0.85);
+}
+
+html.dark .bg-slate-200\/90:not([class*="dark:bg-"]) {
+  background-color: rgba(33, 47, 69, 0.9);
+}
+
+/* ------------------------------------------------------------- */
+/* High-Contrast Typography & Headings in Dark Mode              */
+/* ------------------------------------------------------------- */
+
+/* Standard Headings */
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+  color: #F8FAFC !important;
+}
+
+/* Header & Footer theme styling */
+html.dark header {
+  background-color: #131B2A !important;
+  border-bottom-color: #1E2B3E !important;
+}
+
+html.dark header .bg-\[\#1E3A8A\],
+html.dark header .bg-\[\#1e3a8a\] {
+  background-color: #0B101B !important;
+  border-bottom-color: #1E2B3E !important;
+}
+
+html.dark footer {
+  background-color: #0B101B !important;
+  border-top-color: #1E2B3E !important;
+}
+
+html.dark footer .bg-gradient-to-r {
+  background-image: none !important;
+  background-color: #0E1624 !important;
+  border-bottom-color: #1E2B3E !important;
+}
+
+/* Overrides for Hardcoded Brand Color Headings (previously unreadable navy on dark) */
+html.dark .text-\[\#1E3A8A\],
+html.dark .text-\[\#1e3a8a\],
+html.dark h1.text-\[\#1E3A8A\],
+html.dark h1.text-\[\#1e3a8a\],
+html.dark h2.text-\[\#1E3A8A\],
+html.dark h2.text-\[\#1e3a8a\],
+html.dark h3.text-\[\#1E3A8A\],
+html.dark h3.text-\[\#1e3a8a\],
+html.dark h4.text-\[\#1E3A8A\],
+html.dark h4.text-\[\#1e3a8a\],
+html.dark .text-\[\#002855\],
+html.dark .text-\[\#172554\] {
+  color: #93C5FD !important;
+}
+
+html.dark .text-\[\#003882\] {
+  color: #60A5FA !important;
+}
+
+html.dark .text-\[\#1034a6\],
+html.dark .text-\[\#1a0dab\] {
+  color: #93C5FD !important;
+}
+
+html.dark .text-\[\#4d5156\] {
+  color: #CBD5E1 !important;
+}
+
+html.dark .text-\[\#374151\] {
+  color: #E2E8F0 !important;
+}
+
+html.dark .text-\[\#111827\] {
+  color: #F8FAFC !important;
+}
+
+html.dark .text-\[\#1F2937\] {
+  color: #F1F5F9 !important;
+}
+
+html.dark .text-\[\#1e293b\] {
+  color: #F1F5F9 !important;
+}
+
+html.dark .text-\[\#0f172a\] {
+  color: #F8FAFC !important;
+}
+
+html.dark .text-\[\#2563EB\] {
+  color: #60A5FA !important;
+}
+
+/* Primary High-Contrast Text */
+html.dark .text-slate-950:not([class*="dark:text-"]),
+html.dark .text-gray-950:not([class*="dark:text-"]),
+html.dark .text-zinc-950:not([class*="dark:text-"]),
+html.dark .text-neutral-950:not([class*="dark:text-"]) {
+  color: #FFFFFF;
+}
+
+html.dark .text-slate-900:not([class*="dark:text-"]),
+html.dark .text-gray-900:not([class*="dark:text-"]),
+html.dark .text-zinc-900:not([class*="dark:text-"]),
+html.dark .text-neutral-900:not([class*="dark:text-"]) {
+  color: #F8FAFC;
+}
+
+html.dark .text-slate-800:not([class*="dark:text-"]),
+html.dark .text-gray-800:not([class*="dark:text-"]),
+html.dark .text-zinc-800:not([class*="dark:text-"]),
+html.dark .text-neutral-800:not([class*="dark:text-"]) {
+  color: #F1F5F9;
+}
+
+html.dark .text-slate-700:not([class*="dark:text-"]),
+html.dark .text-gray-700:not([class*="dark:text-"]),
+html.dark .text-zinc-700:not([class*="dark:text-"]),
+html.dark .text-neutral-700:not([class*="dark:text-"]) {
+  color: #CBD5E1;
+}
+
+html.dark .text-slate-600:not([class*="dark:text-"]),
+html.dark .text-gray-600:not([class*="dark:text-"]),
+html.dark .text-zinc-600:not([class*="dark:text-"]),
+html.dark .text-neutral-600:not([class*="dark:text-"]) {
+  color: #94A3B8;
+}
+
+html.dark .text-slate-500:not([class*="dark:text-"]),
+html.dark .text-gray-500:not([class*="dark:text-"]),
+html.dark .text-zinc-500:not([class*="dark:text-"]),
+html.dark .text-neutral-500:not([class*="dark:text-"]) {
+  color: #94A3B8;
+}
+
+html.dark .text-slate-400:not([class*="dark:text-"]),
+html.dark .text-gray-400:not([class*="dark:text-"]),
+html.dark .text-zinc-400:not([class*="dark:text-"]),
+html.dark .text-neutral-400:not([class*="dark:text-"]) {
+  color: #64748B;
+}
+
+/* Blue Text Hierarchy */
+html.dark .text-blue-950:not([class*="dark:text-"]),
+html.dark .text-blue-900:not([class*="dark:text-"]) {
+  color: #BFDBFE;
+}
+
+html.dark .text-blue-800:not([class*="dark:text-"]) {
+  color: #93C5FD;
+}
+
+html.dark .text-blue-700:not([class*="dark:text-"]) {
+  color: #60A5FA;
+}
+
+html.dark .text-blue-600:not([class*="dark:text-"]) {
+  color: #60A5FA;
+}
+
+/* ------------------------------------------------------------- */
+/* Borders and Dividers in Dark Mode                            */
+/* ------------------------------------------------------------- */
+html.dark .border-gray-100:not([class*="dark:border-"]),
+html.dark .border-slate-100:not([class*="dark:border-"]) {
+  border-color: #1E2B3E;
+}
+
+html.dark .border-gray-200:not([class*="dark:border-"]),
+html.dark .border-slate-200:not([class*="dark:border-"]) {
+  border-color: #24344D;
+}
+
+html.dark .border-gray-300:not([class*="dark:border-"]),
+html.dark .border-slate-300:not([class*="dark:border-"]) {
+  border-color: #334563;
+}
+
+html.dark .border-gray-200\/60:not([class*="dark:border-"]),
+html.dark .border-gray-200\/70:not([class*="dark:border-"]),
+html.dark .border-gray-200\/80:not([class*="dark:border-"]),
+html.dark .border-gray-200\/90:not([class*="dark:border-"]),
+html.dark .border-slate-200\/60:not([class*="dark:border-"]),
+html.dark .border-slate-200\/70:not([class*="dark:border-"]),
+html.dark .border-slate-200\/80:not([class*="dark:border-"]),
+html.dark .border-slate-200\/90:not([class*="dark:border-"]) {
+  border-color: rgba(36, 52, 77, 0.8);
+}
+
+html.dark .divide-gray-100 > * + *,
+html.dark .divide-slate-100 > * + * {
+  border-color: #1E2B3E !important;
+}
+
+html.dark .divide-gray-200 > * + *,
+html.dark .divide-slate-200 > * + * {
+  border-color: #24344D !important;
+}
+
+/* ------------------------------------------------------------- */
+/* Interactive Hover States                                     */
+/* ------------------------------------------------------------- */
+html.dark .hover\:bg-gray-50:hover,
+html.dark .hover\:bg-slate-50:hover {
+  background-color: #1A263B !important;
+}
+
+html.dark .hover\:bg-gray-100:hover,
+html.dark .hover\:bg-slate-100:hover {
+  background-color: #21304A !important;
+}
+
+html.dark .hover\:bg-gray-200:hover,
+html.dark .hover\:bg-slate-200:hover {
+  background-color: #2A3D5E !important;
+}
+
+html.dark .hover\:bg-blue-50:hover,
+html.dark .hover\:bg-blue-50\/80:hover {
+  background-color: rgba(37, 99, 235, 0.25) !important;
+}
+
+html.dark .hover\:border-blue-200:hover,
+html.dark .hover\:border-blue-300:hover {
+  border-color: rgba(96, 165, 250, 0.5) !important;
+}
+
+html.dark .hover\:text-blue-600:hover,
+html.dark .hover\:text-blue-800:hover {
+  color: #93C5FD !important;
+}
+
+html.dark .hover\:text-gray-900:hover,
+html.dark .hover\:text-slate-900:hover {
+  color: #FFFFFF !important;
+}
+
+/* ------------------------------------------------------------- */
+/* Badges & Accent Colors                                       */
+/* ------------------------------------------------------------- */
+
+/* Blue Badges */
+html.dark .bg-blue-50 {
+  background-color: rgba(37, 99, 235, 0.2) !important;
+}
+
+html.dark .bg-blue-50\/80 {
+  background-color: rgba(37, 99, 235, 0.25) !important;
+}
+
+html.dark .bg-blue-100 {
+  background-color: rgba(37, 99, 235, 0.3) !important;
+}
+
+html.dark .bg-blue-100\/70,
+html.dark .bg-blue-100\/80 {
+  background-color: rgba(37, 99, 235, 0.28) !important;
+}
+
+html.dark .border-blue-100,
+html.dark .border-blue-200,
+html.dark .border-blue-200\/60 {
+  border-color: rgba(96, 165, 250, 0.4) !important;
+}
+
+/* Amber/Yellow Badges */
+html.dark .bg-amber-50,
+html.dark .bg-amber-50\/30,
+html.dark .bg-amber-50\/60 {
+  background-color: rgba(245, 158, 11, 0.18) !important;
+}
+
+html.dark .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.26) !important;
+}
+
+html.dark .text-amber-700,
+html.dark .text-amber-800,
+html.dark .text-amber-900,
+html.dark .text-amber-950 {
+  color: #FCD34D !important;
+}
+
+html.dark .border-amber-200,
+html.dark .border-amber-200\/80,
+html.dark .border-amber-300 {
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+/* Emerald Badges */
+html.dark .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.18) !important;
+}
+
+html.dark .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.28) !important;
+}
+
+html.dark .text-emerald-700,
+html.dark .text-emerald-800,
+html.dark .text-emerald-900,
+html.dark .text-emerald-950 {
+  color: #6EE7B7 !important;
+}
+
+html.dark .border-emerald-200 {
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+/* Rose/Red Badges */
+html.dark .bg-rose-50,
+html.dark .bg-rose-50\/20,
+html.dark .bg-rose-50\/30 {
+  background-color: rgba(244, 63, 94, 0.18) !important;
+}
+
+html.dark .bg-rose-100 {
+  background-color: rgba(244, 63, 94, 0.28) !important;
+}
+
+html.dark .text-rose-700,
+html.dark .text-rose-800,
+html.dark .text-rose-900,
+html.dark .text-rose-950 {
+  color: #FDA4AF !important;
+}
+
+html.dark .border-rose-200 {
+  border-color: rgba(244, 63, 94, 0.4) !important;
+}
+
+/* Purple Badges */
+html.dark .bg-purple-50 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+}
+
+html.dark .bg-purple-100 {
+  background-color: rgba(168, 85, 247, 0.28) !important;
+}
+
+html.dark .text-purple-700,
+html.dark .text-purple-800,
+html.dark .text-purple-900,
+html.dark .text-purple-950 {
+  color: #D8B4FE !important;
+}
+
+html.dark .border-purple-200 {
+  border-color: rgba(168, 85, 247, 0.4) !important;
+}
+
+/* Indigo Badges */
+html.dark .bg-indigo-50,
+html.dark .bg-indigo-50\/20 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+}
+
+html.dark .bg-indigo-100 {
+  background-color: rgba(99, 102, 241, 0.28) !important;
+}
+
+html.dark .text-indigo-700,
+html.dark .text-indigo-800,
+html.dark .text-indigo-900,
+html.dark .text-indigo-950 {
+  color: #A5B4FC !important;
+}
+
+html.dark .border-indigo-200 {
+  border-color: rgba(99, 102, 241, 0.4) !important;
+}
+
+/* Cyan Badges */
+html.dark .bg-cyan-50 {
+  background-color: rgba(6, 182, 212, 0.18) !important;
+}
+
+html.dark .bg-cyan-100 {
+  background-color: rgba(6, 182, 212, 0.28) !important;
+}
+
+html.dark .text-cyan-700,
+html.dark .text-cyan-800,
+html.dark .text-cyan-900,
+html.dark .text-cyan-950 {
+  color: #67E8F9 !important;
+}
+
+html.dark .border-cyan-200 {
+  border-color: rgba(6, 182, 212, 0.4) !important;
+}
+
+/* ------------------------------------------------------------- */
+/* Form inputs & controls in Dark Mode                          */
+/* ------------------------------------------------------------- */
+html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+html.dark select,
+html.dark textarea {
+  background-color: #0E1624 !important;
+  color: #F8FAFC !important;
+  border-color: #26364F !important;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+  border-color: #3B82F6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* Modals & Dropdown shadows */
+html.dark .shadow-2xl,
+html.dark .shadow-xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Universal sleek scrollbar styling for both light and dark modes */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Dark scrollbar */
+html.dark ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+html.dark ::-webkit-scrollbar-track {
+  background: #0B0F17;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #24344D;
+  border-radius: 9999px;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #334563;
+}
+
+/* Hide scrollbar utility for Chrome, Safari, Edge, Firefox */
+@utility no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  &::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+}
+
+@utility scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  &::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Tiptap Editor Styles */
+.ProseMirror {
+  outline: none;
+}
+.ProseMirror > * + * {
+  margin-top: 0.75em;
+}
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
+  line-height: 1.1;
+  font-weight: 700;
+}
+.ProseMirror h1 { font-size: 1.5rem; margin-top: 1.5rem; }
+.ProseMirror h2 { font-size: 1.25rem; margin-top: 1.25rem; }
+.ProseMirror h3 { font-size: 1.125rem; margin-top: 1rem; }
+.ProseMirror p {
+  margin-bottom: 0.75rem;
+}
+.ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+}
+.ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+}
+.ProseMirror blockquote {
+  border-left: 3px solid #60A5FA;
+  padding-left: 1rem;
+  font-style: italic;
+  margin-left: 0;
+  margin-right: 0;
+}
+.ProseMirror pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+}
+.ProseMirror code {
+  background: rgba(0,0,0,0.1);
+  color: #38bdf8;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+.ProseMirror pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+.ProseMirror a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+/* Dynamic animated floating action buttons (Phone ring, Bot bob, Radiating Radar Pulse) */
+@keyframes floating-pulse-ring {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.25;
+  }
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+@keyframes phone-ring-wiggle {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  8% {
+    transform: rotate(-16deg) scale(1.1);
+  }
+  16% {
+    transform: rotate(14deg) scale(1.1);
+  }
+  24% {
+    transform: rotate(-12deg) scale(1.06);
+  }
+  32% {
+    transform: rotate(10deg) scale(1.06);
+  }
+  40% {
+    transform: rotate(-4deg) scale(1.02);
+  }
+  48% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+@keyframes bot-float-bob {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  25% {
+    transform: translateY(-3px) scale(1.04) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(0px) scale(1) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-2px) scale(1.03) rotate(3deg);
+  }
+}
+
+@keyframes subtle-breath {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+.animate-floating-pulse-1 {
+  animation: floating-pulse-ring 2.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.animate-floating-pulse-2 {
+  animation: floating-pulse-ring 2.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation-delay: 1.3s;
+}
+
+.animate-phone-ring {
+  animation: phone-ring-wiggle 4s ease-in-out infinite;
+}
+
+.animate-bot-bob {
+  animation: bot-float-bob 3.5s ease-in-out infinite;
+}
+
+.animate-subtle-breath {
+  animation: subtle-breath 3.5s ease-in-out infinite;
+}
+
+/* Brand ribbon infinite marquee */
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 45s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Negative z-index utility */
+.-z-5 {
+  z-index: -5;
+}
+
+/* ------------------------------------------------------------- */
+/* Print Styles: Optimized for A4 printing of product specifications */
+/* ------------------------------------------------------------- */
+@media print {
+  /* Hide non-essential layout elements */
+  header,
+  footer,
+  nav,
+  .print-hidden,
+  .bottom-navigation-actions,
+  .compare-drawer,
+  .search-modal,
+  .contact-modal,
+  .callback-modal,
+  .privacy-modal,
+  .smart-lead-popup,
+  .manager-live-alerts,
+  .offline-indicator,
+  [role="status"],
+  #main-content > div:first-child:has(> nav[aria-label="Навигация по разделам сайта (хлебные крошки)"]),
+  nav[aria-label="Навигация по разделам сайта (хлебные крошки)"],
+  canvas {
+    display: none !important;
+  }
+
+  /* Force white background and black text for better contrast */
+  html, body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt !important;
+  }
+
+  * {
+    color: black !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Optimize page layout constraints */
+  #root, body, html {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  #main-content {
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Improve typography and readability */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    color: black !important;
+  }
+
+  p, h2, h3 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Prevent awkward breaks inside cards and tables */
+  .card, 
+  [class*="rounded-"], 
+  table, 
+  figure, 
+  img, 
+  blockquote {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Expand hidden scroll areas */
+  [class*="overflow-"] {
+    overflow: visible !important;
+  }
+
+  /* Remove all borders that might look too thick */
+  [class*="border-"] {
+    border-color: #ddd !important;
+  }
+
+  /* ============================================================== */
+  /* Service Request Form Formatting for Physical Print Output      */
+  /* ============================================================== */
+  
+  form, .service-request-form {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Ensure logical form groups do not break across pages */
+  .form-group, form div {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Style inputs and textareas to look like printable fillable fields */
+  form input:not([type="checkbox"]):not([type="radio"]),
+  form textarea,
+  form select {
+    border: 1px solid #999 !important;
+    background-color: #fff !important;
+    color: #000 !important;
+    padding: 8px 12px !important;
+    border-radius: 4px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    height: auto !important;
+    min-height: 40px !important;
+    font-family: inherit !important;
+    font-size: 11pt !important;
+  }
+
+  /* Provide ample space for textareas (useful if printing a blank form to fill by hand) */
+  form textarea {
+    min-height: 100px !important;
+    resize: none !important;
+    white-space: pre-wrap !important;
+  }
+
+  /* Ensure labels are strong and distinct */
+  form label {
+    font-weight: 600 !important;
+    margin-bottom: 4px !important;
+    display: inline-block !important;
+    color: #111 !important;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Hide interactive form controls that make no sense on paper */
+  form button, 
+  form input[type="submit"], 
+  form input[type="reset"], 
+  form input[type="file"],
+  .form-actions,
+  [role="button"] {
+    display: none !important;
+  }
+
+  /* Improve appearance of fieldsets */
+  form fieldset {
+    border: 1px solid #ccc !important;
+    padding: 16px !important;
+    margin-bottom: 24px !important;
+    page-break-inside: avoid;
+    border-radius: 6px !important;
+  }
+
+  form legend {
+    font-weight: 700 !important;
+    font-size: 13pt !important;
+    color: #000 !important;
+    padding: 0 8px !important;
+  }
+}
+
+\n
+/* Custom Thin Scrollbar for Slider */
+.custom-scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+}
+.custom-scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+.custom-scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+}
+.custom-scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+.custom-scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.05);
+}

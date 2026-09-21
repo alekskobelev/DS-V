@@ -1,0 +1,223 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient resembling modern office / glass architecture -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#cfd8dc" />
+      <stop offset="35%" stop-color="#b0bec5" />
+      <stop offset="70%" stop-color="#90a4ae" />
+      <stop offset="100%" stop-color="#78909c" />
+    </linearGradient>
+    <linearGradient id="glassReflection" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#80cbc4" stop-opacity="0.3" />
+      <stop offset="50%" stop-color="#b2dfdb" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.4" />
+    </linearGradient>
+    <!-- Skin Tones -->
+    <radialGradient id="faceGrad" cx="48%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#fce2d4" />
+      <stop offset="50%" stop-color="#f5cbba" />
+      <stop offset="85%" stop-color="#e8b29e" />
+      <stop offset="100%" stop-color="#d49680" />
+    </radialGradient>
+    <linearGradient id="neckGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#c98a72" />
+      <stop offset="40%" stop-color="#dfa48e" />
+      <stop offset="100%" stop-color="#f0c2b0" />
+    </linearGradient>
+    <!-- Hair Shading -->
+    <linearGradient id="hairGrad" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#4a423d" />
+      <stop offset="30%" stop-color="#38322e" />
+      <stop offset="70%" stop-color="#2c2724" />
+      <stop offset="100%" stop-color="#1f1b19" />
+    </linearGradient>
+    <linearGradient id="hairHighlight" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#6e635b" />
+      <stop offset="50%" stop-color="#544c45" />
+      <stop offset="100%" stop-color="#3a342f" />
+    </linearGradient>
+    <!-- Eye Iris -->
+    <radialGradient id="irisGrad" cx="45%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#81d4fa" />
+      <stop offset="45%" stop-color="#4fc3f7" />
+      <stop offset="75%" stop-color="#0288d1" />
+      <stop offset="100%" stop-color="#01579b" />
+    </radialGradient>
+    <!-- Jacket -->
+    <linearGradient id="jacketGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e2229" />
+      <stop offset="50%" stop-color="#121418" />
+      <stop offset="100%" stop-color="#0a0b0d" />
+    </linearGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="400" fill="url(#bgGrad)" />
+  <!-- Diagonal subtle architecture beam -->
+  <polygon points="0,40 280,0 120,400 0,400" fill="url(#glassReflection)" />
+  <polygon points="180,0 400,0 400,240 260,400" fill="white" opacity="0.1" />
+
+  <!-- Body / Shoulders / Jacket -->
+  <g>
+    <!-- White shirt inner collar -->
+    <path d="M160,340 Q200,360 240,340 L250,400 L150,400 Z" fill="#f8fafc" />
+    <path d="M175,346 Q200,365 225,346 L230,400 L170,400 Z" fill="#e2e8f0" />
+    
+    <!-- Dark Executive Jacket -->
+    <path d="M80,400 C80,350 110,320 155,315 L185,350 L195,400 L70,400 Z" fill="url(#jacketGrad)" />
+    <path d="M320,400 C320,350 290,320 245,315 L215,350 L205,400 L330,400 Z" fill="url(#jacketGrad)" />
+    <!-- Lapels -->
+    <path d="M155,315 L190,365 L170,400 L120,400 C110,380 125,340 155,315 Z" fill="#181a1f" />
+    <path d="M245,315 L210,365 L230,400 L280,400 C290,380 275,340 245,315 Z" fill="#15171c" />
+  </g>
+
+  <!-- Neck -->
+  <g>
+    <path d="M165,245 L165,340 Q200,355 235,340 L235,245 Z" fill="url(#neckGrad)" />
+    <!-- Adam's apple / neck shading -->
+    <path d="M185,270 Q200,285 215,270 Q200,310 185,270 Z" fill="#c48067" opacity="0.35" />
+    <path d="M165,250 Q200,285 235,250 L235,265 Q200,300 165,265 Z" fill="#b87258" opacity="0.4" />
+  </g>
+
+  <!-- Head Base Shape -->
+  <g id="head">
+    <!-- Ears -->
+    <ellipse cx="132" cy="205" rx="14" ry="24" fill="#e5aa94" transform="rotate(-6 132 205)" />
+    <ellipse cx="132" cy="205" rx="8" ry="16" fill="#c9836a" transform="rotate(-6 132 205)" />
+    <ellipse cx="268" cy="205" rx="14" ry="24" fill="#e5aa94" transform="rotate(6 268 205)" />
+    <ellipse cx="268" cy="205" rx="8" ry="16" fill="#c9836a" transform="rotate(6 268 205)" />
+
+    <!-- Face Oval with masculine square jaw -->
+    <path d="M142,145 
+             C135,185 136,225 150,260 
+             C162,285 180,296 200,297 
+             C220,296 238,285 250,260 
+             C264,225 265,185 258,145 
+             C252,105 148,105 142,145 Z" 
+          fill="url(#faceGrad)" />
+
+    <!-- Subtle cheekbone & temple shading -->
+    <path d="M144,175 C142,210 150,240 162,260 C154,235 148,205 150,175 Z" fill="#c9836a" opacity="0.3" />
+    <path d="M256,175 C258,210 250,240 238,260 C246,235 252,205 250,175 Z" fill="#c9836a" opacity="0.3" />
+
+    <!-- Chin definition -->
+    <path d="M185,285 Q200,293 215,285 Q200,300 185,285 Z" fill="#be775e" opacity="0.35" />
+  </g>
+
+  <!-- Facial Features -->
+  <g id="features">
+    <!-- Eyebrows (Masculine, natural brown) -->
+    <!-- Left Eyebrow -->
+    <path d="M154,168 C164,160 178,160 188,166 C182,163 168,164 154,168 Z" fill="#38322e" />
+    <path d="M156,167 C166,158 180,159 188,165" stroke="#2c2724" stroke-width="3" stroke-linecap="round" />
+    <!-- Right Eyebrow -->
+    <path d="M212,166 C222,160 236,160 246,168 C232,164 218,163 212,166 Z" fill="#38322e" />
+    <path d="M212,165 C220,159 234,158 244,167" stroke="#2c2724" stroke-width="3" stroke-linecap="round" />
+
+    <!-- Eyes (Blue-Grey expressive eyes) -->
+    <!-- Left Eye -->
+    <g transform="translate(0, 0)">
+      <path d="M156,183 Q171,173 186,183 Q171,192 156,183 Z" fill="#ffffff" />
+      <!-- Upper eyelid crease -->
+      <path d="M154,178 Q171,170 188,178" stroke="#a4634d" stroke-width="1.2" fill="none" opacity="0.6" />
+      <!-- Iris -->
+      <circle cx="171" cy="183" r="6.5" fill="url(#irisGrad)" />
+      <!-- Pupil -->
+      <circle cx="171" cy="183" r="3" fill="#111827" />
+      <!-- Light Reflection -->
+      <circle cx="169" cy="181" r="1.5" fill="#ffffff" />
+      <circle cx="173" cy="185" r="0.8" fill="#ffffff" opacity="0.7" />
+      <!-- Eyelash contour -->
+      <path d="M155,183 Q171,173 187,183" stroke="#2c2724" stroke-width="2" fill="none" stroke-linecap="round" />
+      <path d="M158,184 Q171,193 185,184" stroke="#a4634d" stroke-width="1" fill="none" opacity="0.5" />
+    </g>
+
+    <!-- Right Eye -->
+    <g transform="translate(0, 0)">
+      <path d="M214,183 Q229,173 244,183 Q229,192 214,183 Z" fill="#ffffff" />
+      <!-- Upper eyelid crease -->
+      <path d="M212,178 Q229,170 246,178" stroke="#a4634d" stroke-width="1.2" fill="none" opacity="0.6" />
+      <!-- Iris -->
+      <circle cx="229" cy="183" r="6.5" fill="url(#irisGrad)" />
+      <!-- Pupil -->
+      <circle cx="229" cy="183" r="3" fill="#111827" />
+      <!-- Light Reflection -->
+      <circle cx="227" cy="181" r="1.5" fill="#ffffff" />
+      <circle cx="231" cy="185" r="0.8" fill="#ffffff" opacity="0.7" />
+      <!-- Eyelash contour -->
+      <path d="M213,183 Q229,173 245,183" stroke="#2c2724" stroke-width="2" fill="none" stroke-linecap="round" />
+      <path d="M215,184 Q229,193 242,184" stroke="#a4634d" stroke-width="1" fill="none" opacity="0.5" />
+    </g>
+
+    <!-- Nose -->
+    <g>
+      <!-- Bridge highlight and shadow -->
+      <path d="M196,170 L195,218 L190,228 Q200,234 210,228 L205,218 L204,170 Z" fill="#e8b29e" opacity="0.4" />
+      <path d="M195,178 L194,222" stroke="#caa08f" stroke-width="1.5" fill="none" />
+      <path d="M205,178 L206,222" stroke="#ffffff" stroke-width="1.5" fill="none" opacity="0.4" />
+      <!-- Nose tip & nostrils -->
+      <ellipse cx="200" cy="225" rx="6" ry="4" fill="#deb09d" />
+      <path d="M188,226 Q194,231 200,230 Q206,231 212,226" stroke="#b46e56" stroke-width="1.8" fill="none" />
+      <!-- Nostril curves -->
+      <path d="M188,225 Q186,228 191,229" stroke="#7e4330" stroke-width="1.8" fill="none" stroke-linecap="round" />
+      <path d="M212,225 Q214,228 209,229" stroke="#7e4330" stroke-width="1.8" fill="none" stroke-linecap="round" />
+    </g>
+
+    <!-- Philtrum -->
+    <path d="M197,233 L196,244 M203,233 L204,244" stroke="#caa08f" stroke-width="1" opacity="0.5" />
+
+    <!-- Mouth & Lips (Calm, friendly executive smile) -->
+    <g>
+      <!-- Upper lip -->
+      <path d="M182,253 C189,248 196,249 200,251 C204,249 211,248 218,253 C211,254 189,254 182,253 Z" fill="#be6f5c" />
+      <!-- Mouth line with subtle corner upturn -->
+      <path d="M180,253 Q190,256 200,256 Q210,256 220,253" stroke="#6e2d1d" stroke-width="2" fill="none" stroke-linecap="round" />
+      <!-- Lower lip -->
+      <path d="M184,254 Q200,266 216,254 Q200,262 184,254 Z" fill="#cb7f6d" />
+      <!-- Under-lip shadow -->
+      <path d="M188,266 Q200,272 212,266" stroke="#a86550" stroke-width="1.5" fill="none" opacity="0.5" />
+    </g>
+
+    <!-- Light stubble / 5 o'clock shadow around jaw & chin -->
+    <path d="M150,240 C155,275 180,294 200,295 C220,294 245,275 250,240 C242,260 220,285 200,286 C180,285 158,260 150,240 Z" fill="#4a5568" opacity="0.12" />
+  </g>
+
+  <!-- Hair (Wavy textured dark ash-brown hair with characteristic volume and waves) -->
+  <g id="hair">
+    <!-- Base Hair Volume -->
+    <path d="M136,155 
+             C128,125 140,88 165,72 
+             C185,58 215,58 238,70 
+             C262,84 274,120 264,155 
+             C260,135 256,120 248,110 
+             C240,98 225,92 210,95 
+             C195,88 175,90 160,102 
+             C148,112 142,130 136,155 Z" 
+          fill="url(#hairGrad)" />
+
+    <!-- Hair Wave Strands & Texture -->
+    <!-- Top volume waves -->
+    <path d="M155,90 Q175,65 205,70 Q185,82 170,95 Z" fill="url(#hairHighlight)" />
+    <path d="M190,68 Q220,62 245,78 Q225,82 205,75 Z" fill="url(#hairHighlight)" />
+    <path d="M170,80 Q195,60 225,66 Q210,78 190,85 Z" fill="url(#hairGrad)" />
+    
+    <!-- Forehead hair contours & locks -->
+    <path d="M142,135 Q150,110 168,105 Q158,120 152,140 Z" fill="#2c2724" />
+    <path d="M158,115 Q175,98 195,108 Q180,122 170,125 Z" fill="#3a342f" />
+    <path d="M190,105 Q210,96 230,104 Q218,120 205,120 Z" fill="#4a423d" />
+    <path d="M225,102 Q245,105 255,125 Q245,135 235,130 Z" fill="#2c2724" />
+
+    <!-- Sideburns -->
+    <path d="M136,150 L140,185 L144,185 L142,150 Z" fill="#2c2724" />
+    <path d="M264,150 L260,185 L256,185 L258,150 Z" fill="#2c2724" />
+
+    <!-- Delicate stray strands for natural realistic hair look -->
+    <path d="M165,68 Q180,55 200,60" stroke="#544c45" stroke-width="2" fill="none" stroke-linecap="round" />
+    <path d="M195,58 Q215,54 235,65" stroke="#6e635b" stroke-width="2" fill="none" stroke-linecap="round" />
+    <path d="M230,64 Q250,72 260,90" stroke="#544c45" stroke-width="1.8" fill="none" stroke-linecap="round" />
+    <path d="M145,105 Q140,90 155,75" stroke="#544c45" stroke-width="1.8" fill="none" stroke-linecap="round" />
+  </g>
+</svg>

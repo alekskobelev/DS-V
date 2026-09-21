@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 68" width="240" height="68">
+  <g transform="translate(4, 10)">
+    <path d="M0,0 L32,0 L16,24 Z" fill="#ef4444" />
+    <path d="M16,24 L48,24 L32,48 Z" fill="#b91c1c" />
+  </g>
+  <text x="60" y="34" font-family="'Segoe UI', Roboto, sans-serif" font-size="23" font-weight="900" fill="#0f172a">TopSolid<tspan fill="#ef4444"> 7</tspan></text>
+  <text x="61" y="49" font-family="'Segoe UI', Roboto, sans-serif" font-size="8" font-weight="700" fill="#64748b" letter-spacing="1">Integrated CAD / CAM / PDM</text>
+</svg>

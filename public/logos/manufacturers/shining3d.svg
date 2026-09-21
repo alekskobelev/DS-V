@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 68" width="240" height="68">
+  <g transform="translate(6, 12)">
+    <rect x="0" y="0" width="16" height="42" fill="#0284c7" rx="3" />
+    <rect x="22" y="8" width="16" height="34" fill="#0ea5e9" rx="3" />
+    <polygon points="44,16 60,8 60,38 44,46" fill="#38bdf8" />
+  </g>
+  <text x="76" y="34" font-family="'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="900" fill="#0f172a" letter-spacing="1">SHINING 3D</text>
+  <text x="77" y="49" font-family="'Segoe UI', Roboto, sans-serif" font-size="8" font-weight="700" fill="#64748b" letter-spacing="1.5">FreeScan • 3D Metrology</text>
+</svg>

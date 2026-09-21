@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 68" width="240" height="68">
+  <circle cx="26" cy="34" r="22" fill="#0284c7" />
+  <text x="26" y="41" font-family="'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="900" fill="#ffffff" text-anchor="middle">3D</text>
+  <text x="60" y="32" font-family="'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="900" fill="#0f172a">Geomagic<tspan fill="#0284c7">®</tspan></text>
+  <text x="61" y="48" font-family="'Segoe UI', Roboto, sans-serif" font-size="8" font-weight="700" fill="#64748b" letter-spacing="1">Design X • 3D Systems</text>
+</svg>
