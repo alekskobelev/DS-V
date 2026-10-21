@@ -12,6 +12,7 @@ import {
   Edit3
 } from 'lucide-react';
 import { AttachedDocument } from '../../types';
+import { useModalStack } from '../../hooks/useModalStack';
 
 interface AccountFileModalProps {
   existingDoc?: AttachedDocument | null;
@@ -50,6 +51,13 @@ export const AccountFileModal: React.FC<AccountFileModalProps> = ({
   const [uploadedBy, setUploadedBy] = useState(existingDoc?.uploadedBy || 'Инженерный отдел');
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState('');
+
+  const { containerRef, zIndex } = useModalStack({
+    id: `account-file-modal-${existingDoc?.id || 'new'}`,
+    isOpen: true,
+    onClose,
+    baseZIndex: 520
+  });
 
   const isEditing = !!existingDoc;
 
@@ -147,8 +155,15 @@ export const AccountFileModal: React.FC<AccountFileModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl max-w-lg w-full shadow-sm border border-gray-200 overflow-hidden flex flex-col my-auto">
+    <div 
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
+      style={{ zIndex }}
+    >
+      <div 
+        ref={containerRef}
+        tabIndex={-1}
+        className="bg-white rounded-xl max-w-lg w-full shadow-sm border border-gray-200 overflow-hidden flex flex-col my-auto"
+      >
         
         {/* Header */}
         <div className="p-5 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white flex items-center justify-between border-b border-gray-800">

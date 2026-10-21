@@ -70,6 +70,8 @@ import path from 'path';
 const CRM_DATA_DIR = path.join(process.cwd(), 'data');
 const FLEET_FILE_PATH = path.join(CRM_DATA_DIR, 'crm_fleet_devices.json');
 const REPORTS_FILE_PATH = path.join(CRM_DATA_DIR, 'crm_metrology_reports.json');
+const FUNNELS_FILE_PATH = path.join(CRM_DATA_DIR, 'crm_funnels.json');
+const CRM_SETTINGS_FILE_PATH = path.join(CRM_DATA_DIR, 'crm_settings.json');
 
 export const INITIAL_COMPANY_FLEET: any[] = [
   {
@@ -88,68 +90,88 @@ export const INITIAL_COMPANY_FLEET: any[] = [
     accuracy: 'до 0.020 мм',
     measuringRange: 'Поле сканирования до 550 × 600 мм',
     currentLocation: 'Главный офис в Самаре (ул. Свободы, 198) / Метрологический зал',
-    responsiblePerson: 'Скобелев А.С. (Инженер по ПО, ЧПУ и CAD-моделированию)',
+    responsiblePerson: 'Скобелев А.С. (Инженер по внедрению CAD/CAM и постпроцессорам)',
     notes: 'Комплект: ручной сканер EasyScan Omni, калибровочная пластина, набор магнитных меток, транспортный защитный кейс Pelicase.',
     photoUrl: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 'fleet-dev-2',
-    catalogProductId: 'hexagon-absolute-arm-8520',
-    modelName: 'Портативная измерительная машина Hexagon Absolute ARM 8520 со сканером RS6',
-    brand: 'Hexagon Manufacturing Intelligence',
-    category: 'Измерительные руки',
-    serialNumber: '8520-7A-4491-RU',
+    catalogProductId: 'freescan-combo',
+    modelName: 'Метрологический лазерный 3D-сканер Shining 3D FreeScan Combo',
+    brand: 'Shining 3D',
+    category: 'Оптические и лазерные 3D-сканеры',
+    serialNumber: 'FSC-2025-091',
     inventoryNumber: 'ИНВ-ДС-042',
     status: 'in_office',
-    statusLabel: 'В офисе / Метрологическом зале',
+    statusLabel: 'В офисе (Самара)',
     verificationNumber: 'С-МСК/24-08-2025/119044-АРШИН',
     verificationDate: '2025-08-24',
     verificationValidUntil: '2026-12-15',
-    accuracy: '0.018 мм (щуп) / 0.026 мм (сканер RS6)',
-    measuringRange: 'Сфера диаметром 2.0 м',
-    currentLocation: 'Офис в Тольятти (Южное шоссе, 165, корп. 2.3)',
+    accuracy: 'до 0.020 мм',
+    measuringRange: 'Поле сканирования до 600 × 550 мм',
+    currentLocation: 'Центральный офис в Самаре (ул. Свободы, 198)',
     responsiblePerson: 'Ярыш И.В. (Инженер-метролог)',
-    notes: '7-осевая измерительная рука с абсолютными энкодерами, синий лазерный сканер Hexagon RS6 (1.2 млн тчк/с), комплект контактных щупов Renishaw Ruby Ø3, Ø5, Ø6 мм, магнитное основание.',
+    notes: 'Гибридный источник света: синий лазер (26 линий) + VCSEL фотограмметрия для сканирования крупногабаритных объектов без потери точности.',
     photoUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 'fleet-dev-3',
-    catalogProductId: 'leica-at403',
-    modelName: 'Лазерный трекер Leica AT403',
-    brand: 'Leica Geosystems / Hexagon',
-    category: 'Лазерные трекеры',
-    serialNumber: 'AT403-9120-CH',
+    catalogProductId: 'freescan-ue-pro',
+    modelName: 'Прецизионный синий лазерный 3D-сканер Shining 3D FreeScan UE Pro',
+    brand: 'Shining 3D',
+    category: 'Оптические и лазерные 3D-сканеры',
+    serialNumber: 'FS-UEPRO-2025-018',
     inventoryNumber: 'ИНВ-ДС-018',
     status: 'on_site',
     statusLabel: 'На выезде у заказчика',
     verificationNumber: 'С-ВНИИМС/05-11-2025/44120-АРШИН',
     verificationDate: '2025-11-05',
     verificationValidUntil: '2026-11-05',
-    accuracy: '±15 мкм + 6 мкм/м',
-    measuringRange: 'Сфера диаметром до 320 м',
+    accuracy: 'до 0.020 мм, объемная точность 0.020 + 0.035 мм/м',
+    measuringRange: 'Высокоточное сканирование деталей от 50 мм до 4000 мм',
     currentLocation: 'ПАО «ОДК-Кузнецов» (Самара, контроль крупногабаритной оснастки)',
-    responsiblePerson: 'Некрасов С.Ю. (Генеральный директор)',
-    notes: 'Ультрапортативный лазерный трекер с технологией PowerLock, отражатели RRR 1.5", метеостанция MeteoStation, штатив углепластиковый Brunson, влагозащита IP54.',
+    responsiblePerson: 'Ярыш И.В. (Инженер-метролог)',
+    notes: 'Интегрированная фотограмметрия высокой точности, лазерные перекрестия высокой четкости, мобильный чемодан для выездных измерений.',
     photoUrl: 'https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 'fleet-dev-4',
+    catalogProductId: 'pmt-alpha-arm',
+    modelName: 'Портативная координатно-измерительная машина PMT Alpha Arm',
+    brand: 'PMT Measurement',
+    category: 'Измерительные руки',
+    serialNumber: 'PMT-ARM-2500-RU',
+    inventoryNumber: 'ИНВ-ДС-007',
+    status: 'in_office',
+    statusLabel: 'В офисе (Самара)',
+    verificationNumber: 'С-СПБ/10-01-2026/01229-АРШИН',
+    verificationDate: '2026-01-10',
+    verificationValidUntil: '2027-01-10',
+    accuracy: 'до 0.018 мм',
+    measuringRange: 'Сфера измерения диаметром 2.5 м',
+    currentLocation: 'Центральный офис в Самаре (ул. Свободы, 198)',
+    responsiblePerson: 'Скобелев А.С. (Инженер по ПО и 3D-моделированию)',
+    notes: 'Портативная рука-КИМ с противовесом, датчики Renishaw TP20, магнитная стойка для установки прямо на станину станка.',
+    photoUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 'fleet-dev-5',
     catalogProductId: 'mitutoyo-crysta-apex-s',
     modelName: 'Стационарная высокоточная измерительная машина Mitutoyo CRYSTA-Apex S',
     brand: 'Mitutoyo Corporation (Япония)',
     category: 'Координатно-измерительные машины',
     serialNumber: 'MIT-APEX-9106-JP',
-    inventoryNumber: 'ИНВ-ДС-007',
+    inventoryNumber: 'ИНВ-ДС-008',
     status: 'in_office',
-    statusLabel: 'В офисе / Метрологическом зале',
+    statusLabel: 'В метрологическом зале',
     verificationNumber: 'С-СПБ/10-01-2026/01229-АРШИН',
     verificationDate: '2026-01-10',
     verificationValidUntil: '2027-01-10',
     accuracy: 'E0,MPE = (1.7 + 3L/1000) мкм',
     measuringRange: '900 × 1000 × 600 мм',
-    currentLocation: 'Метрологический зал (Тольятти, Южное шоссе, 165, корп. 3.2)',
+    currentLocation: 'Метрологический зал в технопарке «Жигулевская долина» (г. Тольятти, Южное шоссе, 165)',
     responsiblePerson: 'Ярыш И.В. (Инженер-метролог)',
-    notes: 'Стационарная мостовая КИМ на гранитном основании, ЧПУ контроллер, моторизованная головка Renishaw PH10MQ Plus с датчиком TP200, модуль динамической температурной компенсации.',
+    notes: 'Стационарная мостовая КИМ на гранитном основании в метро-зале технопарка «Жигулевская долина», ЧПУ контроллер, моторизованная головка Renishaw PH10MQ Plus с датчиком TP200, модуль динамической температурной компенсации.',
     photoUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800'
   }
 ];
@@ -162,9 +184,9 @@ export const INITIAL_METROLOGY_REPORTS: any[] = [
     objectName: 'Лопатка турбины ЛП-04 (ТВ7-117СТ)',
     customer: 'ПАО «ОДК-Кузнецов»',
     engineer: 'Ярыш И.В. (Инженер-метролог)',
-    equipment: 'Портативная измерительная машина Hexagon Absolute ARM 8520 со сканером RS6',
+    equipment: 'Метрологический лазерный 3D-сканер Shining 3D FreeScan Combo',
     fleetDeviceId: 'fleet-dev-2',
-    equipmentSerial: '8520-7A-4491-RU',
+    equipmentSerial: 'FSC-2025-091',
     inventoryNumber: 'ИНВ-ДС-042',
     verificationCertificate: 'С-МСК/24-08-2025/119044-АРШИН',
     verificationValidUntil: '2026-12-15',
@@ -179,7 +201,7 @@ export const INITIAL_METROLOGY_REPORTS: any[] = [
     date: '2026-07-20T00:00:00.000Z',
     objectName: 'Штамп глубокой вытяжки кузовной панели',
     customer: 'АО «АВТОВАЗ»',
-    engineer: 'Скобелев А.С. (Инженер по ПО, ЧПУ и CAD-моделированию)',
+    engineer: 'Скобелев А.С. (Инженер по внедрению CAD/CAM и постпроцессорам)',
     equipment: '3D-сканер ScanLine EasyScan Omni',
     fleetDeviceId: 'fleet-dev-1',
     equipmentSerial: 'SL-OMNI-2025-084',
@@ -198,9 +220,9 @@ export const INITIAL_METROLOGY_REPORTS: any[] = [
     objectName: 'Корпус редуктора вертолета Ка-62',
     customer: 'АО «Вертолеты России»',
     engineer: 'Ярыш И.В. (Инженер-метролог)',
-    equipment: 'Стационарная высокоточная измерительная машина Mitutoyo CRYSTA-Apex S',
+    equipment: 'Портативная координатно-измерительная машина PMT Alpha Arm',
     fleetDeviceId: 'fleet-dev-4',
-    equipmentSerial: 'MIT-APEX-9106-JP',
+    equipmentSerial: 'PMT-ARM-2500-RU',
     inventoryNumber: 'ИНВ-ДС-007',
     verificationCertificate: 'С-СПБ/10-01-2026/01229-АРШИН',
     verificationValidUntil: '2027-01-10',
@@ -276,6 +298,285 @@ function saveReportsToDisk(data: any[]) {
     console.error('Failed to save metrology reports to disk:', e);
   }
 }
+
+export const DEFAULT_CRM_FUNNELS_SERVER: any[] = [
+  {
+    id: 'equipment',
+    name: 'Оборудование и ПО',
+    description: 'КИМ, 3D-сканеры, ПО PolyWorks, САПР TopSolid 7 для ЧПУ',
+    accentColor: 'blue',
+    icon: 'Cpu',
+    stages: [
+      { id: 'lead', label: '1. Входящий лид (Квалификация)', shortLabel: 'Лид', winRate: 10, color: 'border-blue-200 bg-blue-50/50 text-blue-800' },
+      { id: 'audit', label: '2. Технический аудит и Бенчмаркинг', shortLabel: 'Тех. аудит', winRate: 25, color: 'border-blue-200 bg-blue-50/50 text-blue-800' },
+      { id: 'tender', label: '3. ТКП и Тендерная подготовка', shortLabel: 'ТКП / Тендер', winRate: 45, color: 'border-cyan-200 bg-cyan-50/50 text-cyan-800' },
+      { id: 'demo', label: '4. Выездная демо и Согласование NDA', shortLabel: 'Выездная демо', winRate: 60, color: 'border-purple-200 bg-purple-50/50 text-purple-800' },
+      { id: 'contract', label: '5. Договор и Аванс', shortLabel: 'Договор и аванс', winRate: 80, color: 'border-amber-200 bg-amber-50/50 text-amber-800' },
+      { id: 'logistics', label: '6. Логистика и Таможня', shortLabel: 'Логистика', winRate: 90, color: 'border-orange-200 bg-orange-50/50 text-orange-800' },
+      { id: 'implementation', label: '7. Внедрение и Инструктаж', shortLabel: 'Внедрение', winRate: 95, color: 'border-teal-200 bg-teal-50/50 text-teal-800' },
+      { id: 'closed_won', label: '8. Закрыто / Поставка выполнена', shortLabel: 'Закрыто / Успех', winRate: 100, color: 'border-emerald-200 bg-emerald-50/50 text-emerald-800', isWon: true },
+      { id: 'lost', label: 'Отменено / Отказ', shortLabel: 'Отказ / Архив', winRate: 0, color: 'border-rose-200 bg-rose-50/50 text-rose-800', isLost: true }
+    ]
+  },
+  {
+    id: 'services',
+    name: 'Инжиниринг',
+    description: '3D-сканирование, реверс, постпроцессоры',
+    accentColor: 'amber',
+    icon: 'Settings',
+    stages: [
+      { id: 'new', label: '1. Заявка из калькулятора', shortLabel: 'Заявка', winRate: 15, color: 'border-amber-200 bg-amber-50/50 text-amber-800' },
+      { id: 'estimate', label: '2. Оценка трудоемкости инженером', shortLabel: 'Оценка', winRate: 35, color: 'border-blue-200 bg-blue-50/50 text-blue-800' },
+      { id: 'nda', label: '3. Утверждение методики и NDA', shortLabel: 'Методика / NDA', winRate: 60, color: 'border-purple-200 bg-purple-50/50 text-purple-800' },
+      { id: 'implementation', label: '4. Выполнение работ (Сканы/Постпроцессор)', shortLabel: 'Реализация', winRate: 85, color: 'border-teal-200 bg-teal-50/50 text-teal-800' },
+      { id: 'cross_sell', label: '5. Перевод в продажу оборудования', shortLabel: 'Кросс-продажа', winRate: 95, color: 'border-blue-200 bg-blue-50/50 text-blue-800' },
+      { id: 'completed', label: '6. Завершено / Сдача проекта', shortLabel: 'Сдано', winRate: 100, color: 'border-emerald-200 bg-emerald-50/50 text-emerald-800', isWon: true },
+      { id: 'lost', label: 'Отменено / Архив', shortLabel: 'Архив', winRate: 0, color: 'border-rose-200 bg-rose-50/50 text-rose-800', isLost: true }
+    ]
+  },
+  {
+    id: 'support',
+    name: 'Сервис и ТО',
+    description: 'ТО КИМ, поверка, калибровка и ремонт',
+    accentColor: 'emerald',
+    icon: 'LifeBuoy',
+    stages: [
+      { id: 'ticket', label: '1. Обращение / Заводской номер', shortLabel: 'Обращение', winRate: 20, color: 'border-blue-200 bg-blue-50/50 text-blue-800' },
+      { id: 'diagnostics', label: '2. Диагностика проблемы инженером', shortLabel: 'Диагностика', winRate: 45, color: 'border-blue-200 bg-blue-50/50 text-blue-800' },
+      { id: 'maintenance', label: '3. ТО КИМ и калибровка', shortLabel: 'ТО КИМ', winRate: 75, color: 'border-amber-200 bg-amber-50/50 text-amber-800' },
+      { id: 'resolution', label: '4. Решение обращения / Продление техподдержки', shortLabel: 'Решение', winRate: 90, color: 'border-teal-200 bg-teal-50/50 text-teal-800' },
+      { id: 'closed_won', label: '5. Выполнено / Подписано', shortLabel: 'Выполнено', winRate: 100, color: 'border-emerald-200 bg-emerald-50/50 text-emerald-800', isWon: true },
+      { id: 'lost', label: 'Архив / Отклонено', shortLabel: 'Архив', winRate: 0, color: 'border-rose-200 bg-rose-50/50 text-rose-800', isLost: true }
+    ]
+  }
+];
+
+export const DEFAULT_CRM_SETTINGS_SERVER: any = {
+  defaultVatRate: 22,
+  allowVatOverride: true,
+  neighboringCountriesVatZero: true,
+  exportVatRate: 0,
+  exportZeroRateEnabled: true,
+  autoDetectCountryRate: true,
+  requireExportDocuments: false,
+  showVatBreakdownInProposals: true,
+  countryOverrides: [
+    {
+      id: 'vat-kz',
+      country: 'Казахстан',
+      code: 'KZ',
+      vatRate: 0,
+      isExport: true,
+      legalReason: 'ст. 164 НК РФ, Приложение № 18 к Договору о ЕАЭС (Протокол о взимании косвенных налогов)',
+      enabled: true,
+      currency: 'RUB / KZT',
+      notes: 'Государство-член ЕАЭС. Нулевая ставка НДС 0% при подтверждении вывоза в течение 180 дней.'
+    },
+    {
+      id: 'vat-by',
+      country: 'Беларусь',
+      code: 'BY',
+      vatRate: 0,
+      isExport: true,
+      legalReason: 'ст. 164 НК РФ, Приложение № 18 к Договору о ЕАЭС (Протокол о взимании косвенных налогов)',
+      enabled: true,
+      currency: 'RUB / BYN',
+      notes: 'Государство-член ЕАЭС. Ставка 0% для оборудования и инжиниринговых услуг.'
+    },
+    {
+      id: 'vat-uz',
+      country: 'Узбекистан',
+      code: 'UZ',
+      vatRate: 0,
+      isExport: true,
+      legalReason: 'пп. 1 п. 1 ст. 164 НК РФ (Экспорт товаров и трансграничных услуг в страны СНГ)',
+      enabled: true,
+      currency: 'RUB / UZS',
+      notes: 'Страна СНГ. Экспортные поставки с таможенным декларированием по ставке 0%.'
+    },
+    {
+      id: 'vat-am',
+      country: 'Армения',
+      code: 'AM',
+      vatRate: 0,
+      isExport: true,
+      legalReason: 'ст. 164 НК РФ, Приложение № 18 к Договору о ЕАЭС',
+      enabled: true,
+      currency: 'RUB / AMD',
+      notes: 'Государство-член ЕАЭС. Ставка 0% при наличии заявления о ввозе товаров.'
+    },
+    {
+      id: 'vat-kg',
+      country: 'Кыргызстан',
+      code: 'KG',
+      vatRate: 0,
+      isExport: true,
+      legalReason: 'ст. 164 НК РФ, Приложение № 18 к Договору о ЕАЭС',
+      enabled: true,
+      currency: 'RUB / KGS',
+      notes: 'Государство-член ЕАЭС. Ставка 0% для метрологических приборов и инжиниринга.'
+    },
+    {
+      id: 'vat-tj',
+      country: 'Таджикистан',
+      code: 'TJ',
+      vatRate: 0,
+      isExport: true,
+      legalReason: 'пп. 1 п. 1 ст. 164 НК РФ (Экспорт товаров и услуг)',
+      enabled: true,
+      currency: 'RUB / TJS',
+      notes: 'Экспортные контракты в СНГ по ставке 0%.'
+    },
+    {
+      id: 'vat-az',
+      country: 'Азербайджан',
+      code: 'AZ',
+      vatRate: 0,
+      isExport: true,
+      legalReason: 'пп. 1 п. 1 ст. 164 НК РФ (ВЭД экспорт)',
+      enabled: true,
+      currency: 'RUB / AZN',
+      notes: 'Прямой экспорт из РФ по ставке 0%.'
+    },
+    {
+      id: 'vat-cn',
+      country: 'Китай',
+      code: 'CN',
+      vatRate: 0,
+      isExport: true,
+      legalReason: 'пп. 1 п. 1 ст. 164 НК РФ (Международный экспорт ВЭД)',
+      enabled: true,
+      currency: 'CNY / RUB',
+      notes: 'Внешнеторговые контракты поставки в КНР по ставке 0%.'
+    },
+    {
+      id: 'vat-ae',
+      country: 'ОАЭ',
+      code: 'AE',
+      vatRate: 0,
+      isExport: true,
+      legalReason: 'пп. 1 п. 1 ст. 164 НК РФ (Международный экспорт)',
+      enabled: true,
+      currency: 'AED / USD',
+      notes: 'Поставки оборудования и услуг в ОАЭ по ставке 0%.'
+    },
+    {
+      id: 'vat-ru',
+      country: 'Россия',
+      code: 'RU',
+      vatRate: 22,
+      isExport: false,
+      legalReason: 'п. 3 ст. 164 НК РФ (Базовая ставка НДС для операций на территории РФ)',
+      enabled: true,
+      currency: 'RUB',
+      notes: 'Основной внутренний рынок Российской Федерации. Стандартное налогообложение 22%.'
+    }
+  ],
+  categoryOverrides: [
+    {
+      id: 'vat-cat-sw-reestr',
+      categoryName: 'Отечественное ПО из единого реестра программ РФ (CAD/Inspect)',
+      targetCategory: 'software',
+      vatRate: 0,
+      isExempt: true,
+      legalReason: 'пп. 26 п. 2 ст. 149 НК РФ (Освобождение от НДС передачи прав на программы из реестра Минцифры)',
+      enabled: true,
+      notes: 'Передача неисключительных лицензий на ПО PolyWorks / Shining 3D / отечественные модули.'
+    },
+    {
+      id: 'vat-cat-equipment',
+      categoryName: 'Контрольно-измерительные машины, 3D-сканеры и лазерные трекеры',
+      targetCategory: 'equipment',
+      vatRate: 22,
+      isExempt: false,
+      legalReason: 'п. 3 ст. 164 НК РФ (Реализация технологического оборудования)',
+      enabled: true,
+      notes: 'Поставки по РФ облагаются базовой ставкой 22%, экспорт переопределяется правилом страны.'
+    },
+    {
+      id: 'vat-cat-services',
+      categoryName: 'Услуги 3D-сканирования, контроля геометрии и реверс-инжиниринга',
+      targetCategory: 'services',
+      vatRate: 22,
+      isExempt: false,
+      legalReason: 'п. 3 ст. 164 НК РФ (Инжиниринговые и метрологические услуги в РФ)',
+      enabled: true,
+      notes: 'Базовые инжиниринговые работы в РФ.'
+    },
+    {
+      id: 'vat-cat-support',
+      categoryName: 'Сервисное ТО, калибровка КИМ и метрологическая аттестация',
+      targetCategory: 'support',
+      vatRate: 22,
+      isExempt: false,
+      legalReason: 'п. 3 ст. 164 НК РФ (Сервисно-техническое обслуживание)',
+      enabled: true,
+      notes: 'Техническая поддержка и калибровка оборудования.'
+    },
+    {
+      id: 'vat-cat-training',
+      categoryName: 'Курсы обучения операторов КИМ по образовательной лицензии',
+      targetCategory: 'training',
+      vatRate: 0,
+      isExempt: true,
+      legalReason: 'пп. 14 п. 2 ст. 149 НК РФ (Услуги в сфере образования)',
+      enabled: false,
+      notes: 'Применяется при наличии действующей государственной образовательной лицензии.'
+    }
+  ],
+  updatedAt: new Date().toISOString()
+};
+
+function loadFunnelsFromDisk(): any[] {
+  try {
+    if (fs.existsSync(FUNNELS_FILE_PATH)) {
+      const raw = fs.readFileSync(FUNNELS_FILE_PATH, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.error('Failed to load funnels from disk:', e);
+  }
+  return [...DEFAULT_CRM_FUNNELS_SERVER];
+}
+
+function saveFunnelsToDisk(data: any[]) {
+  try {
+    if (!fs.existsSync(CRM_DATA_DIR)) {
+      fs.mkdirSync(CRM_DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(FUNNELS_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('Failed to save funnels to disk:', e);
+  }
+}
+
+function loadCrmSettingsFromDisk(): any {
+  try {
+    if (fs.existsSync(CRM_SETTINGS_FILE_PATH)) {
+      const raw = fs.readFileSync(CRM_SETTINGS_FILE_PATH, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.defaultVatRate === 'number') return parsed;
+    }
+  } catch (e) {
+    console.error('Failed to load CRM settings from disk:', e);
+  }
+  return { ...DEFAULT_CRM_SETTINGS_SERVER };
+}
+
+function saveCrmSettingsToDisk(data: any) {
+  try {
+    if (!fs.existsSync(CRM_DATA_DIR)) {
+      fs.mkdirSync(CRM_DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(CRM_SETTINGS_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('Failed to save CRM settings to disk:', e);
+  }
+}
+
+let funnelsStore: any[] = loadFunnelsFromDisk();
+let crmSettingsStore: any = loadCrmSettingsFromDisk();
 
 let metrologyReportsStore: any[] = loadReportsFromDisk();
 let companyFleetStore: any[] = loadFleetFromDisk();
@@ -1770,7 +2071,13 @@ export function registerCrmRoutes(app: Express, serviceRequestsStoreRef?: any[])
           dealsStore = data as any[];
         }
       }
-      res.json({ success: true, data: dealsStore });
+      const seenDealIds = new Set<string>();
+      const uniqueDeals = dealsStore.filter((d: any) => {
+        if (!d?.id || seenDealIds.has(d.id)) return false;
+        seenDealIds.add(d.id);
+        return true;
+      });
+      res.json({ success: true, data: uniqueDeals });
     } catch (e) {
       res.status(500).json({ success: false, error: 'Server error' });
     }
@@ -1793,7 +2100,12 @@ export function registerCrmRoutes(app: Express, serviceRequestsStoreRef?: any[])
     async (req, res) => {
     try {
       const deal = req.body;
-      dealsStore.unshift(deal);
+      const existingIdx = dealsStore.findIndex(d => d.id === deal.id);
+      if (existingIdx >= 0) {
+        dealsStore[existingIdx] = { ...dealsStore[existingIdx], ...deal };
+      } else {
+        dealsStore.unshift(deal);
+      }
       if (isDbConfigured()) {
         await db.insert(schema.deals).values({
           ...deal,
@@ -1833,7 +2145,7 @@ export function registerCrmRoutes(app: Express, serviceRequestsStoreRef?: any[])
 
   
   // ==========================================
-  // CRM FUNNELS (Dynamic stages)
+  // CRM FUNNELS & STAGES (Dynamic stages management)
   // ==========================================
   app.get('/api/crm/funnels', async (_req, res) => {
     try {
@@ -1841,51 +2153,156 @@ export function registerCrmRoutes(app: Express, serviceRequestsStoreRef?: any[])
         const funnels = await db.select().from(schema.crmFunnels).orderBy(asc(schema.crmFunnels.createdAt));
         const stages = await db.select().from(schema.crmFunnelStages).orderBy(asc(schema.crmFunnelStages.orderIndex));
         
-        // Group stages by funnel
-        
-        if (funnels.length === 0) {
-           // We could seed it here, but instead let's just return empty array and let frontend use fallback
-           return res.json({ success: true, data: [] });
+        if (funnels.length > 0) {
+          const result = funnels.map(f => ({
+            ...f,
+            stages: stages.filter(s => s.funnelId === f.id)
+          }));
+          return res.json({ success: true, data: result });
         }
-        
-        const result = funnels.map(f => ({
-          ...f,
-          stages: stages.filter(s => s.funnelId === f.id)
-        }));
-        
-        res.json({ success: true, data: result });
-      } else {
-        res.json({ success: true, data: [] });
       }
+      // Return disk store / defaults
+      res.json({ success: true, data: funnelsStore });
     } catch (e) {
       console.error('Failed to get funnels', e);
-      res.status(500).json({ success: false, error: 'Server error' });
+      res.json({ success: true, data: funnelsStore });
     }
   });
 
   app.post('/api/crm/funnels', async (req, res) => {
     try {
       const { id, name, description, accentColor, icon, stages } = req.body;
+      if (!id || !name) {
+        return res.status(400).json({ success: false, error: 'ID and Name are required' });
+      }
+
+      // Update in DB if configured
       if (isDbConfigured()) {
-        await db.insert(schema.crmFunnels).values({ id, name, description, accentColor, icon }).onConflictDoNothing();
-        if (stages && stages.length > 0) {
-          const stageValues = stages.map((s, idx) => ({
-            id: s.id,
-            funnelId: id,
-            label: s.label,
-            shortLabel: s.shortLabel,
-            winRate: s.winRate,
-            color: s.color,
-            isWon: s.isWon || false,
-            isLost: s.isLost || false,
-            orderIndex: idx
-          }));
-          await db.insert(schema.crmFunnelStages).values(stageValues).onConflictDoNothing();
+        try {
+          const existing = await db.select().from(schema.crmFunnels).where(eq(schema.crmFunnels.id, id));
+          if (existing.length > 0) {
+            await db.update(schema.crmFunnels)
+              .set({ name, description, accentColor, icon, updatedAt: new Date() })
+              .where(eq(schema.crmFunnels.id, id));
+          } else {
+            await db.insert(schema.crmFunnels).values({ id, name, description, accentColor, icon });
+          }
+
+          // Replace stages for this funnel
+          await db.delete(schema.crmFunnelStages).where(eq(schema.crmFunnelStages.funnelId, id));
+
+          if (stages && stages.length > 0) {
+            const stageValues = stages.map((s: any, idx: number) => ({
+              id: s.id || `${id}_stage_${idx}`,
+              funnelId: id,
+              label: s.label || `Этап ${idx + 1}`,
+              shortLabel: s.shortLabel || s.label || `Э${idx + 1}`,
+              winRate: typeof s.winRate === 'number' ? s.winRate : 50,
+              color: s.color || 'border-blue-200 bg-blue-50/50 text-blue-800',
+              isWon: Boolean(s.isWon),
+              isLost: Boolean(s.isLost),
+              orderIndex: idx
+            }));
+            await db.insert(schema.crmFunnelStages).values(stageValues);
+          }
+        } catch (dbErr) {
+          console.warn('DB update for funnel warning, persisting to disk fallback:', dbErr);
         }
       }
-      res.status(201).json({ success: true });
+
+      // Update memory store and disk
+      const existingIdx = funnelsStore.findIndex(f => f.id === id);
+      const funnelData = {
+        id,
+        name,
+        description: description || '',
+        accentColor: accentColor || 'blue',
+        icon: icon || 'Workflow',
+        stages: stages || []
+      };
+
+      if (existingIdx >= 0) {
+        funnelsStore[existingIdx] = funnelData;
+      } else {
+        funnelsStore.push(funnelData);
+      }
+      saveFunnelsToDisk(funnelsStore);
+
+      res.status(200).json({ success: true, data: funnelData });
     } catch (e) {
       console.error('Failed to save funnel', e);
+      res.status(500).json({ success: false, error: 'Server error' });
+    }
+  });
+
+  app.post('/api/crm/funnels/reset', async (_req, res) => {
+    try {
+      funnelsStore = JSON.parse(JSON.stringify(DEFAULT_CRM_FUNNELS_SERVER));
+      saveFunnelsToDisk(funnelsStore);
+
+      if (isDbConfigured()) {
+        try {
+          await db.delete(schema.crmFunnelStages);
+          await db.delete(schema.crmFunnels);
+
+          for (const funnel of funnelsStore) {
+            await db.insert(schema.crmFunnels).values({
+              id: funnel.id,
+              name: funnel.name,
+              description: funnel.description,
+              accentColor: funnel.accentColor,
+              icon: funnel.icon
+            });
+
+            if (funnel.stages && funnel.stages.length > 0) {
+              const stageValues = funnel.stages.map((s: any, idx: number) => ({
+                id: s.id,
+                funnelId: funnel.id,
+                label: s.label,
+                shortLabel: s.shortLabel,
+                winRate: s.winRate,
+                color: s.color,
+                isWon: s.isWon || false,
+                isLost: s.isLost || false,
+                orderIndex: idx
+              }));
+              await db.insert(schema.crmFunnelStages).values(stageValues);
+            }
+          }
+        } catch (dbErr) {
+          console.warn('DB reset funnels warning:', dbErr);
+        }
+      }
+
+      res.json({ success: true, data: funnelsStore });
+    } catch (e) {
+      console.error('Failed to reset funnels', e);
+      res.status(500).json({ success: false, error: 'Server error' });
+    }
+  });
+
+  // ==========================================
+  // CRM GLOBAL SETTINGS (VAT, Taxes & Organization)
+  // ==========================================
+  app.get('/api/crm/settings', async (_req, res) => {
+    try {
+      res.json({ success: true, data: crmSettingsStore });
+    } catch (e) {
+      res.status(500).json({ success: false, error: 'Server error' });
+    }
+  });
+
+  app.post('/api/crm/settings', async (req, res) => {
+    try {
+      const updates = req.body;
+      crmSettingsStore = {
+        ...crmSettingsStore,
+        ...updates,
+        updatedAt: new Date().toISOString()
+      };
+      saveCrmSettingsToDisk(crmSettingsStore);
+      res.json({ success: true, data: crmSettingsStore });
+    } catch (e) {
       res.status(500).json({ success: false, error: 'Server error' });
     }
   });
@@ -2462,6 +2879,67 @@ export function registerCrmRoutes(app: Express, serviceRequestsStoreRef?: any[])
       res.json({ success: true });
     } catch (e) {
       res.status(500).json({ success: false, error: 'Server error' });
+    }
+  });
+
+  // ==========================================
+  // СБРОС БАЗЫ ДАННЫХ CRM И ЛИЧНОГО КАБИНЕТА
+  // ==========================================
+  app.post('/api/crm/reset', async (_req: Request, res: Response) => {
+    try {
+      companiesStore = [...INITIAL_CRM_COMPANIES];
+      contactsStore = [...INITIAL_CRM_CONTACTS];
+      tasksStore = [...INITIAL_USER_TASKS];
+      calendarEventsStore = [...INITIAL_CALENDAR_EVENTS];
+      clientListsStore = [...INITIAL_CLIENT_LISTS];
+      dealsStore = [...INITIAL_CRM_DEALS];
+      proposalsStore = [...INITIAL_PROPOSALS];
+      contractsStore = [...INITIAL_CONTRACTS];
+      ticketsStore = [...INITIAL_SUPPORT_TICKETS];
+      licensesStore = [...INITIAL_LICENSES];
+      companyFleetStore = [...INITIAL_COMPANY_FLEET];
+      certificatesStore = [
+        {
+          id: 'cert-1',
+          certificateNumber: '2026-000142',
+          date: '2026-05-29T00:00:00.000Z',
+          traineeName: 'Захарова Светлана Николаевна',
+          customer: 'ООО «АВТОСВЕТ»',
+          instructor: 'С.Ю. Некрасов',
+          files: []
+        }
+      ];
+      metrologyReportsStore = [];
+
+      saveFleetToDisk(companyFleetStore);
+      saveReportsToDisk(metrologyReportsStore);
+
+      logRealtimeEvent({
+        category: 'DB_PERSISTENCE',
+        level: 'INFO',
+        action: 'CRM_DB_RESET',
+        summary: 'База данных CRM и Личного кабинета сброшена к заводским значениям'
+      });
+
+      res.json({
+        success: true,
+        message: 'База данных CRM и Личного кабинета успешно сброшена к заводским значениям',
+        data: {
+          deals: dealsStore,
+          contracts: contractsStore,
+          proposals: proposalsStore,
+          companies: companiesStore,
+          contacts: contactsStore,
+          tickets: ticketsStore,
+          licenses: licensesStore,
+          fleet: companyFleetStore,
+          tasks: tasksStore,
+          calendarEvents: calendarEventsStore
+        }
+      });
+    } catch (err: any) {
+      console.error('[CrmModule] Error resetting CRM database:', err);
+      res.status(500).json({ success: false, error: 'Failed to reset CRM database' });
     }
   });
 }

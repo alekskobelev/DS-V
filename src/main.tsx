@@ -3,10 +3,41 @@ import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import { ErrorBoundary } from './components/common/ErrorBoundary.tsx';
-import { runSystemHealthCheck } from './services/healthCheckService.ts';
+import { runSystemHealthCheck, checkAllApiEndpoints } from './services/healthCheckService.ts';
 
-// Globally suppress ResizeObserver, benign sandbox WebSocket, and transient fetch errors
-const suppressBenignErrors = () => {
+console.log('[BOOT] [1/5] src/main.tsx module loaded');
+
+// Mount React immediately
+const rootElement = document.getElementById('root');
+console.log('[BOOT] [2/5] #root element check:', rootElement ? 'FOUND' : 'NOT FOUND');
+
+if (rootElement) {
+  try {
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  } catch (_e) {}
+
+  console.log('[BOOT] [3/5] Creating React root & rendering App...');
+  const root = createRoot(rootElement);
+  root.render(
+    <StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </StrictMode>,
+  );
+  console.log('[BOOT] [4/5] root.render() executed');
+
+  try {
+    (window as any).__APP_MOUNTED__ = true;
+    (window as any).__DS_APP_MOUNT_TIME__ = Date.now();
+  } catch (_e) {}
+} else {
+  console.error('[BOOT] [CRITICAL] #root element missing in document body!');
+}
+
+// Global safety handler for benign sandbox / iframe warnings
+try {
   const isBenign = (msg: string) => {
     return (
       msg.includes('ResizeObserver') ||
@@ -34,61 +65,25 @@ const suppressBenignErrors = () => {
       e.stopImmediatePropagation();
     }
   });
+} catch (_e) {}
 
-  const originalOnError = window.onerror;
-  window.onerror = (message, source, lineno, colno, error) => {
-    const fullMsg = String(message || '') + ' ' + String(error?.message || '');
-    if (isBenign(fullMsg)) {
-      return true;
-    }
-    if (originalOnError) {
-      return originalOnError(message, source, lineno, colno, error);
-    }
-    return false;
-  };
-};
-suppressBenignErrors();
-
-// In development, unregister any stale service worker and clear caches to prevent chunk desync
-if (import.meta.env.DEV && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then((registrations) => {
-    for (const registration of registrations) {
-      registration.unregister();
-    }
-  });
-  if ('caches' in window) {
-    caches.keys().then((keys) => {
-      for (const key of keys) {
-        caches.delete(key);
+// Background non-blocking service cleanup and healthcheck
+try {
+  if (import.meta.env.DEV && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations?.().then((registrations) => {
+      for (const registration of registrations) {
+        registration.unregister().catch(() => {});
       }
-    });
+    }).catch(() => {});
   }
-}
+} catch (_e) {}
 
-const rootElement = document.getElementById('root');
-if (rootElement) {
-  const root = createRoot(rootElement);
-  root.render(
-    <StrictMode>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
-    </StrictMode>,
-  );
+// Async non-blocking background health check & API endpoint availability audit
+setTimeout(() => {
+  try {
+    runSystemHealthCheck().catch(() => {});
+    checkAllApiEndpoints().catch(() => {});
+  } catch (_e) {}
+}, 2000);
 
-  // Mark application bundle as mounted successfully for the index.html health monitor
-  (window as any).__APP_MOUNTED__ = true;
-  (window as any).__DS_APP_MOUNT_TIME__ = Date.now();
-
-  // Run async health check in background
-  if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
-    window.requestIdleCallback(() => {
-      runSystemHealthCheck().catch(() => {});
-    });
-  } else {
-    setTimeout(() => {
-      runSystemHealthCheck().catch(() => {});
-    }, 1000);
-  }
-}
 

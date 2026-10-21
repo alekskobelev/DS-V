@@ -21,11 +21,29 @@ import {
   Smartphone,
   Eye,
   Edit3,
-  Layers
+  Layers,
+  Globe,
+  Compass,
+  Laptop,
+  HardDrive,
+  Wrench,
+  BookOpen,
+  Newspaper
 } from 'lucide-react';
 import { CustomPageBlock, PageCommentItem } from '../../types';
+import { useApp } from '../../context/AppContext';
+import { HomePage } from '../../pages/HomePage';
+import { SoftwarePage } from '../../pages/SoftwarePage';
+import { HardwarePage } from '../../pages/HardwarePage';
+import { ServicesPage } from '../../pages/ServicesPage';
+import { KnowledgeBasePage } from '../../pages/KnowledgeBasePage';
+import { NewsPage } from '../../pages/NewsPage';
+import { AboutPage } from '../../pages/AboutPage';
+import { ContactsPage } from '../../pages/ContactsPage';
+import { CustomPageView } from '../../pages/CustomPageView';
 
 interface PageVisualPreviewProps {
+  pageId?: string;
   pageTitle: string;
   pageDesc?: string;
   pageSlug?: string;
@@ -77,6 +95,7 @@ function getVideoEmbed(url: string): { type: 'iframe' | 'video' | 'empty'; src: 
 }
 
 export const PageVisualPreview: React.FC<PageVisualPreviewProps> = ({
+  pageId,
   pageTitle,
   pageDesc,
   pageSlug,
@@ -91,9 +110,58 @@ export const PageVisualPreview: React.FC<PageVisualPreviewProps> = ({
   onViewportChange,
   interactive = true,
 }) => {
+  const { navigateTo } = useApp();
+  const [previewMode, setPreviewMode] = useState<'live' | 'blocks'>('live');
   const [selectedImage, setSelectedImage] = useState<{ url: string; caption?: string } | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  const renderLiveContent = () => {
+    const normId = (pageId || '').toLowerCase();
+    const normSlug = (pageSlug || '').toLowerCase();
+
+    if (normId === 'home' || normSlug === '' || normSlug === 'main' || normSlug === 'home') {
+      return <HomePage />;
+    }
+    if (normId.startsWith('software') || normSlug.startsWith('software')) {
+      return <SoftwarePage />;
+    }
+    if (normId.startsWith('hardware') || normSlug.startsWith('hardware')) {
+      return <HardwarePage />;
+    }
+    if (normId.startsWith('services') || normSlug.startsWith('services')) {
+      return <ServicesPage />;
+    }
+    if (normId.startsWith('knowledge') || normSlug.startsWith('knowledge')) {
+      return <KnowledgeBasePage />;
+    }
+    if (normId.startsWith('news') || normSlug.startsWith('news')) {
+      return <NewsPage />;
+    }
+    if (normId.startsWith('about') || normSlug.startsWith('about')) {
+      return <AboutPage />;
+    }
+    if (normId.startsWith('contacts') || normSlug.startsWith('contacts')) {
+      return <ContactsPage />;
+    }
+
+    return (
+      <CustomPageView
+        page={{
+          id: pageId || 'custom-page',
+          slug: pageSlug || '',
+          title: pageTitle || 'Страница',
+          menuTitle: pageTitle || 'Страница',
+          description: pageDesc || '',
+          showInHeader: true,
+          showInFooter: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          blocks: blocks || [],
+        }}
+      />
+    );
+  };
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
@@ -137,16 +205,37 @@ export const PageVisualPreview: React.FC<PageVisualPreviewProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-slate-900/90 rounded-xl border border-slate-700/80 overflow-hidden shadow-sm">
-      {/* Top Preview Bar with Viewport Controls & Live Status */}
+      {/* Top Preview Bar with Viewport Controls & Mode Switcher */}
       <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-[11px] font-bold text-emerald-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>LIVE ПРЕДПРОСМОТР</span>
+          {/* Mode switcher pills */}
+          <div className="flex items-center p-1 bg-slate-800 rounded-xl border border-slate-700">
+            <button
+              type="button"
+              onClick={() => setPreviewMode('live')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                previewMode === 'live'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>Живой сайт (Текущее состояние)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewMode('blocks')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                previewMode === 'blocks'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Кастомные блоки ({blocks.length})</span>
+            </button>
           </div>
-          <span className="text-xs text-slate-400 hidden sm:inline">
-            • {blocks.length} {blocks.length === 1 ? 'блок' : blocks.length < 5 ? 'блока' : 'блоков'}
-          </span>
+
           {pageSlug && (
             <span className="text-[11px] text-slate-500 font-mono hidden md:inline">
               /{pageSlug}
@@ -235,9 +324,14 @@ export const PageVisualPreview: React.FC<PageVisualPreviewProps> = ({
             </span>
           </div>
 
-          {/* Rendered Blocks Container */}
-          <div className="p-4 sm:p-6 space-y-6 flex-1">
-            {blocks.length === 0 ? (
+          {/* Rendered Body Container */}
+          {previewMode === 'live' ? (
+            <div className="bg-white min-h-[500px] flex-1 overflow-y-auto">
+              {renderLiveContent()}
+            </div>
+          ) : (
+            <div className="p-4 sm:p-6 space-y-6 flex-1 overflow-y-auto">
+              {blocks.length === 0 ? (
               <div className="py-10 text-center text-gray-400 space-y-3">
                 <Layers className="w-12 h-12 mx-auto text-gray-300 stroke-1" />
                 <p className="text-sm font-semibold text-slate-500">На странице пока нет блоков</p>
@@ -623,6 +717,7 @@ export const PageVisualPreview: React.FC<PageVisualPreviewProps> = ({
               })
             )}
           </div>
+          )}
         </div>
       </div>
 

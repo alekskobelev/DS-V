@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Public catalog read access, authenticated CRM management
+    match /price_categories/{categoryId} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidId(categoryId);
+    }
+
+    match /price_items/{itemId} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidId(itemId);
+    }
+
+    match /price_history/{historyId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(historyId);
+      allow update: if isSignedIn() && isValidId(historyId);
+      allow delete: if false; // History is immutable audit trail
+    }
+
+    match /price_tier_rules/{ruleId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(ruleId);
+    }
+  }
+}

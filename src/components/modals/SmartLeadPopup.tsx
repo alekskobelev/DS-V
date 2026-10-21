@@ -261,7 +261,7 @@ export const SmartLeadPopup: React.FC = () => {
           handleClose();
         }
       }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
+      className="fixed inset-0 z-[300] flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
@@ -287,7 +287,7 @@ export const SmartLeadPopup: React.FC = () => {
             <div className="relative z-10 space-y-3 sm:space-y-5 pr-8 md:pr-0">
               <div className="inline-flex items-center gap-1.5 px-4 py-1 bg-white/10 rounded-full text-[10px] sm:text-[11px] font-bold tracking-wide uppercase text-blue-100 border border-white/15">
                 <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>ИНЖЕНЕРНЫЙ ЦЕНТР ДС‑ИНЖИНИРИНГ</span>
+                <span>ИНЖИНИРИНГОВАЯ КОМПАНИЯ ДС‑ИНЖИНИРИНГ</span>
               </div>
               
               <h2 className="text-lg sm:text-2xl md:text-3xl font-extrabold leading-snug sm:leading-tight">

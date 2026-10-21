@@ -27,6 +27,7 @@ import {
   RotateCcw,
   XCircle,
   AlertTriangle,
+  ExternalLink,
   Send,
   Calendar,
   CalendarClock,
@@ -52,7 +53,15 @@ import {
   List,
   Smartphone,
   Printer,
-  Copy
+  Copy,
+  Receipt,
+  Loader2,
+  Building,
+  Briefcase,
+  Users,
+  UserPlus,
+  Star,
+  Globe
 } from 'lucide-react';
 import { 
   ExtendedDeal, 
@@ -68,7 +77,9 @@ import {
   CURRENCY_OPTIONS, 
   getCurrencySymbol, 
   formatCurrency, 
-  CURRENCIES 
+  CURRENCIES,
+  CrmCompany,
+  CrmContact
 } from '../../types';
 import { CrmDocumentViewerModal } from './CrmDocumentViewerModal';
 import { CrmAttachDocModal } from './CrmAttachDocModal';
@@ -80,6 +91,8 @@ import { CrmManualView } from './CrmManualView';
 import { CertificatesRegistry } from './CertificatesRegistry';
 import { CrmDashboard } from './CrmDashboard';
 import { GenerateProposalModal } from './GenerateProposalModal';
+import { FunnelStagesEditorModal } from './FunnelStagesEditorModal';
+import { CrmVatSettingsModal } from './CrmVatSettingsModal';
 import { parseRussianLeaderGreeting } from '../../utils/printProposal';
 import { CommercialProposal, CommercialContract, INITIAL_PROPOSALS, INITIAL_CONTRACTS } from '../../data/mockCrmData';
 
@@ -102,6 +115,25 @@ export interface FunnelConfig {
   accentColor: string;
   stages: FunnelStage[];
 }
+
+export const getFunnelIconComponent = (icon: any) => {
+  if (typeof icon === 'function' || (typeof icon === 'object' && icon !== null)) {
+    return icon;
+  }
+  if (typeof icon === 'string') {
+    switch (icon) {
+      case 'Cpu':
+        return Cpu;
+      case 'Settings':
+        return Settings;
+      case 'LifeBuoy':
+        return LifeBuoy;
+      default:
+        return Cpu;
+    }
+  }
+  return Cpu;
+};
 
 // Helper to get formatted manager title from AuthAccount
 export const formatManagerOption = (user: { fullName: string; position?: string }) => {
@@ -152,7 +184,7 @@ export const UTM_CAMPAIGN_LABELS: Record<string, string> = {
   'lead_form': 'Инженерный калькулятор на сайте'
 };
 
-const CRM_FUNNELS: Record<'services' | 'equipment' | 'support', FunnelConfig> = {
+export const CRM_FUNNELS: Record<'services' | 'equipment' | 'support', FunnelConfig> = {
   equipment: {
     id: 'equipment',
     name: 'Оборудование и ПО',
@@ -292,7 +324,7 @@ export const STAGE_RECOMMENDED_ACTIONS: Record<string, StageActionRecommendation
   ticket: {
     action: 'Регистрация инцидента в CRM, проверка заводского номера КИМ и условий гарантии/сервиса',
     timeframe: 'В течение 2 часов',
-    urgencyLabel: 'Регистрация тикета (до 2 ч.)',
+    urgencyLabel: 'Регистрация заявки (до 2 ч.)',
     priority: 'high'
   },
   diagnostics: {
@@ -526,8 +558,12 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
     commercialProposals: proposals,
     setCommercialProposals: setProposals,
     funnels,
+    crmSettings,
     fleetDevices,
   } = useApp();
+
+  const [isStageEditorOpen, setIsStageEditorOpen] = useState(false);
+  const [isVatSettingsOpen, setIsVatSettingsOpen] = useState(false);
 
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'superadmin';
   
@@ -595,7 +631,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
     if (staffUsers.length === 0) {
       return [
         { value: 'Некрасов С.Ю.', label: 'Некрасов С.Ю. (Генеральный директор)', fullName: 'Некрасов Сергей Юрьевич', position: 'Генеральный директор' },
-        { value: 'Скобелев А.С.', label: 'Скобелев А.С. (Инженер по ПО, ЧПУ и CAD-моделированию)', fullName: 'Скобелев Александр Сергеевич', position: 'Инженер по ПО, ЧПУ и CAD-моделированию' },
+        { value: 'Скобелев А.С.', label: 'Скобелев А.С. (Инженер по внедрению CAD/CAM и постпроцессорам)', fullName: 'Скобелев Александр Сергеевич', position: 'Инженер по внедрению CAD/CAM и постпроцессорам' },
         { value: 'Ярыш И.В.', label: 'Ярыш И.В. (Инженер-метролог)', fullName: 'Ярыш Иван Владимирович', position: 'Инженер-метролог' },
         { value: 'Ярыш А.В.', label: 'Ярыш А.В. (Инженер по подбору оборудования и ПО)', fullName: 'Ярыш Александр Владимирович', position: 'Инженер по подбору оборудования и ПО' },
         { value: 'Морозов В.Г.', label: 'Морозов В.Г. (Руководитель КТО)', fullName: 'Морозов Владимир Георгиевич', position: 'Руководитель КТО' },
@@ -668,8 +704,14 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
   const [confirmDeleteItemId, setConfirmDeleteItemId] = useState<string | null>(null);
 
   const [isNewDealModalOpen, setIsNewDealModalOpen] = useState(false);
+  const [dealDisplayMode, setDealDisplayMode] = useState<'kanban' | 'list'>('kanban');
   const [isCompactKanban, setIsCompactKanban] = useState(false);
   const [collapsedStages, setCollapsedStages] = useState<string[]>([]);
+  const [selectedDealIds, setSelectedDealIds] = useState<string[]>([]);
+  const [isBatchStageModalOpen, setIsBatchStageModalOpen] = useState(false);
+  const [isBatchManagerModalOpen, setIsBatchManagerModalOpen] = useState(false);
+  const [batchTargetStage, setBatchTargetStage] = useState('');
+  const [batchTargetManager, setBatchTargetManager] = useState('');
 
   const toggleCollapseStage = (stageId: string) => {
     setCollapsedStages(prev => 
@@ -677,9 +719,16 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
     );
   };
   const [newDealForm, setNewDealForm] = useState({
+    companyId: '',
     companyName: '',
     customerName: '',
+    customerPost: '',
     inn: '',
+    kpp: '',
+    address: '',
+    ceoName: '',
+    ceoPost: 'Генеральный директор',
+    contactId: '',
     phone: '',
     email: '',
     serviceType: '',
@@ -693,6 +742,467 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
   });
   const [newDealAttachedFile, setNewDealAttachedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // CRM Companies & Contacts in New Deal Modal
+  const [crmCompanies, setCrmCompanies] = useState<CrmCompany[]>([]);
+  const [crmContacts, setCrmContacts] = useState<CrmContact[]>([]);
+  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
+  const [isSearchingDadataDeal, setIsSearchingDadataDeal] = useState(false);
+  const [dadataDealResults, setDadataDealResults] = useState<any[]>([]);
+  const [dadataDealStatus, setDadataDealStatus] = useState<string | null>(null);
+  const [selectedContactMode, setSelectedContactMode] = useState<'ceo' | 'crm_contact' | 'custom'>('custom');
+  const companyDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Quick Contact Creation on the fly state (for both selectedDeal card and newDeal modal)
+  const [isAddingContactInlineInDeal, setIsAddingContactInlineInDeal] = useState(false);
+  const [isEditingContactInlineInDeal, setIsEditingContactInlineInDeal] = useState(false);
+  const [quickContactForm, setQuickContactForm] = useState({
+    fullName: '',
+    position: 'Главный метролог / Начальник ОТК',
+    department: 'Отдел контроля геометрии и КИМ',
+    workPhone: '',
+    mobilePhone: '',
+    email: '',
+    isDecisionMaker: true,
+    notes: '',
+  });
+
+  // Edit contact inline in selected deal state
+  const [editDealContactForm, setEditDealContactForm] = useState({
+    customerName: '',
+    customerPost: '',
+    phone: '',
+    email: ''
+  });
+
+  // Reset quick contact form
+  const resetQuickContactForm = () => {
+    setQuickContactForm({
+      fullName: '',
+      position: 'Главный метролог / Начальник ОТК',
+      department: 'Отдел контроля геометрии и КИМ',
+      workPhone: '',
+      mobilePhone: '',
+      email: '',
+      isDecisionMaker: true,
+      notes: '',
+    });
+    setIsAddingContactInlineInDeal(false);
+  };
+
+  // Sync editDealContactForm when selectedDeal changes
+  useEffect(() => {
+    if (selectedDeal) {
+      setEditDealContactForm({
+        customerName: selectedDeal.customerName || '',
+        customerPost: selectedDeal.customerPost || '',
+        phone: selectedDeal.phone || '',
+        email: selectedDeal.email || ''
+      });
+      setIsAddingContactInlineInDeal(false);
+      setIsEditingContactInlineInDeal(false);
+    }
+  }, [selectedDeal?.id]);
+
+  // Load CRM companies and contacts on mount / modal open
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [compRes, contRes] = await Promise.all([
+          apiService.getCrmCompanies(),
+          apiService.getCrmContacts()
+        ]);
+        if (compRes.success && Array.isArray(compRes.data)) {
+          setCrmCompanies(compRes.data);
+        }
+        if (contRes.success && Array.isArray(contRes.data)) {
+          setCrmContacts(contRes.data);
+        }
+      } catch (e) {
+        console.warn('Error loading CRM companies/contacts:', e);
+      }
+    };
+    loadData();
+  }, [isNewDealModalOpen, selectedDeal?.id]);
+
+  // Create contact on the fly for selectedDeal
+  const handleCreateContactForSelectedDeal = async () => {
+    if (!selectedDeal) return;
+    if (!quickContactForm.fullName.trim()) {
+      showToast('Укажите ФИО контактного лица');
+      return;
+    }
+
+    try {
+      const newContactData: Partial<CrmContact> = {
+        fullName: quickContactForm.fullName.trim(),
+        position: quickContactForm.position.trim(),
+        department: quickContactForm.department.trim(),
+        workPhone: quickContactForm.workPhone.trim(),
+        mobilePhone: quickContactForm.mobilePhone.trim(),
+        email: quickContactForm.email.trim(),
+        isDecisionMaker: quickContactForm.isDecisionMaker,
+        companyId: selectedDeal.companyId || undefined,
+        companyName: selectedDeal.companyName || selectedDeal.customerName || 'Предприятие',
+        notes: quickContactForm.notes.trim() || undefined,
+        interactionHistory: [
+          {
+            id: `int-${Date.now()}`,
+            date: new Date().toISOString().slice(0, 10),
+            type: 'meeting',
+            comment: `Создан на лету из карточки сделки ${selectedDeal.id}`,
+            author: currentStaffObj?.value || 'Скобелев А.С.'
+          }
+        ]
+      };
+
+      const res = await apiService.saveCrmContact(newContactData);
+      const createdContact = res.data || { 
+        ...newContactData, 
+        id: `cont-${Date.now()}`, 
+        createdAt: new Date().toISOString(), 
+        updatedAt: new Date().toISOString() 
+      };
+      
+      // Update local contacts
+      setCrmContacts(prev => [...prev.filter(c => c.id !== createdContact.id), createdContact]);
+
+      // Update the active deal
+      const updatedFields: Partial<ExtendedDeal> = {
+        contactId: createdContact.id,
+        customerName: createdContact.fullName,
+        customerPost: createdContact.position,
+        phone: createdContact.workPhone || createdContact.mobilePhone || selectedDeal.phone,
+        email: createdContact.email || selectedDeal.email,
+        updatedAt: new Date().toISOString()
+      };
+
+      setDeals(prev => prev.map(d => d.id === selectedDeal.id ? { ...d, ...updatedFields } : d));
+      setSelectedDeal(prev => prev ? { ...prev, ...updatedFields } : null);
+      
+      resetQuickContactForm();
+      showToast(`Контакт «${createdContact.fullName}» создан и привязан к сделке!`);
+    } catch (e: any) {
+      showToast(e?.message || 'Ошибка создания контакта');
+    }
+  };
+
+  // Create contact on the fly for newDealForm
+  const handleCreateContactForNewDeal = async () => {
+    if (!quickContactForm.fullName.trim()) {
+      showToast('Укажите ФИО контактного лица');
+      return;
+    }
+
+    try {
+      const newContactData: Partial<CrmContact> = {
+        fullName: quickContactForm.fullName.trim(),
+        position: quickContactForm.position.trim(),
+        department: quickContactForm.department.trim(),
+        workPhone: quickContactForm.workPhone.trim(),
+        mobilePhone: quickContactForm.mobilePhone.trim(),
+        email: quickContactForm.email.trim(),
+        isDecisionMaker: quickContactForm.isDecisionMaker,
+        companyId: newDealForm.companyId || undefined,
+        companyName: newDealForm.companyName || 'Предприятие',
+        notes: quickContactForm.notes.trim() || undefined,
+        interactionHistory: []
+      };
+
+      const res = await apiService.saveCrmContact(newContactData);
+      const createdContact = res.data || { 
+        ...newContactData, 
+        id: `cont-${Date.now()}`, 
+        createdAt: new Date().toISOString(), 
+        updatedAt: new Date().toISOString() 
+      };
+      
+      setCrmContacts(prev => [...prev.filter(c => c.id !== createdContact.id), createdContact]);
+
+      setNewDealForm(prev => ({
+        ...prev,
+        contactId: createdContact.id,
+        customerName: createdContact.fullName,
+        customerPost: createdContact.position || 'Контактное лицо',
+        phone: createdContact.workPhone || createdContact.mobilePhone || prev.phone,
+        email: createdContact.email || prev.email
+      }));
+      setSelectedContactMode('crm_contact');
+      resetQuickContactForm();
+      showToast(`Контакт «${createdContact.fullName}» создан и выбран в сделку!`);
+    } catch (e: any) {
+      showToast(e?.message || 'Ошибка создания контакта');
+    }
+  };
+
+  // Switch contact for selectedDeal
+  const handleSelectContactForSelectedDeal = (contactIdValue: string) => {
+    if (!selectedDeal) return;
+    
+    if (contactIdValue === '__ceo__') {
+      const matchedComp = crmCompanies.find(c => c.id === selectedDeal.companyId || (selectedDeal.companyName && c.name.toLowerCase() === selectedDeal.companyName.toLowerCase()));
+      const ceoName = matchedComp?.ceoName || selectedDeal.ceoName || selectedDeal.customerName;
+      const ceoPost = matchedComp?.ceoPost || selectedDeal.ceoPost || 'Генеральный директор';
+      const updatedFields: Partial<ExtendedDeal> = {
+        contactId: '',
+        customerName: ceoName,
+        customerPost: ceoPost,
+        updatedAt: new Date().toISOString()
+      };
+      setDeals(prev => prev.map(d => d.id === selectedDeal.id ? { ...d, ...updatedFields } : d));
+      setSelectedDeal(prev => prev ? { ...prev, ...updatedFields } : null);
+      showToast(`Выбран руководитель: ${ceoName}`);
+      return;
+    }
+
+    if (contactIdValue === '__custom__') {
+      setIsEditingContactInlineInDeal(true);
+      return;
+    }
+
+    const contact = crmContacts.find(c => c.id === contactIdValue);
+    if (contact) {
+      const updatedFields: Partial<ExtendedDeal> = {
+        contactId: contact.id,
+        customerName: contact.fullName,
+        customerPost: contact.position || 'Контактное лицо',
+        phone: contact.workPhone || contact.mobilePhone || selectedDeal.phone,
+        email: contact.email || selectedDeal.email,
+        updatedAt: new Date().toISOString()
+      };
+      setDeals(prev => prev.map(d => d.id === selectedDeal.id ? { ...d, ...updatedFields } : d));
+      setSelectedDeal(prev => prev ? { ...prev, ...updatedFields } : null);
+      showToast(`Контакт переключен на: ${contact.fullName} (${contact.position})`);
+    }
+  };
+
+  // Save inline edited contact for deal
+  const handleSaveInlineContactForDeal = () => {
+    if (!selectedDeal) return;
+    if (!editDealContactForm.customerName.trim()) {
+      showToast('Укажите ФИО контактного лица');
+      return;
+    }
+
+    const updatedFields: Partial<ExtendedDeal> = {
+      customerName: editDealContactForm.customerName.trim(),
+      customerPost: editDealContactForm.customerPost.trim(),
+      phone: editDealContactForm.phone.trim(),
+      email: editDealContactForm.email.trim(),
+      updatedAt: new Date().toISOString()
+    };
+
+    setDeals(prev => prev.map(d => d.id === selectedDeal.id ? { ...d, ...updatedFields } : d));
+    setSelectedDeal(prev => prev ? { ...prev, ...updatedFields } : null);
+    setIsEditingContactInlineInDeal(false);
+    showToast('Контактные данные сделки сохранены!');
+  };
+
+  // Handle DaData search for deal creation
+  const handleSearchDadataForDeal = async (queryText?: string) => {
+    const q = (queryText || newDealForm.companyName).trim();
+    if (!q) return;
+    setIsSearchingDadataDeal(true);
+    setDadataDealStatus(null);
+    try {
+      const res = await apiService.searchCompanyByDadata(q);
+      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+        setDadataDealResults(res.data);
+        setIsCompanyDropdownOpen(true);
+        setDadataDealStatus(`Найдено в ЕГРЮЛ: ${res.data.length}`);
+      } else {
+        setDadataDealResults([]);
+        setDadataDealStatus(res.error || 'Организация не найдена в ЕГРЮЛ');
+      }
+    } catch (err: any) {
+      setDadataDealStatus('Ошибка сервиса DaData');
+    } finally {
+      setIsSearchingDadataDeal(false);
+    }
+  };
+
+  // Apply CRM company to new deal
+  const selectCrmCompanyForDeal = (comp: CrmCompany) => {
+    const relatedContacts = crmContacts.filter(c => c.companyId === comp.id);
+    const hasCeo = Boolean(comp.ceoName);
+    
+    let initialCustomerName = comp.contactPerson || comp.ceoName || '';
+    let initialCustomerPost = comp.ceoPost || 'Генеральный директор';
+    let initialPhone = comp.phone || '';
+    let initialEmail = comp.email || '';
+    let initialContactId = '';
+
+    if (relatedContacts.length > 0) {
+      const primaryContact = relatedContacts.find(c => c.isDecisionMaker) || relatedContacts[0];
+      initialCustomerName = primaryContact.fullName;
+      initialCustomerPost = primaryContact.position || 'Контактное лицо';
+      initialPhone = primaryContact.workPhone || primaryContact.mobilePhone || comp.phone || '';
+      initialEmail = primaryContact.email || comp.email || '';
+      initialContactId = primaryContact.id;
+      setSelectedContactMode('crm_contact');
+    } else if (hasCeo) {
+      setSelectedContactMode('ceo');
+    } else {
+      setSelectedContactMode('custom');
+    }
+
+    setNewDealForm(prev => ({
+      ...prev,
+      companyId: comp.id,
+      companyName: comp.name,
+      inn: comp.inn,
+      kpp: comp.kpp || '',
+      address: comp.address || '',
+      ceoName: comp.ceoName || '',
+      ceoPost: comp.ceoPost || 'Генеральный директор',
+      customerName: initialCustomerName,
+      customerPost: initialCustomerPost,
+      contactId: initialContactId,
+      phone: initialPhone,
+      email: initialEmail
+    }));
+    setIsCompanyDropdownOpen(false);
+    setDadataDealResults([]);
+  };
+
+  // Apply DaData suggestion to new deal
+  const selectDadataCompanyForDeal = (sug: any) => {
+    const d = sug.data || {};
+    const compName = sug.value || d.name?.short_with_opf || d.name?.full_with_opf || '';
+    const leaderName = d.management?.name || (d.fio ? [d.fio.surname, d.fio.name, d.fio.patronymic].filter(Boolean).join(' ') : '');
+    const leaderPost = d.management?.post || (d.fio ? 'Индивидуальный предприниматель' : 'Генеральный директор');
+    const compPhone = d.phones?.[0]?.value || '';
+    const compEmail = d.emails?.[0]?.value || '';
+    const addressStr = d.address?.value || '';
+
+    // Check if company already in CRM
+    const matchedComp = crmCompanies.find(c => (d.inn && c.inn === d.inn) || (compName && c.name.toLowerCase() === compName.toLowerCase()));
+    const relatedContacts = matchedComp ? crmContacts.filter(c => c.companyId === matchedComp.id) : [];
+
+    let custName = leaderName;
+    let custPost = leaderPost;
+    let contId = '';
+    let contMode: 'ceo' | 'crm_contact' | 'custom' = 'ceo';
+
+    if (relatedContacts.length > 0) {
+      const primaryContact = relatedContacts.find(c => c.isDecisionMaker) || relatedContacts[0];
+      custName = primaryContact.fullName;
+      custPost = primaryContact.position || 'Контактное лицо';
+      contId = primaryContact.id;
+      contMode = 'crm_contact';
+    }
+
+    setNewDealForm(prev => ({
+      ...prev,
+      companyId: matchedComp ? matchedComp.id : `comp-${Date.now()}`,
+      companyName: compName,
+      inn: d.inn || '',
+      kpp: d.kpp || '',
+      address: addressStr,
+      ceoName: leaderName,
+      ceoPost: leaderPost,
+      customerName: custName,
+      customerPost: custPost,
+      contactId: contId,
+      phone: compPhone || prev.phone,
+      email: compEmail || prev.email
+    }));
+    setSelectedContactMode(contMode);
+    setIsCompanyDropdownOpen(false);
+    setDadataDealResults([]);
+  };
+
+  // Available contacts for currently selected company
+  const availableDealContacts = useMemo(() => {
+    if (!newDealForm.companyId && !newDealForm.companyName) return [];
+    return crmContacts.filter(c => 
+      (newDealForm.companyId && c.companyId === newDealForm.companyId) ||
+      (newDealForm.companyName && c.companyName.toLowerCase() === newDealForm.companyName.toLowerCase())
+    );
+  }, [crmContacts, newDealForm.companyId, newDealForm.companyName]);
+
+  // Check if deal with the same title already exists for the chosen company
+  const duplicateExistingDeal = useMemo(() => {
+    if (!isNewDealModalOpen) return null;
+    
+    const targetCompName = newDealForm.companyName?.trim();
+    const targetTitle = (
+      newDealForm.catalogSelection !== 'other' && newDealForm.catalogSelection
+        ? newDealForm.catalogSelection
+        : newDealForm.serviceType
+    )?.trim();
+
+    if (!targetCompName || !targetTitle) return null;
+
+    const normalizeStr = (str?: string): string => {
+      if (!str) return '';
+      return str
+        .toLowerCase()
+        .replace(/[«»""''`„“]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+
+    const normTargetTitle = normalizeStr(targetTitle);
+    const normTargetComp = normalizeStr(targetCompName);
+    const targetInn = newDealForm.inn?.trim();
+    const targetCompanyId = newDealForm.companyId?.trim();
+
+    return deals.find(d => {
+      // 1. Check company match
+      let isSameComp = false;
+
+      // Match by companyId if both have it
+      if (targetCompanyId && d.companyId && targetCompanyId === d.companyId) {
+        isSameComp = true;
+      }
+      // Match by INN if both have it and valid length
+      else if (targetInn && d.inn && targetInn.length >= 8 && targetInn === d.inn.trim()) {
+        isSameComp = true;
+      }
+      // Match by normalized company name
+      else {
+        const normDealComp = normalizeStr(d.companyName);
+        if (normDealComp && normTargetComp) {
+          if (normDealComp === normTargetComp) {
+            isSameComp = true;
+          } else {
+            // Strip common OPF prefixes for comparison
+            const cleanTarget = normTargetComp.replace(/^(ооо|зао|пао|ао|ип|нпо|фгуп)\s+/, '');
+            const cleanDeal = normDealComp.replace(/^(ооо|зао|пао|ао|ип|нпо|фгуп)\s+/, '');
+            if (cleanTarget.length >= 3 && cleanDeal.length >= 3 && cleanTarget === cleanDeal) {
+              isSameComp = true;
+            }
+          }
+        }
+      }
+
+      if (!isSameComp) return false;
+
+      // 2. Check deal title / serviceType match
+      const dealTitle = normalizeStr(d.title || d.serviceType);
+      return dealTitle === normTargetTitle;
+    }) || null;
+  }, [
+    isNewDealModalOpen,
+    deals,
+    newDealForm.companyName,
+    newDealForm.companyId,
+    newDealForm.inn,
+    newDealForm.catalogSelection,
+    newDealForm.serviceType
+  ]);
+
+  // Click outside listener for company dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (companyDropdownRef.current && !companyDropdownRef.current.contains(e.target as Node)) {
+        setIsCompanyDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Custom catalog dropdown state
   const [isCatalogDropdownOpen, setIsCatalogDropdownOpen] = useState(false);
@@ -934,11 +1444,18 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
           };
         });
 
-        // Merge keeping initials first
-        setDeals(prev => {
+        // Merge keeping initials first without re-triggering interceptor
+        originalSetDeals(prev => {
           const existingIds = new Set(prev.map(d => d.id));
           const newOnes = mappedRfqs.filter(m => !existingIds.has(m.id));
-          return [...prev, ...newOnes];
+          if (newOnes.length === 0) return prev;
+          const merged = [...prev, ...newOnes];
+          const seen = new Set<string>();
+          return merged.filter(d => {
+            if (!d?.id || seen.has(d.id)) return false;
+            seen.add(d.id);
+            return true;
+          });
         });
       }
     } catch (e) {
@@ -999,7 +1516,14 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
   };
 
   const filteredDeals = useMemo(() => {
-    return deals.filter(deal => {
+    const seenDealIds = new Set<string>();
+    const uniqueDeals = deals.filter(deal => {
+      if (!deal?.id || seenDealIds.has(deal.id)) return false;
+      seenDealIds.add(deal.id);
+      return true;
+    });
+
+    return uniqueDeals.filter(deal => {
       // 1. Funnel Match
       if (deal.funnel !== activeFunnel) return false;
 
@@ -1206,7 +1730,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
       title: `Сформировано официальное ТКП: № ${proposalData.number || doc.name}`,
       author: currentUser?.fullName || proposalData.assigneeName || 'Менеджер CRM',
       type: 'document',
-      comment: `Сформировано ТКП на сумму ${(proposalData.budget || 0).toLocaleString('ru-RU')} ₽ (в т.ч. НДС 20%). Адресат: ${proposalData.ceoPost || 'Руководитель'} ${proposalData.ceoName || ''}. Режим поставки: ${proposalData.procurementType === '44fz' ? '44-ФЗ' : proposalData.procurementType === '223fz' ? '223-ФЗ' : 'Коммерческий'}. Вставлена гербовая печать и факсимиле.`
+      comment: `Сформировано ТКП на сумму ${(proposalData.budget || 0).toLocaleString('ru-RU')} ₽ (в т.ч. НДС 22%). Адресат: ${proposalData.ceoPost || 'Руководитель'} ${proposalData.ceoName || ''}. Режим поставки: ${proposalData.procurementType === '44fz' ? '44-ФЗ' : proposalData.procurementType === '223fz' ? '223-ФЗ' : 'Коммерческий'}. Вставлена гербовая печать и факсимиле.`
     };
 
     const updatedDeal: ExtendedDeal = {
@@ -1549,6 +2073,14 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
     showToast(`Создан дубликат сделки ${clonedId}`);
   };
 
+  // Helper to resolve effective VAT rate for a deal
+  const getDealEffectiveVatRate = (deal?: ExtendedDeal | null): number => {
+    if (!deal) return 22;
+    if (deal.vatMode === 'no_vat' || deal.vatMode === 'export_zero') return 0;
+    if (deal.vatRate !== undefined && deal.vatRate !== null) return deal.vatRate;
+    return crmSettings?.defaultVatRate ?? 22;
+  };
+
   // Specification Items Handlers (Create, Edit, Delete, Recalculate)
   const handleStartEditItem = (item: DealItemSpec) => {
     if (!canEditDeals) {
@@ -1597,14 +2129,20 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
       return it;
     });
 
-    // Recalculate total estimatedPrice based on sum of items (quantity * price)
+    const vRate = getDealEffectiveVatRate(selectedDeal);
     const totalWithoutVat = updatedItems.reduce((acc, it) => acc + (it.quantity * it.price), 0);
-    const vat22 = Math.round(totalWithoutVat * 0.22);
-    const newEstimatedPrice = totalWithoutVat + vat22;
+    const vatAmount = (selectedDeal.vatMode === 'no_vat' || selectedDeal.vatMode === 'export_zero') ? 0 : Math.round(totalWithoutVat * (vRate / 100));
+    const newEstimatedPrice = totalWithoutVat + vatAmount;
     const curSym = getCurrencySymbol(selectedDeal.currency);
 
     const now = new Date();
     const timeStr = `${now.toLocaleDateString('ru-RU')} ${now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`;
+
+    const vatLabel = selectedDeal.vatMode === 'export_zero' 
+      ? 'НДС 0% (Экспорт)' 
+      : selectedDeal.vatMode === 'no_vat' 
+      ? 'Без НДС' 
+      : `в т.ч. НДС ${vRate}%`;
 
     const newTimelineItem: TimelineEntry = {
       id: `tl-${Date.now()}`,
@@ -1612,7 +2150,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
       title: `Обновлена позиция: ${itemName}`,
       author: currentUser?.fullName || 'Инженер CRM',
       type: 'comment',
-      comment: `Изменены параметры спецификации: «${itemName}» (${qty} ${unt} по цене ${prc.toLocaleString('ru-RU')} ${curSym} без НДС, сумма: ${(qty * prc).toLocaleString('ru-RU')} ${curSym} без НДС). ИТОГО без НДС: ${totalWithoutVat.toLocaleString('ru-RU')} ${curSym}, в т.ч. НДС 22%: ${vat22.toLocaleString('ru-RU')} ${curSym}, ИТОГО с учетом НДС 22%: ${newEstimatedPrice.toLocaleString('ru-RU')} ${curSym}.`
+      comment: `Изменены параметры спецификации: «${itemName}» (${qty} ${unt} по цене ${prc.toLocaleString('ru-RU')} ${curSym} без НДС, сумма: ${(qty * prc).toLocaleString('ru-RU')} ${curSym} без НДС). ИТОГО без НДС: ${totalWithoutVat.toLocaleString('ru-RU')} ${curSym}, ${vatLabel}: ${vatAmount.toLocaleString('ru-RU')} ${curSym}, ИТОГО с учетом НДС: ${newEstimatedPrice.toLocaleString('ru-RU')} ${curSym}.`
     };
 
     setDeals(prev => prev.map(d => {
@@ -1665,13 +2203,20 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
     };
 
     const updatedItems = [...(selectedDeal.items || []), newItem];
+    const vRate = getDealEffectiveVatRate(selectedDeal);
     const totalWithoutVat = updatedItems.reduce((acc, it) => acc + (it.quantity * it.price), 0);
-    const vat22 = Math.round(totalWithoutVat * 0.22);
-    const newEstimatedPrice = totalWithoutVat + vat22;
+    const vatAmount = (selectedDeal.vatMode === 'no_vat' || selectedDeal.vatMode === 'export_zero') ? 0 : Math.round(totalWithoutVat * (vRate / 100));
+    const newEstimatedPrice = totalWithoutVat + vatAmount;
     const curSym = getCurrencySymbol(selectedDeal.currency);
 
     const now = new Date();
     const timeStr = `${now.toLocaleDateString('ru-RU')} ${now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`;
+
+    const vatLabel = selectedDeal.vatMode === 'export_zero' 
+      ? 'НДС 0% (Экспорт)' 
+      : selectedDeal.vatMode === 'no_vat' 
+      ? 'Без НДС' 
+      : `в т.ч. НДС ${vRate}%`;
 
     const newTimelineItem: TimelineEntry = {
       id: `tl-${Date.now()}`,
@@ -1679,7 +2224,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
       title: `Добавлена позиция в спецификацию: ${itemName}`,
       author: currentUser?.fullName || 'Инженер CRM',
       type: 'comment',
-      comment: `Добавлена позиция спецификации: «${itemName}» (${qty} ${unt} по цене ${prc.toLocaleString('ru-RU')} ${curSym} без НДС, сумма: ${(qty * prc).toLocaleString('ru-RU')} ${curSym} без НДС). ИТОГО без НДС: ${totalWithoutVat.toLocaleString('ru-RU')} ${curSym}, в т.ч. НДС 22%: ${vat22.toLocaleString('ru-RU')} ${curSym}, ИТОГО с учетом НДС 22%: ${newEstimatedPrice.toLocaleString('ru-RU')} ${curSym}.`
+      comment: `Добавлена позиция спецификации: «${itemName}» (${qty} ${unt} по цене ${prc.toLocaleString('ru-RU')} ${curSym} без НДС, сумма: ${(qty * prc).toLocaleString('ru-RU')} ${curSym} без НДС). ИТОГО без НДС: ${totalWithoutVat.toLocaleString('ru-RU')} ${curSym}, ${vatLabel}: ${vatAmount.toLocaleString('ru-RU')} ${curSym}, ИТОГО с учетом НДС: ${newEstimatedPrice.toLocaleString('ru-RU')} ${curSym}.`
     };
 
     setDeals(prev => prev.map(d => {
@@ -1721,9 +2266,10 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
     if (!itemToDelete) return;
 
     const updatedItems = (selectedDeal.items || []).filter(it => it.id !== itemId);
+    const vRate = getDealEffectiveVatRate(selectedDeal);
     const totalWithoutVat = updatedItems.reduce((acc, it) => acc + (it.quantity * it.price), 0);
-    const vat22 = Math.round(totalWithoutVat * 0.22);
-    const newEstimatedPrice = totalWithoutVat + vat22;
+    const vatAmount = (selectedDeal.vatMode === 'no_vat' || selectedDeal.vatMode === 'export_zero') ? 0 : Math.round(totalWithoutVat * (vRate / 100));
+    const newEstimatedPrice = totalWithoutVat + vatAmount;
     const curSym = getCurrencySymbol(selectedDeal.currency);
 
     const now = new Date();
@@ -1735,7 +2281,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
       title: `Удалена позиция: ${itemToDelete.name}`,
       author: currentUser?.fullName || 'Инженер CRM',
       type: 'comment',
-      comment: `Позиция «${itemToDelete.name}» (${itemToDelete.quantity} ${itemToDelete.unit || 'шт.'} на сумму ${(itemToDelete.quantity * itemToDelete.price).toLocaleString('ru-RU')} ${curSym} без НДС) удалена из спецификации. ИТОГО с учетом НДС 22%: ${newEstimatedPrice.toLocaleString('ru-RU')} ${curSym}.`
+      comment: `Позиция «${itemToDelete.name}» (${itemToDelete.quantity} ${itemToDelete.unit || 'шт.'} на сумму ${(itemToDelete.quantity * itemToDelete.price).toLocaleString('ru-RU')} ${curSym} без НДС) удалена из спецификации. ИТОГО с учетом НДС: ${newEstimatedPrice.toLocaleString('ru-RU')} ${curSym}.`
     };
 
     setDeals(prev => prev.map(d => {
@@ -1777,7 +2323,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
       title: `Изменена валюта расчетов: ${curObj.label}`,
       author: currentUser?.fullName || 'Инженер CRM',
       type: 'comment',
-      comment: `Установлена валюта спецификации и расчетов по проекту: «${curObj.name}» (${curObj.symbol}, ${curObj.code}). Цены позиций без НДС и ИТОГО с учетом НДС 22% исчисляются в данной валюте.`
+      comment: `Установлена валюта спецификации и расчетов по проекту: «${curObj.name}» (${curObj.symbol}, ${curObj.code}). Цены позиций без НДС и ИТОГО с учетом НДС исчисляются в данной валюте.`
     };
 
     setDeals(prev => prev.map(d => {
@@ -1800,6 +2346,67 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
     } : null);
 
     showToast(`Валюта спецификации изменена на: ${curObj.label}`);
+  };
+
+  // Handle VAT Mode and Custom Rate update in Deal
+  const handleUpdateDealVat = (
+    dealId: string, 
+    newVatMode: 'standard' | 'export_zero' | 'no_vat' | 'custom', 
+    newVatRate?: number
+  ) => {
+    if (!selectedDeal) return;
+    const effectiveRate = newVatMode === 'no_vat' || newVatMode === 'export_zero' 
+      ? 0 
+      : (newVatRate !== undefined ? newVatRate : (newVatMode === 'standard' ? (crmSettings?.defaultVatRate ?? 22) : 22));
+
+    const totalWithoutVat = (selectedDeal.items || []).reduce((acc, it) => acc + (it.quantity * it.price), 0);
+    const vatAmount = (newVatMode === 'no_vat' || newVatMode === 'export_zero') ? 0 : Math.round(totalWithoutVat * (effectiveRate / 100));
+    const newEstimatedPrice = totalWithoutVat > 0 ? (totalWithoutVat + vatAmount) : selectedDeal.estimatedPrice;
+
+    const modeLabels: Record<string, string> = {
+      standard: `Стандартная ставка (${effectiveRate}%)`,
+      export_zero: 'НДС 0% (Экспорт в страны СНГ / ЕАЭС / ст. 164 НК РФ)',
+      no_vat: 'Без НДС (УСН / спецрежим)',
+      custom: `Индивидуальная ставка (${effectiveRate}%)`
+    };
+    const modeLabel = modeLabels[newVatMode] || `НДС ${effectiveRate}%`;
+
+    const now = new Date();
+    const timeStr = `${now.toLocaleDateString('ru-RU')} ${now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`;
+
+    const newTimelineItem: TimelineEntry = {
+      id: `tl-${Date.now()}`,
+      date: timeStr,
+      title: `Изменен режим НДС: ${modeLabel}`,
+      author: currentUser?.fullName || 'Инженер / Бухгалтерия CRM',
+      type: 'comment',
+      comment: `Установлен режим налогообложения: ${modeLabel}. Пересчитана итоговая стоимость сделки.`
+    };
+
+    setDeals(prev => prev.map(d => {
+      if (d.id === dealId) {
+        return {
+          ...d,
+          vatMode: newVatMode,
+          vatRate: effectiveRate,
+          estimatedPrice: newEstimatedPrice,
+          timeline: [newTimelineItem, ...d.timeline],
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return d;
+    }));
+
+    setSelectedDeal(prev => prev ? {
+      ...prev,
+      vatMode: newVatMode,
+      vatRate: effectiveRate,
+      estimatedPrice: newEstimatedPrice,
+      timeline: [newTimelineItem, ...prev.timeline],
+      updatedAt: new Date().toISOString()
+    } : null);
+
+    showToast(`Настройка НДС обновлена: ${modeLabel}`);
   };
 
   // Add Comment to Timeline
@@ -1831,6 +2438,26 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
   const handleCreateNewDeal = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Check for duplicate deal with the same title for the selected company
+    if (duplicateExistingDeal) {
+      const dealTitle = (newDealForm.catalogSelection !== 'other' && newDealForm.catalogSelection ? newDealForm.catalogSelection : newDealForm.serviceType).trim();
+      const stageObj = activeFunnels[duplicateExistingDeal.funnel]?.stages?.find(s => s.id === duplicateExistingDeal.stage);
+      const stageLabel = stageObj?.label || duplicateExistingDeal.stage;
+      
+      alert(
+        `Внимание! Сделка с таким наименованием уже существует для данной компании:\n\n` +
+        `• Организация: ${duplicateExistingDeal.companyName || newDealForm.companyName}\n` +
+        `• Наименование: ${dealTitle}\n` +
+        `• Номер сделки: ${duplicateExistingDeal.id}\n` +
+        `• Воронка: ${activeFunnels[duplicateExistingDeal.funnel]?.name || duplicateExistingDeal.funnel}\n` +
+        `• Текущий этап: ${stageLabel}\n` +
+        `• Ответственный: ${duplicateExistingDeal.responsibleManager || duplicateExistingDeal.createdByManager || 'Не назначен'}\n\n` +
+        `Добавление дубликата заблокировано во избежание задвоения сделок в CRM. Измените наименование сделки или откройте существующую.`
+      );
+      showToast(`Ошибка: сделка «${dealTitle}» уже существует для выбранной компании (${duplicateExistingDeal.id})`);
+      return;
+    }
+
     const lowerType = (newDealForm.serviceType + ' ' + newDealForm.details).toLowerCase();
     const isScannerOrArm = lowerType.includes('сканер') || lowerType.includes('arm') || lowerType.includes('рука') || lowerType.includes('freescan') || lowerType.includes('мобильн');
     if (isScannerOrArm && lowerType.includes('topsolid')) {
@@ -1839,16 +2466,26 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
     }
 
     const newId = `СДЕЛКА-2026-${Math.floor(100 + Math.random() * 900)}`;
+    const dealTitle = newDealForm.catalogSelection !== 'other' && newDealForm.catalogSelection ? newDealForm.catalogSelection : (newDealForm.serviceType || 'Поставка измерительной системы и ПО');
+
     const newDeal: ExtendedDeal = {
       id: newId,
+      title: dealTitle,
       customerName: newDealForm.customerName || 'Новый клиент',
+      customerPost: newDealForm.customerPost || undefined,
       companyName: newDealForm.companyName || 'ООО ПромИнжиниринг',
+      companyId: newDealForm.companyId || undefined,
+      contactId: newDealForm.contactId || undefined,
       inn: newDealForm.inn || '6312' + Math.floor(100000 + Math.random() * 900000),
+      kpp: newDealForm.kpp || undefined,
+      address: newDealForm.address || undefined,
+      ceoName: newDealForm.ceoName || undefined,
+      ceoPost: newDealForm.ceoPost || undefined,
       phone: newDealForm.phone || '+7 (846) 954-00-00',
       email: newDealForm.email || 'info@partner.ru',
       funnel: newDealForm.funnel,
       stage: activeFunnels[newDealForm.funnel].stages[0].id,
-      serviceType: newDealForm.catalogSelection !== 'other' && newDealForm.catalogSelection ? newDealForm.catalogSelection : (newDealForm.serviceType || 'Поставка измерительной системы и ПО'),
+      serviceType: dealTitle,
       details: newDealForm.details || 'Первичный запрос через панель CRM.',
       estimatedPrice: Number(newDealForm.estimatedPrice) || 1200000,
       currency: newDealForm.currency || 'RUB',
@@ -1885,9 +2522,16 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
     setActiveFunnel(newDealForm.funnel);
     setIsNewDealModalOpen(false);
     setNewDealForm({
+      companyId: '',
       companyName: '',
       customerName: '',
+      customerPost: '',
       inn: '',
+      kpp: '',
+      address: '',
+      ceoName: '',
+      ceoPost: 'Генеральный директор',
+      contactId: '',
       phone: '',
       email: '',
       serviceType: '',
@@ -1907,43 +2551,80 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
     <div className="space-y-6">
       {activeTab === 'funnels' && (
         <div className="space-y-6">
-                    {/* Header */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-xs">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* 1. Header & Consolidated Actions */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
-                  <TrendingUp className="w-6 h-6" />
+                <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
+                  <TrendingUp className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">
-                    Управление сделками и воронка продаж
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>Управление сделками и воронка продаж</span>
                   </h2>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Канбан-доски процессов продаж оборудования, услуг и сервисного обслуживания
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 <button
-                  onClick={() => setIsNewDealModalOpen(true)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                  type="button"
+                  onClick={() => setIsStageEditorOpen(true)}
+                  className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-600 hover:text-white text-indigo-800 dark:text-indigo-300 font-bold rounded-lg text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                  title="Настройка этапов в воронках продаж"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>Новая сделка</span>
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Настройка этапов</span>
                 </button>
-                <button className="px-4 py-2 bg-white border border-gray-300 text-slate-500 hover:bg-gray-50 font-bold rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer">
-                  <Download className="w-4 h-4" />
-                  <span className="hidden sm:inline">Экспорт</span>
+                <button
+                  type="button"
+                  onClick={() => setIsVatSettingsOpen(true)}
+                  className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-600 hover:text-white text-emerald-900 dark:text-emerald-300 font-bold rounded-lg text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                  title="Базовая ставка НДС (22%), расчет для экспорта (0%) и правила"
+                >
+                  <Receipt className="w-3.5 h-3.5" />
+                  <span>Ставка НДС ({crmSettings?.defaultVatRate ?? 22}%)</span>
+                </button>
+                <button
+                  onClick={handleExportCsv}
+                  className={`h-8 flex items-center gap-1.5 px-3 text-xs font-bold rounded-lg border transition-all shrink-0 cursor-pointer ${
+                    canExportReports
+                      ? 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 shadow-2xs'
+                      : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                  }`}
+                  title={canExportReports ? 'Экспорт воронки в CSV-файл' : 'Экспорт отключен'}
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Экспорт CSV</span>
+                </button>
+                <button
+                  onClick={() => {
+                    if (!canEditDeals) {
+                      showToast('У вас нет прав для создания сделок');
+                      return;
+                    }
+                    setIsNewDealModalOpen(true);
+                  }}
+                  className={`h-8 flex items-center gap-1.5 px-3.5 text-xs font-bold rounded-lg shadow-xs transition-all shrink-0 cursor-pointer ${
+                    canEditDeals
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20 active:scale-98'
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                  }`}
+                  title={canEditDeals ? 'Создать новую сделку' : 'Создание сделок отключено администратором'}
+                >
+                  {canEditDeals ? <Plus className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                  <span>Новая сделка</span>
                 </button>
               </div>
             </div>
           </div>
 
-          {/* 1. Funnel Selector Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          {/* 2. Compact Interactive Funnel Filter */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             {(Object.keys(activeFunnels) as Array<keyof typeof activeFunnels>).map(key => {
               const funnel = activeFunnels[key as keyof typeof activeFunnels];
-              const Icon = funnel.icon;
+              const Icon = getFunnelIconComponent(funnel.icon);
               const isActive = activeFunnel === key;
               const count = deals.filter(d => d.funnel === key).length;
               const funnelVolume = deals
@@ -1953,130 +2634,88 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
               return (
                 <button
                   key={key}
+                  type="button"
                   onClick={() => setActiveFunnel(key)}
-                  className={`flex flex-col justify-between p-4 rounded-lg border text-left transition-all min-h-[116px] cursor-pointer ${
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer ${
                     isActive 
-                      ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-900/20 ring-2 ring-blue-500/30' 
-                      : 'bg-white border-slate-200/90 text-slate-800 hover:border-blue-300 hover:shadow-xs hover:bg-slate-50/60'
+                      ? 'bg-blue-600 border-blue-600 text-white shadow-sm ring-2 ring-blue-500/20' 
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-blue-400 hover:bg-slate-50 dark:hover:bg-slate-850 shadow-2xs'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-2.5 w-full">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
-                      }`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <h3 className="font-bold text-sm truncate">{funnel.name}</h3>
-                    </div>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                      isActive ? 'bg-white text-blue-700 font-black' : 'bg-slate-100 text-slate-700'
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
                     }`}>
-                      {count}
-                    </span>
+                      <Icon className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="text-left min-w-0">
+                      <div className="font-bold text-xs truncate">{funnel.name}</div>
+                      <div className={`text-[11px] font-semibold truncate ${isActive ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'}`}>
+                        {funnelVolume > 0 ? `${(funnelVolume / 1000000).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} млн ₽ в воронке` : '0 ₽'}
+                      </div>
+                    </div>
                   </div>
-
-                  <p className={`text-xs mt-1.5 line-clamp-1 ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
-                    {funnel.description}
-                  </p>
-
-                  <div className={`text-xs font-bold mt-2.5 ${isActive ? 'text-white' : 'text-blue-600'}`}>
-                    {funnelVolume > 0 ? `${(funnelVolume / 1000000).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} млн ₽ в воронке` : '0 ₽ в воронке'}
-                  </div>
+                  <span className={`text-[11px] font-black px-2 py-0.5 rounded-full shrink-0 border ${
+                    isActive ? 'bg-white text-blue-800 border-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                  }`}>
+                    {count}
+                  </span>
                 </button>
               );
             })}
           </div>
 
-          {/* 2. Top Funnel Toolbar: High-Density Stats Chips & Unified Filter Strip */}
-          <div className="bg-white border border-slate-200/90 rounded-lg p-4 shadow-xs space-y-3.5">
-            {/* Row 1: High-Density Stats Chips & Action Buttons */}
-            <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
-              {/* KPI Chips */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 flex-1 max-w-4xl">
-                {/* Funnel Total Volume */}
-                <div className="flex items-center gap-3 px-4.5 py-2 bg-slate-50/90 border border-slate-200/80 rounded-lg">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
-                    ₽
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider whitespace-normal break-words leading-tight">
-                      {selectedManagerFilter !== 'all' ? 'Объем менеджера' : 'Объем воронки'}
-                    </div>
-                    <div className="text-sm sm:text-base font-bold text-slate-900 truncate" title={`${pipelineStats.totalVolume.toLocaleString('ru-RU')} ₽`}>
-                      {pipelineStats.totalVolume >= 1000000 
-                        ? `${(pipelineStats.totalVolume / 1000000).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} млн ₽`
-                        : `${pipelineStats.totalVolume.toLocaleString('ru-RU')} ₽`}
-                    </div>
-                  </div>
+          {/* 3. High-Density Stats Strip & Filter Toolbar */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xs space-y-3">
+            {/* KPI Metric Strip (Read-Only) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800 text-xs">
+              {/* Funnel Total Volume */}
+              <div className="flex items-center gap-2.5 px-3 py-1.5 bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-lg">
+                <div className="w-7 h-7 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 flex items-center justify-center font-bold text-xs shrink-0">
+                  ₽
                 </div>
-
-                {/* Weighted Forecast */}
-                <div className="flex items-center gap-3 px-4.5 py-2 bg-blue-50/50 border border-blue-200/80 rounded-lg">
-                  <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                    <TrendingUp className="w-4 h-4" />
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    {selectedManagerFilter !== 'all' ? 'Объем менеджера' : 'Объем воронки'}
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider whitespace-normal break-words leading-tight">
-                      Взвешенный прогноз
-                    </div>
-                    <div className="text-sm sm:text-base font-bold text-blue-900 truncate" title={`${pipelineStats.weightedRevenue.toLocaleString('ru-RU')} ₽`}>
-                      {pipelineStats.weightedRevenue >= 1000000 
-                        ? `${(pipelineStats.weightedRevenue / 1000000).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} млн ₽`
-                        : `${pipelineStats.weightedRevenue.toLocaleString('ru-RU')} ₽`}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Active Deals Count */}
-                <div className="flex items-center gap-3 px-4.5 py-2 bg-emerald-50/50 border border-emerald-200/80 rounded-lg">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
-                    {pipelineStats.activeDealsCount}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider whitespace-normal break-words leading-tight">
-                      {selectedManagerFilter !== 'all' ? 'Сделок менеджера' : 'Активных сделок'}
-                    </div>
-                    <div className="text-sm sm:text-base font-bold text-emerald-900 whitespace-normal break-words leading-tight">
-                      {pipelineStats.activeDealsCount} <span className="text-[11px] font-normal text-emerald-600">из {pipelineStats.totalDealsCount}</span>
-                    </div>
+                  <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate" title={`${pipelineStats.totalVolume.toLocaleString('ru-RU')} ₽`}>
+                    {pipelineStats.totalVolume >= 1000000 
+                      ? `${(pipelineStats.totalVolume / 1000000).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} млн ₽`
+                      : `${pipelineStats.totalVolume.toLocaleString('ru-RU')} ₽`}
                   </div>
                 </div>
               </div>
 
-              {/* Action Buttons: Export CSV & New Deal */}
-              <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
-                <button
-                  onClick={handleExportCsv}
-                  className={`h-9 flex items-center gap-1.5 px-4.5 text-xs font-bold rounded-lg border transition-all shrink-0 cursor-pointer ${
-                    canExportReports
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 shadow-2xs'
-                      : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
-                  }`}
-                  title={canExportReports ? 'Экспорт воронки в CSV-файл с учетом выбранного фильтра' : 'Экспорт отчетов отключен администратором'}
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Экспорт CSV</span>
-                </button>
+              {/* Weighted Forecast */}
+              <div className="flex items-center gap-2.5 px-3 py-1.5 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900 rounded-lg">
+                <div className="w-7 h-7 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                  <TrendingUp className="w-3.5 h-3.5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                    Взвешенный прогноз
+                  </div>
+                  <div className="text-xs sm:text-sm font-bold text-blue-900 dark:text-blue-200 truncate" title={`${pipelineStats.weightedRevenue.toLocaleString('ru-RU')} ₽`}>
+                    {pipelineStats.weightedRevenue >= 1000000 
+                      ? `${(pipelineStats.weightedRevenue / 1000000).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} млн ₽`
+                      : `${pipelineStats.weightedRevenue.toLocaleString('ru-RU')} ₽`}
+                  </div>
+                </div>
+              </div>
 
-                <button
-                  onClick={() => {
-                    if (!canEditDeals) {
-                      showToast('У вас нет прав для создания сделок (требуется разрешение «Редактирование сделок»)');
-                      return;
-                    }
-                    setIsNewDealModalOpen(true);
-                  }}
-                  className={`h-9 flex items-center gap-1.5 px-4 text-xs sm:text-sm font-bold rounded-lg shadow-xs transition-all shrink-0 cursor-pointer ${
-                    canEditDeals
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20 active:scale-98'
-                      : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                  }`}
-                  title={canEditDeals ? 'Создать новую сделку' : 'Создание сделок отключено администратором'}
-                >
-                  {canEditDeals ? <Plus className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-                  <span>Новая сделка</span>
-                </button>
+              {/* Active Deals Count */}
+              <div className="flex items-center gap-2.5 px-3 py-1.5 bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900 rounded-lg">
+                <div className="w-7 h-7 rounded-md bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                  {pipelineStats.activeDealsCount}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                    {selectedManagerFilter !== 'all' ? 'Сделок менеджера' : 'Активных сделок'}
+                  </div>
+                  <div className="text-xs sm:text-sm font-bold text-emerald-900 dark:text-emerald-200 whitespace-nowrap">
+                    {pipelineStats.activeDealsCount} <span className="text-[10px] font-normal text-emerald-600 dark:text-emerald-400">из {pipelineStats.totalDealsCount}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -2195,29 +2834,68 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
               </div>
 
               {/* Right: View Mode Toggle & Search Box */}
-              <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-                {/* Kanban View Mode Toggle */}
-                <button
-                  id="crm-kanban-view-mode-btn"
-                  type="button"
-                  onClick={() => {
-                    const next = !isCompactKanban;
-                    setIsCompactKanban(next);
-                    showToast(next ? 'Компактный вид колонок (270px)' : 'Стандартный вид колонок (320px)');
-                  }}
-                  className={`h-9 flex items-center gap-1.5 px-4.5 text-xs font-bold rounded-lg border transition-all cursor-pointer shrink-0 ${
-                    isCompactKanban
-                      ? 'bg-blue-50 text-blue-700 border-blue-300 ring-2 ring-blue-400/20 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
-                      : 'bg-slate-50/90 hover:bg-slate-100 text-slate-700 hover:text-blue-700 border-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-200 dark:border-slate-700'
-                  }`}
-                  title={isCompactKanban ? 'Переключить на стандартный просторный вид колонок (320px)' : 'Переключить на компактный вид колонок (270px)'}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span>{isCompactKanban ? 'Компактный вид' : 'Стандартный вид'}</span>
-                </button>
+              <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 flex-wrap">
+                {/* Segmented Display Mode Switcher (Kanban vs Table) */}
+                <div className="h-9 flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDealDisplayMode('kanban');
+                      showToast('Режим отображения: Канбан-доска');
+                    }}
+                    className={`h-full flex items-center gap-1.5 px-3 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                      dealDisplayMode === 'kanban'
+                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                    title="Отображение воронки в виде интерактивной Канбан-доски"
+                  >
+                    <Columns className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Канбан</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDealDisplayMode('list');
+                      showToast('Режим отображения: Табличный реестр сделок');
+                    }}
+                    className={`h-full flex items-center gap-1.5 px-3 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                      dealDisplayMode === 'list'
+                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                    title="Отображение воронки в виде компактной таблицы со всеми сделками"
+                  >
+                    <List className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Таблица</span>
+                  </button>
+                </div>
+
+                {/* Compact Column Toggle (only in Kanban mode) */}
+                {dealDisplayMode === 'kanban' && (
+                  <button
+                    id="crm-kanban-view-mode-btn"
+                    type="button"
+                    onClick={() => {
+                      const next = !isCompactKanban;
+                      setIsCompactKanban(next);
+                      showToast(next ? 'Компактный вид колонок (270px)' : 'Стандартный вид колонок (320px)');
+                    }}
+                    className={`h-9 flex items-center gap-1.5 px-3 text-xs font-bold rounded-lg border transition-all cursor-pointer shrink-0 ${
+                      isCompactKanban
+                        ? 'bg-blue-50 text-blue-700 border-blue-300 ring-2 ring-blue-400/20 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
+                        : 'bg-slate-50/90 hover:bg-slate-100 text-slate-700 hover:text-blue-700 border-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-200 dark:border-slate-700'
+                    }`}
+                    title={isCompactKanban ? 'Переключить на стандартный просторный вид колонок (320px)' : 'Переключить на компактный вид колонок (270px)'}
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline">{isCompactKanban ? 'Компактные' : 'Стандартные'}</span>
+                  </button>
+                )}
 
                 {/* Search Input */}
-                <div className="relative flex-1 sm:w-56 md:w-64">
+                <div className="relative flex-1 sm:w-52 md:w-60">
                   <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input 
                     id="crm-search-deals-input"
@@ -2298,6 +2976,15 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
             <span className="text-[11px] text-gray-500 font-medium hidden sm:inline">
               ({currentFunnelConfig.stages.length} этапов)
             </span>
+            <button
+              type="button"
+              onClick={() => setIsStageEditorOpen(true)}
+              className="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 hover:underline cursor-pointer ml-1"
+              title="Создать, удалить или отредактировать этапы воронки"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Настроить</span>
+            </button>
           </div>
 
           {/* View Mode Toggle: Stage List vs Kanban */}
@@ -2399,18 +3086,18 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
         const stageTheme = getStageTheme(currentStage);
 
         return (
-          <div className="space-y-4">
+          <div className="space-y-4 pb-28 sm:pb-8">
             {/* Active Stage Banner */}
             <div className="p-4 sm:p-5 rounded-lg border border-blue-200 dark:border-blue-900/60 bg-white dark:bg-slate-900 shadow-xs space-y-3">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="flex items-start gap-2.5 flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-start gap-2.5 min-w-0 flex-1">
                   {stageHeader.stepNumber ? (
                     <span className={`inline-flex items-center justify-center w-6 h-6 rounded-lg text-xs font-black shrink-0 mt-0.5 border ${stageTheme.badge}`}>
                       {stageHeader.stepNumber}
                     </span>
                   ) : null}
-                  <div>
-                    <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white leading-tight">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white leading-tight break-words">
                       {stageHeader.title}
                     </h3>
                     {stageHeader.subtitle && (
@@ -2421,7 +3108,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-gray-100 dark:border-slate-800">
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${stageTheme.badge}`}>
                     {currentStage.winRate}% вероятность
                   </span>
@@ -2489,61 +3176,71 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                     <div
                       key={deal.id}
                       onClick={() => setSelectedDeal(deal)}
-                      className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg p-4 shadow-2xs hover:shadow-md transition-all cursor-pointer space-y-3 group"
+                      className={`bg-white dark:bg-slate-900 border-2 rounded-xl p-4 transition-all duration-200 cursor-pointer space-y-3 group shadow-[0_2px_8px_rgba(15,23,42,0.08),0_1px_2px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.5)] hover:shadow-[0_12px_28px_rgba(15,23,42,0.14),0_4px_10px_rgba(15,23,42,0.08)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.7)] hover:-translate-y-1 active:translate-y-0 active:scale-[0.99] ${
+                        deal.stage === 'lost'
+                          ? 'border-rose-300 dark:border-rose-800 bg-rose-50/30 dark:bg-rose-950/20 border-l-4 border-l-rose-500'
+                          : (currentStage.isWon 
+                              ? 'border-emerald-400 dark:border-emerald-700 bg-emerald-50/30 dark:bg-emerald-950/20 border-l-4 border-l-emerald-500'
+                              : `border-slate-300 dark:border-slate-700 hover:border-blue-600 dark:hover:border-blue-400 ${
+                                  deal.funnel === 'equipment' ? 'border-l-4 border-l-blue-600' :
+                                  deal.funnel === 'services' ? 'border-l-4 border-l-teal-600' : 'border-l-4 border-l-amber-500'
+                                }`
+                            )
+                      }`}
                     >
                       {/* Top: ID, Date, Age & Badge */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs font-black text-gray-500 group-hover:text-blue-600 font-mono">
+                          <span className="text-xs font-black text-slate-500 group-hover:text-blue-600 dark:text-slate-400 dark:group-hover:text-blue-300 font-mono tracking-wider transition-colors">
                             {deal.id}
                           </span>
                           {isAssignedToCurrentUser && (
-                            <span className="text-[10px] font-black bg-blue-100 text-blue-900 px-2 py-0.5 rounded-md">
+                            <span className="text-[10px] font-black bg-blue-100 dark:bg-blue-950 text-blue-900 dark:text-blue-200 border border-blue-300 dark:border-blue-800 px-2 py-0.5 rounded-md shadow-2xs">
                               Моя сделка
                             </span>
                           )}
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shadow-2xs ${
                             dealAge.days <= 3 
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700'
                               : dealAge.days <= 10
-                              ? 'bg-sky-50 text-sky-800 border-sky-200'
-                              : 'bg-slate-50 text-slate-500 border-gray-200'
+                              ? 'bg-sky-50 text-sky-800 border-sky-300 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-700'
+                              : 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
                           }`}>
                             {dealAge.days <= 3 ? 'до 3 дн.' : dealAge.days <= 10 ? 'до 10 дн.' : dealAge.text}
                           </span>
                         </div>
-                        <span className="text-xs font-medium text-gray-400">
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                           {new Date(deal.createdAt).toLocaleDateString('ru-RU')}
                         </span>
                       </div>
 
                       {/* Company & Client */}
                       <div>
-                        <h4 className="font-bold text-sm sm:text-base text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                        <h4 className="font-black text-sm sm:text-base text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                           {deal.companyName || deal.customerName}
                         </h4>
                         {deal.companyName && deal.customerName && (
-                          <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                            <User className="w-3 h-3 text-gray-400" />
+                          <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 flex items-center gap-1 font-medium">
+                            <User className="w-3 h-3 text-slate-400 shrink-0" />
                             <span>ЛПР: {deal.customerName}</span>
                           </div>
                         )}
                       </div>
 
                       {/* Service / Equipment */}
-                      <div className="text-xs text-slate-500 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-lg border border-gray-100 dark:border-slate-800 font-medium">
+                      <div className="text-xs text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 font-medium">
                         {deal.serviceType}
                       </div>
 
                       {/* Client Equipment Alert */}
                       {deal.clientEquipment && (
-                        <div className="p-2 rounded-lg text-[11px] font-bold flex items-center justify-between bg-amber-50 text-amber-950 border border-amber-200">
+                        <div className="p-2 rounded-lg text-[11px] font-bold flex items-center justify-between bg-amber-50 text-amber-950 border border-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-700 shadow-2xs">
                           <span className="flex items-center gap-1.5">
                             <Wrench className="w-3.5 h-3.5 text-amber-600" />
                             <span>Зав. № {deal.clientEquipment.serialNumber}</span>
                           </span>
                           {isVerificationClose && (
-                            <span className="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full font-black">
                               Поверка: {deal.clientEquipment.daysUntilVerification} дн.
                             </span>
                           )}
@@ -2552,45 +3249,45 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
 
                       {/* Next Action */}
                       {deal.stage !== 'lost' && (
-                        <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 text-slate-500 min-w-0">
+                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-xs flex items-center justify-between gap-2 shadow-2xs">
+                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 min-w-0 font-medium">
                             <CalendarClock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                             <span className="truncate">{nextAction.action}</span>
                           </div>
-                          <span className="text-[10px] font-mono text-gray-400 shrink-0">
+                          <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 shrink-0 font-bold">
                             {nextAction.timeframe}
                           </span>
                         </div>
                       )}
 
                       {/* Touch Contact Buttons (Min 44px height for mobile accessibility) */}
-                      <div className="pt-2 border-t border-gray-100 dark:border-slate-800 flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                      <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2" onClick={e => e.stopPropagation()}>
                         {deal.phone ? (
                           <a
                             href={`tel:${deal.phone}`}
-                            className="flex-1 min-h-[44px] px-4 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                            className="flex-1 min-h-[44px] px-4 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-600 text-emerald-800 hover:text-white font-bold text-xs border border-emerald-300 hover:border-emerald-600 flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-sm active:scale-95 active:bg-emerald-700"
                             title={`Позвонить ${deal.phone}`}
                           >
-                            <Phone className="w-4 h-4 text-emerald-600" />
+                            <Phone className="w-4 h-4 text-emerald-600 group-hover/btn:text-white" />
                             <span>Позвонить</span>
                           </a>
                         ) : null}
                         {deal.email ? (
                           <a
                             href={`mailto:${deal.email}`}
-                            className="flex-1 min-h-[44px] px-4 py-2 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 font-bold text-xs border border-sky-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                            className="flex-1 min-h-[44px] px-4 py-2 rounded-lg bg-sky-50 hover:bg-sky-600 text-sky-800 hover:text-white font-bold text-xs border border-sky-300 hover:border-sky-600 flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-sm active:scale-95 active:bg-sky-700"
                             title={`Написать на ${deal.email}`}
                           >
-                            <Mail className="w-4 h-4 text-sky-600" />
+                            <Mail className="w-4 h-4 text-sky-600 group-hover/btn:text-white" />
                             <span>Email</span>
                           </a>
                         ) : null}
                       </div>
 
                       {/* Footer: Price & Quick Stage Transition Dropdown */}
-                      <div className="pt-2 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between gap-2" onClick={e => e.stopPropagation()}>
-                        <div className="text-xs sm:text-sm font-black text-gray-950 dark:text-white font-mono">
-                          {deal.estimatedPrice ? `${deal.estimatedPrice.toLocaleString('ru-RU')} ₽` : 'По запросу'}
+                      <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2" onClick={e => e.stopPropagation()}>
+                        <div className="text-xs sm:text-sm font-black text-slate-950 dark:text-white font-mono">
+                          {deal.estimatedPrice ? formatCurrency(deal.estimatedPrice, deal.currency) : 'По запросу'}
                         </div>
 
                         {canChangeStage(deal) && currentStage.id !== 'lost' && !currentStage.isWon && (
@@ -2598,7 +3295,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                             <select
                               value={deal.stage}
                               onChange={(e) => handleStageChange(deal.id, e.target.value)}
-                              className="text-xs font-bold bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 text-slate-500 hover:bg-gray-100 cursor-pointer transition-colors max-w-[150px] truncate"
+                              className="text-xs font-bold bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-200 hover:border-blue-500 focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all max-w-[150px] truncate shadow-2xs"
                               title="Изменить этап сделки"
                             >
                               {currentFunnelConfig.stages.map(stg => (
@@ -2610,7 +3307,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                             <button
                               type="button"
                               onClick={() => handleNextStage(deal)}
-                              className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors cursor-pointer"
+                              className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-90 text-white transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-sm"
                               title="Перевести на следующий этап"
                             >
                               <ArrowRight className="w-3.5 h-3.5" />
@@ -2664,7 +3361,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
           onClick={() => scrollBoard('left')}
           disabled={!canScrollLeft}
           title="Прокрутить влево"
-          className={`absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 rounded-full bg-white/90 backdrop-blur-md border border-gray-200 shadow-sm shadow-slate-900/10 transition-all duration-300 hover:scale-110 hover:bg-white hover:text-[#2563EB] focus:outline-none flex items-center justify-center ${!canScrollLeft ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100 text-slate-500'}`}
+          className={`absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 rounded-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-2 border-slate-300 dark:border-slate-700 shadow-lg shadow-slate-900/15 transition-all duration-200 hover:scale-110 active:scale-95 hover:bg-blue-600 hover:border-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:border-blue-600 focus:outline-none flex items-center justify-center cursor-pointer ${!canScrollLeft ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100 text-slate-700 dark:text-slate-200'}`}
         >
           <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" strokeWidth={3} />
         </button>
@@ -2674,18 +3371,19 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
           onClick={() => scrollBoard('right')}
           disabled={!canScrollRight}
           title="Прокрутить вправо"
-          className={`absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 rounded-full bg-white/90 backdrop-blur-md border border-gray-200 shadow-sm shadow-slate-900/10 transition-all duration-300 hover:scale-110 hover:bg-white hover:text-[#2563EB] focus:outline-none flex items-center justify-center ${!canScrollRight ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100 text-slate-500'}`}
+          className={`absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 rounded-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-2 border-slate-300 dark:border-slate-700 shadow-lg shadow-slate-900/15 transition-all duration-200 hover:scale-110 active:scale-95 hover:bg-blue-600 hover:border-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:border-blue-600 focus:outline-none flex items-center justify-center cursor-pointer ${!canScrollRight ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100 text-slate-700 dark:text-slate-200'}`}
         >
           <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" strokeWidth={3} />
         </button>
 
+        {dealDisplayMode === 'kanban' ? (
         <div 
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="bg-slate-50/80 dark:bg-slate-950/60 border border-gray-200/80 dark:border-slate-800 rounded-lg sm:rounded-lg p-3 sm:p-6 min-h-[560px] overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory no-scrollbar"
+          className="bg-slate-200/70 dark:bg-slate-950/80 border-2 border-slate-300 dark:border-slate-800 rounded-2xl p-3 sm:p-5 min-h-[580px] overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory shadow-inner"
         >
         {loading ? (
-          <div className="flex items-center justify-center h-64 text-gray-400 font-medium">Синхронизация данных CRM...</div>
+          <div className="flex items-center justify-center h-64 text-slate-500 font-medium">Синхронизация данных CRM...</div>
         ) : (
           <div className="flex gap-4 min-w-max pb-4">
             {currentFunnelConfig.stages.map(stage => {
@@ -2707,7 +3405,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                   <div
                     key={stage.id}
                     onClick={() => toggleCollapseStage(stage.id)}
-                    className="w-12 shrink-0 bg-white/70 dark:bg-slate-900/90 hover:bg-blue-50/70 dark:hover:bg-slate-800 border border-gray-200 dark:border-slate-800 rounded-lg p-2 flex flex-col items-center justify-between cursor-pointer transition-all group shadow-2xs"
+                    className="w-12 shrink-0 bg-white dark:bg-slate-900 hover:bg-blue-50/70 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer transition-all group shadow-sm"
                     title={`Развернуть этап «${stage.label}» (${stageDeals.length} сделок)`}
                   >
                     <div className="flex flex-col items-center gap-2 pt-1">
@@ -2717,20 +3415,20 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                           e.stopPropagation();
                           toggleCollapseStage(stage.id);
                         }}
-                        className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-slate-800 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center text-gray-500 dark:text-slate-300 transition-colors"
+                        className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </button>
-                      <span className="text-[11px] font-black bg-gray-200 dark:bg-slate-800 group-hover:bg-blue-100 group-hover:text-blue-900 text-slate-500 dark:text-slate-200 px-1.5 py-0.5 rounded-full">
+                      <span className="text-[11px] font-black bg-slate-200 dark:bg-slate-800 group-hover:bg-blue-100 group-hover:text-blue-900 text-slate-700 dark:text-slate-200 px-1.5 py-0.5 rounded-full">
                         {stageDeals.length}
                       </span>
                     </div>
 
-                    <div className="[writing-mode:vertical-lr] rotate-180 font-bold text-xs text-slate-500 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 tracking-wide py-4 whitespace-normal">
+                    <div className="[writing-mode:vertical-lr] rotate-180 font-bold text-xs text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 tracking-wide py-4 whitespace-normal">
                       {stage.shortLabel || stage.label}
                     </div>
 
-                    <div className="text-[9px] font-bold text-gray-400 dark:text-slate-500 pb-1">
+                    <div className="text-[9px] font-bold text-slate-400 dark:text-slate-500 pb-1">
                       {stage.winRate}%
                     </div>
                   </div>
@@ -2741,9 +3439,9 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                 <div 
                   key={stage.id} 
                   id={`kanban-stage-col-${stage.id}`}
-                  className={`${isCompactKanban ? 'w-[270px]' : 'w-[84vw] sm:w-[320px]'} shrink-0 snap-center flex flex-col gap-3 rounded-lg p-1.5 -m-1.5 transition-all ${
-                    dragOverStage === stage.id ? 'bg-blue-50/80 dark:bg-blue-950/40 ring-2 ring-blue-400/50 shadow-inner' : 
-                    draggedDealId ? 'bg-slate-50/50 dark:bg-slate-900/40' : ''
+                  className={`${isCompactKanban ? 'w-[270px]' : 'w-[84vw] sm:w-[320px]'} shrink-0 snap-center flex flex-col gap-3 rounded-xl p-2 bg-slate-100/95 dark:bg-slate-900/90 border-2 border-slate-300/80 dark:border-slate-800 shadow-xs transition-all ${
+                    dragOverStage === stage.id ? 'bg-blue-50 dark:bg-blue-950/40 ring-4 ring-blue-500/25 border-blue-500 border-dashed shadow-md' : 
+                    draggedDealId ? 'bg-slate-200/50 dark:bg-slate-900/40' : ''
                   }`}
                   onDragOver={(e) => handleDragOver(e, stage.id)}
                   onDragLeave={handleDragLeave}
@@ -2751,8 +3449,8 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                 >
                   {/* Column Header */}
                   <div 
-                    className={`relative overflow-hidden flex flex-col justify-between rounded-lg bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 shadow-2xs transition-all ${
-                      isCompactKanban ? 'p-2.5 min-h-[82px]' : 'p-3 min-h-[88px]'
+                    className={`relative overflow-hidden flex flex-col justify-between rounded-xl bg-white dark:bg-slate-850 border border-slate-300 dark:border-slate-700 shadow-xs hover:border-slate-400 dark:hover:border-slate-600 transition-all ${
+                      isCompactKanban ? 'p-2 min-h-[68px]' : 'p-2.5 min-h-[74px]'
                     }`}
                     title={stage.label}
                   >
@@ -2763,16 +3461,16 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                     <div className="flex items-start justify-between gap-1.5 pt-0.5">
                       <div className="flex items-start gap-1.5 flex-1 min-w-0">
                         {stageHeader.stepNumber ? (
-                          <span className={`inline-flex items-center justify-center w-5 h-5 rounded-md text-[11px] font-black shrink-0 mt-0.5 border shadow-2xs ${stageTheme.badge}`}>
+                          <span className={`inline-flex items-center justify-center w-4.5 h-4.5 rounded text-[10px] font-black shrink-0 mt-0.5 border shadow-2xs ${stageTheme.badge}`}>
                             {stageHeader.stepNumber}
                           </span>
                         ) : null}
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-gray-900 dark:text-white text-xs sm:text-[13px] leading-snug whitespace-normal break-words">
+                          <h4 className="font-black text-slate-900 dark:text-white text-xs leading-tight whitespace-normal break-words">
                             {stageHeader.title}
                           </h4>
                           {stageHeader.subtitle && (
-                            <div className="text-[11px] font-medium text-gray-500 dark:text-slate-400 leading-tight mt-0.5 whitespace-normal break-words">
+                            <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 leading-tight mt-0.5 whitespace-normal break-words">
                               ({stageHeader.subtitle})
                             </div>
                           )}
@@ -2780,9 +3478,9 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                       </div>
 
                       {/* Right Action: Deal Counter Badge & Collapse Column Button */}
-                      <div className="flex items-center gap-1 shrink-0 pt-0.5">
+                      <div className="flex items-center gap-1 shrink-0">
                         <span 
-                          className="text-[11px] font-black bg-gray-100 dark:bg-slate-800 text-slate-500 dark:text-slate-200 border border-gray-200 dark:border-slate-700 px-2 py-0.5 rounded-full shadow-2xs"
+                          className="text-[10px] font-black bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 px-1.5 py-0.2 rounded-full shadow-2xs"
                           title={`${stageDeals.length} сделок`}
                         >
                           {stageDeals.length}
@@ -2790,28 +3488,33 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                         <button
                           type="button"
                           onClick={() => toggleCollapseStage(stage.id)}
-                          className="w-5 h-5 rounded hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-slate-500 dark:hover:text-slate-200 flex items-center justify-center transition-colors cursor-pointer"
+                          className="w-4.5 h-4.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center justify-center active:scale-90 transition-all cursor-pointer"
                           title="Свернуть колонку"
                           aria-label={`Свернуть этап ${stage.label}`}
                         >
-                          <ChevronLeft className="w-3.5 h-3.5" />
+                          <ChevronLeft className="w-3 h-3" />
                         </button>
                       </div>
                     </div>
 
                     {/* Bottom Row: Win Probability & Stage Total Volume */}
-                    <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 mt-1 border-t border-gray-100 dark:border-slate-800/80 font-medium">
-                      <span className={`flex items-center gap-1 font-bold ${stageTheme.percent}`}>
-                        <Percent className="w-3 h-3 shrink-0" /> {stage.winRate}% вероятность
+                    <div className="flex items-center justify-between text-[10px] pt-1 mt-1 border-t border-slate-100 dark:border-slate-800 font-medium">
+                      <span className={`flex items-center gap-0.5 font-bold ${stageTheme.percent}`}>
+                        <Percent className="w-2.5 h-2.5 shrink-0" /> {stage.winRate}%
                       </span>
-                      <span className="font-bold text-gray-800 dark:text-slate-200 font-mono">
-                        {stageSum > 0 ? `${(stageSum / 1000).toLocaleString('ru-RU')} тыс. ₽` : '0 ₽'}
+                      <span className="font-black text-slate-900 dark:text-slate-100 font-mono">
+                        {stageSum >= 1_000_000 
+                          ? `${(stageSum / 1_000_000).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} млн ₽`
+                          : stageSum > 0 
+                            ? `${(stageSum / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 0 })} тыс. ₽` 
+                            : '0 ₽'
+                        }
                       </span>
                     </div>
                   </div>
 
                   {/* Deals Cards Stack */}
-                  <div className="flex flex-col gap-2.5 flex-1 min-h-[400px]">
+                  <div className="flex flex-col gap-2 flex-1 min-h-[400px]">
                     {stageDeals.map(deal => {
                       const isVerificationClose = deal.clientEquipment?.daysUntilVerification && deal.clientEquipment.daysUntilVerification <= 45;
                       const isDraggable = canChangeStage(deal);
@@ -2825,45 +3528,55 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                       );
 
                       return (
-                        <motion.div 
-                          layout
-                          layoutId={deal.id}
-                          initial={{ opacity: 0, y: 15 }}
-                          animate={{ opacity: 1, y: 0 }}
+                        <div 
                           key={deal.id}
                           onClick={() => setSelectedDeal(deal)}
                           draggable={isDraggable}
                           onDragStart={(e: any) => handleDragStart(e, deal)}
                           onDragEnd={handleDragEnd}
-                          className={`bg-white dark:bg-slate-900 border rounded-lg ${isCompactKanban ? 'p-2.5' : 'p-4'} shadow-2xs hover:shadow-lg transition-all ${isDraggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} group relative ${
+                          className={`bg-white dark:bg-slate-855 border-2 rounded-xl ${isCompactKanban ? 'p-2' : 'p-2.5 sm:p-3'} shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] transition-all duration-150 ${isDraggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} group relative ${
                             deal.stage === 'lost' 
-                              ? 'border-rose-200/80 bg-rose-50/20 dark:border-rose-900/60 dark:bg-rose-950/20 opacity-80' 
-                              : (stage.isWon ? 'border-emerald-200/90 bg-emerald-50/20 dark:border-emerald-900/60 dark:bg-emerald-950/20' : 'border-gray-200/90 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-500')
-                          } ${draggedDealId === deal.id ? 'opacity-40 scale-95 shadow-none' : ''}`}
+                              ? 'border-rose-300 bg-rose-50/30 dark:border-rose-800 dark:bg-rose-950/20 border-l-4 border-l-rose-500 opacity-80' 
+                              : (stage.isWon 
+                                  ? 'border-emerald-400 bg-emerald-50/30 dark:border-emerald-700 dark:bg-emerald-950/20 border-l-4 border-l-emerald-500' 
+                                  : `border-slate-300 dark:border-slate-700 hover:border-blue-600 dark:hover:border-blue-400 ${
+                                      deal.funnel === 'equipment' ? 'border-l-4 border-l-blue-600' :
+                                      deal.funnel === 'services' ? 'border-l-4 border-l-teal-600' : 'border-l-4 border-l-amber-500'
+                                    }`
+                                )
+                          } ${draggedDealId === deal.id ? 'opacity-30 border-2 border-dashed border-blue-500 scale-[0.97] ring-4 ring-blue-400/25 shadow-none' : ''}`}
                         >
                           {/* Card Top: ID, Date, Age & "My Deal" Badge */}
-                          <div className="flex items-start justify-between gap-1 mb-1.5">
+                          <div className="flex items-start justify-between gap-1 mb-1">
                             <div className="flex items-center gap-1">
-                              <span className="text-[10px] font-black text-gray-400 group-hover:text-blue-600 transition-colors uppercase tracking-wider">
+                              <span 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigator.clipboard?.writeText(deal.id);
+                                  showToast(`ID ${deal.id} скопирован в буфер`);
+                                }}
+                                className="text-[10px] font-black text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300 font-mono tracking-wider transition-colors cursor-copy"
+                                title="Нажмите, чтобы скопировать ID сделки"
+                              >
                                 {deal.id}
                               </span>
                               {isAssignedToCurrentUser && (
-                                <span className="text-[9px] font-black bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 px-1.5 py-0.2 rounded-md">
-                                  Моя сделка
+                                <span className="text-[9px] font-black bg-blue-100 dark:bg-blue-950 text-blue-900 dark:text-blue-200 border border-blue-300 dark:border-blue-800 px-1 py-0.2 rounded shadow-2xs">
+                                  Моя
                                 </span>
                               )}
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
-                              <span className="text-[10px] font-medium text-gray-400 dark:text-slate-500">
+                              <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
                                 {new Date(deal.createdAt).toLocaleDateString('ru-RU')}
                               </span>
                               <span 
-                                className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${
+                                className={`text-[9px] font-bold px-1 py-0.2 rounded border shadow-2xs ${
                                   dealAge.days <= 3 
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800' 
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700' 
                                     : dealAge.days <= 10
-                                      ? 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-800'
-                                      : 'bg-slate-50 text-slate-500 border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                                      ? 'bg-sky-50 text-sky-800 border-sky-300 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-700'
+                                      : 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
                                 }`}
                                 title={`Срок в воронке: ${dealAge.days} дн.`}
                               >
@@ -2873,127 +3586,127 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                           </div>
 
                           {/* Company / Customer */}
-                          <h5 className="font-bold text-gray-900 dark:text-white text-xs sm:text-sm line-clamp-2 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors whitespace-normal break-words">
+                          <h5 className="font-black text-slate-900 dark:text-white text-xs sm:text-[13px] line-clamp-1 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors whitespace-normal break-words">
                             {deal.companyName || deal.customerName}
                           </h5>
-                          {!isCompactKanban && (
-                            <div className="text-xs text-slate-500 dark:text-slate-300 font-medium mt-0.5 line-clamp-1">
-                              {deal.customerName}
+                          {!isCompactKanban && deal.customerName && deal.companyName && (
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate flex items-center gap-1 mt-0.5">
+                              <User className="w-3 h-3 text-slate-400 shrink-0" />
+                              <span>{deal.customerName}</span>
                             </div>
                           )}
 
                           {/* Task / Product */}
-                          <div className={`text-[11px] text-slate-500 dark:text-slate-300 ${isCompactKanban ? 'mt-1 p-1.5' : 'mt-2 p-2'} line-clamp-2 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-gray-100 dark:border-slate-700/70 whitespace-normal break-words`}>
+                          <div className="text-[11px] text-slate-700 dark:text-slate-200 mt-1 p-1.5 line-clamp-2 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700/70 whitespace-normal break-words font-medium leading-tight">
                             {deal.serviceType}
                           </div>
 
                           {/* Serial or Equipment Alert Badge (ONLY in support funnel for equipment under service) */}
                           {deal.clientEquipment && deal.funnel === 'support' && (
-                            <div className={`mt-2 p-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1.5 ${
+                            <div className={`mt-1.5 p-1 rounded text-[10px] font-bold flex items-center gap-1.5 ${
                               isVerificationClose 
-                                ? 'bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-700' 
-                                : 'bg-gray-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300'
+                                ? 'bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-700 shadow-2xs' 
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                             }`}>
-                              <Wrench className="w-3 h-3 text-gray-500 shrink-0" />
-                              <span className="truncate">Заводской № {deal.clientEquipment.serialNumber}</span>
+                              <Wrench className="w-3 h-3 text-slate-500 shrink-0" />
+                              <span className="truncate">№ {deal.clientEquipment.serialNumber}</span>
                               {isVerificationClose && (
-                                <span className="ml-auto text-[9px] bg-amber-500 text-white px-1.5 py-0.2 rounded font-black shrink-0">
+                                <span className="ml-auto text-[9px] bg-amber-500 text-white px-1 py-0.2 rounded font-black shrink-0">
                                   Поверка: {deal.clientEquipment.daysUntilVerification} дн.
                                 </span>
                               )}
                             </div>
                           )}
 
-                          {/* Next Action & Timeline schedule: Что и когда сделать */}
+                          {/* Next Action: Что и когда сделать */}
                           {deal.stage !== 'lost' && !isCompactKanban && (
-                            <div className={`mt-2.5 p-2 rounded-lg text-[11px] border transition-colors ${
+                            <div className={`mt-1.5 p-1.5 rounded-lg border transition-colors shadow-2xs ${
                               nextAction.urgency === 'critical'
-                                ? 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700/60 text-amber-950 dark:text-amber-200 shadow-2xs'
+                                ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700/60 text-amber-950 dark:text-amber-200'
                                 : isAssignedToCurrentUser
-                                  ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-950 dark:text-blue-200'
-                                  : 'bg-slate-50 dark:bg-slate-800/60 border-gray-200/80 dark:border-slate-700/70 text-gray-800 dark:text-slate-200'
+                                  ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-950 dark:text-blue-200'
+                                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/70 text-slate-800 dark:text-slate-200'
                             }`}>
-                              <div className="flex items-center justify-between gap-1 mb-1 font-bold text-[10px] uppercase tracking-wide">
-                                <span className="flex items-center gap-1 text-slate-500 dark:text-slate-300">
-                                  <CalendarClock className={`w-3.5 h-3.5 shrink-0 ${
+                              <div className="flex items-center justify-between gap-1 mb-0.5 font-bold uppercase tracking-wider text-[9px]">
+                                <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
+                                  <CalendarClock className={`w-3 h-3 shrink-0 ${
                                     nextAction.urgency === 'critical' ? 'text-amber-600' : 'text-blue-600'
                                   }`} />
-                                  <span>Что сделать:</span>
-                                </span>
-                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-black shrink-0 ${
-                                  nextAction.urgency === 'critical'
-                                    ? 'bg-amber-500 text-white'
-                                    : isAssignedToCurrentUser
-                                      ? 'bg-blue-600 text-white'
-                                      : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-300 border border-gray-200 dark:border-slate-700'
-                                }`}>
-                                  {nextAction.timeframe}
+                                  <span>{nextAction.timeframe}</span>
                                 </span>
                               </div>
-                              <div className="line-clamp-2 leading-tight font-medium text-slate-500 dark:text-slate-300 whitespace-normal break-words">
+                              <div className="line-clamp-1 leading-tight font-medium text-slate-700 dark:text-slate-300 text-[11px]">
                                 {nextAction.action}
                               </div>
                             </div>
                           )}
 
-                          {/* Responsible Manager Badge */}
-                          <div className={`flex items-center gap-1.5 ${isCompactKanban ? 'mt-1.5 pt-1.5' : 'mt-2.5 pt-2'} border-t border-gray-100/90 dark:border-slate-800 text-[11px]`}>
-                            <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 border ${
-                              isAssignedToCurrentUser
-                                ? 'bg-blue-600 text-white border-blue-700'
-                                : 'bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
-                            }`}>
-                              <UserCheck className="w-3 h-3" />
-                            </div>
-                            <div className="min-w-0 flex-1 flex items-center justify-between text-gray-500 dark:text-slate-400">
-                              <span className="truncate text-[10px] sm:text-[11px]">
-                                {deal.responsibleManager || deal.createdByManager || 'Скобелев А.С.'}
+                          {/* Card Footer: Manager, Price & Quick Actions consolidated */}
+                          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 dark:border-slate-800 text-xs">
+                            <div className="min-w-0 flex items-center gap-1.5 flex-1 pr-1.5">
+                              <div className={`w-4 h-4 rounded-full flex items-center justify-center font-bold text-[9px] shrink-0 border ${
+                                isAssignedToCurrentUser
+                                  ? 'bg-blue-600 text-white border-blue-700'
+                                  : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                              }`}>
+                                <UserCheck className="w-2.5 h-2.5" />
+                              </div>
+                              <span className="truncate text-[10px] text-slate-500 dark:text-slate-400 font-medium" title={deal.responsibleManager || 'Скобелев А.С.'}>
+                                {(deal.responsibleManager || deal.createdByManager || 'Скобелев А.С.').split(/\s+/).slice(0, 2).join(' ')}
                               </span>
                             </div>
-                          </div>
 
-                          {/* Card Footer: Price & Quick Action */}
-                          <div className={`flex items-center justify-between ${isCompactKanban ? 'mt-1.5 pt-1.5' : 'mt-2 pt-2'} border-t border-gray-100 dark:border-slate-800`}>
-                            <span className="text-xs font-black text-gray-900 dark:text-white font-mono">
-                              {deal.estimatedPrice ? `${deal.estimatedPrice.toLocaleString('ru-RU')} ₽` : 'По запросу'}
-                            </span>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="text-xs font-black text-slate-900 dark:text-white font-mono whitespace-nowrap">
+                                {deal.estimatedPrice ? formatCurrency(deal.estimatedPrice, deal.currency) : 'По запросу'}
+                              </span>
 
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDealForProposal(deal);
-                                }}
-                                title="Сгенерировать ТКП (PDF)"
-                                className="p-1 rounded-lg bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 transition-colors cursor-pointer"
-                              >
-                                <FileText className="w-3.5 h-3.5" />
-                              </button>
-
-                              {stage.id !== 'lost' && !stage.isWon && isDraggable && (
+                              <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                                 <button
+                                  type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleNextStage(deal);
+                                    setDealForProposal(deal);
                                   }}
-                                  title="Перевести на следующий этап"
-                                  className="p-1 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white text-gray-500 dark:text-slate-300 transition-colors cursor-pointer"
+                                  title="Сгенерировать ТКП (PDF)"
+                                  className="p-1 rounded bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 dark:hover:bg-blue-600 dark:hover:text-white transition-all cursor-pointer border border-blue-200 dark:border-blue-800 shadow-2xs"
                                 >
-                                  <ArrowRight className="w-3.5 h-3.5" />
+                                  <FileText className="w-3 h-3" />
                                 </button>
-                              )}
+
+                                {stage.id !== 'lost' && !stage.isWon && isDraggable && (() => {
+                                  const currentIndex = currentFunnelConfig.stages.findIndex(s => s.id === deal.stage);
+                                  const nextStage = currentIndex >= 0 && currentIndex < currentFunnelConfig.stages.length - 2
+                                    ? currentFunnelConfig.stages[currentIndex + 1]
+                                    : null;
+                                  if (!nextStage) return null;
+
+                                  return (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleNextStage(deal);
+                                      }}
+                                      title={`Перевести на этап: «${nextStage.shortLabel || nextStage.label}»`}
+                                      className="p-1 rounded bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-blue-600 dark:hover:text-white transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shadow-2xs"
+                                    >
+                                      <ArrowRight className="w-3 h-3" />
+                                    </button>
+                                  );
+                                })()}
+                              </div>
                             </div>
                           </div>
-                        </motion.div>
+                        </div>
                       );
                     })}
 
                     {stageDeals.length === 0 && (
-                      <div className="h-32 border-2 border-dashed border-gray-200/90 dark:border-slate-800 rounded-lg flex flex-col items-center justify-center p-3 text-center text-xs text-gray-400 dark:text-slate-500 font-medium bg-white/40 dark:bg-slate-900/40">
-                        <CheckSquare className="w-5 h-5 text-gray-300 dark:text-slate-500 mb-1" />
-                        <span>{selectedManagerFilter !== 'all' ? 'У выбранного менеджера нет сделок' : 'Нет сделок на этапе'}</span>
-                        <span className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">
+                      <div className="h-32 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center p-3 text-center text-xs text-slate-500 dark:text-slate-400 font-medium bg-white/60 dark:bg-slate-850/60 shadow-inner">
+                        <CheckSquare className="w-5 h-5 text-slate-400 dark:text-slate-500 mb-1" />
+                        <span className="font-bold">{selectedManagerFilter !== 'all' ? 'У выбранного менеджера нет сделок' : 'Нет сделок на этапе'}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
                           {selectedManagerFilter !== 'all' ? 'Попробуйте сбросить фильтр ответственного' : 'Перетащите сделку сюда'}
                         </span>
                       </div>
@@ -3005,6 +3718,321 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
           </div>
         )}
       </div>
+      ) : (
+        /* Table (List View) Mode for High Data Density with Batch Operations */
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 shadow-xs overflow-hidden relative">
+          {/* Table Header Controls / Stats */}
+          <div className="p-3 border-b border-gray-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+              <span className="font-bold text-slate-900 dark:text-white">Всего в выборке: {filteredDeals.length}</span>
+              <span className="text-slate-300 dark:text-slate-600">·</span>
+              <span>Сумма: <strong className="text-slate-900 dark:text-white">{filteredDeals.reduce((sum, d) => sum + (d.estimatedPrice || 0), 0).toLocaleString('ru-RU')} ₽</strong></span>
+              {selectedDealIds.length > 0 && (
+                <>
+                  <span className="text-slate-300 dark:text-slate-600">·</span>
+                  <span className="text-blue-600 dark:text-blue-400 font-bold">Выбрано: {selectedDealIds.length}</span>
+                </>
+              )}
+            </div>
+
+            {selectedDealIds.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBatchTargetStage(currentFunnelConfig.stages[0]?.id || '');
+                    setIsBatchStageModalOpen(true);
+                  }}
+                  className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 rounded text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  <span>Сменить этап</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBatchTargetManager('Скобелев А.С.');
+                    setIsBatchManagerModalOpen(true);
+                  }}
+                  className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 rounded text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>Назначить ответственного</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const dealsToExport = deals.filter(d => selectedDealIds.includes(d.id));
+                    if (dealsToExport.length === 0) return;
+                    const headers = ['ID', 'Дата', 'Контрагент', 'ИНН', 'Контакт', 'Телефон', 'Email', 'Сумма (руб)', 'Этап', 'Ответственный'];
+                    const rows = dealsToExport.map(d => [
+                      d.id,
+                      (d as any).date || d.createdAt || '',
+                      `"${(d.companyName || '').replace(/"/g, '""')}"`,
+                      d.inn || '',
+                      `"${(d.customerName || '').replace(/"/g, '""')}"`,
+                      d.phone || '',
+                      d.email || '',
+                      d.estimatedPrice || 0,
+                      d.stage || '',
+                      `"${(d.responsibleManager || '').replace(/"/g, '""')}"`
+                    ]);
+                    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\r\n');
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `crm_deals_export_${new Date().toISOString().slice(0, 10)}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    showToast(`Экспортировано ${dealsToExport.length} сделок в Excel (CSV)`);
+                  }}
+                  className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 rounded text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>В Excel</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedDealIds([])}
+                  className="px-2 py-1 text-slate-500 hover:text-slate-800 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Сбросить
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs whitespace-nowrap divide-y divide-gray-100 dark:divide-slate-800">
+              <thead className="bg-slate-50 dark:bg-slate-800/80 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                <tr>
+                  <th className="px-3 py-3 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      checked={filteredDeals.length > 0 && selectedDealIds.length === filteredDeals.length}
+                      onChange={() => {
+                        if (selectedDealIds.length === filteredDeals.length && filteredDeals.length > 0) {
+                          setSelectedDealIds([]);
+                        } else {
+                          setSelectedDealIds(filteredDeals.map(d => d.id));
+                        }
+                      }}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      title="Выбрать все сделки в таблице"
+                    />
+                  </th>
+                  <th className="px-3 py-3">№ / Дата</th>
+                  <th className="px-4 py-3">Контрагент (Предприятие)</th>
+                  <th className="px-4 py-3">Контактное лицо</th>
+                  <th className="px-4 py-3">Предмет сделки</th>
+                  <th className="px-4 py-3 text-right">Сумма (₽)</th>
+                  <th className="px-4 py-3">Этап воронки</th>
+                  <th className="px-4 py-3 text-center">Вероятность</th>
+                  <th className="px-4 py-3">Ответственный</th>
+                  <th className="px-4 py-3 text-right">Действия</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+                {filteredDeals.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="px-4 py-12 text-center text-slate-400 font-medium">
+                      Сделок по выбранным фильтрам не найдено
+                    </td>
+                  </tr>
+                ) : (
+                  filteredDeals.map((deal) => {
+                    const currentStageObj = currentFunnelConfig.stages.find(s => s.id === deal.stage) || currentFunnelConfig.stages[0];
+                    const stageTheme = getStageTheme(currentStageObj);
+                    const isSelected = selectedDealIds.includes(deal.id);
+                    return (
+                      <tr 
+                        key={deal.id}
+                        onClick={() => setSelectedDeal(deal)}
+                        className={`hover:bg-blue-50/50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors ${
+                          isSelected ? 'bg-blue-50/70 dark:bg-blue-950/40' : ''
+                        }`}
+                      >
+                        <td className="px-3 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {
+                              setSelectedDealIds(prev =>
+                                prev.includes(deal.id) ? prev.filter(x => x !== deal.id) : [...prev, deal.id]
+                              );
+                            }}
+                            className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{deal.id}</span>
+                          <div className="text-[10px] text-slate-400 mt-0.5">{(deal as any).date || (deal.createdAt ? new Date(deal.createdAt).toLocaleDateString('ru-RU') : 'Недавно')}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="font-bold text-slate-900 dark:text-white max-w-[220px] truncate" title={deal.companyName || deal.customerName}>
+                            {deal.companyName || deal.customerName}
+                          </div>
+                          {deal.inn && <div className="text-[10px] text-slate-400 font-mono">ИНН: {deal.inn}</div>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-slate-800 dark:text-slate-200 font-medium truncate max-w-[160px]">{deal.customerName || '—'}</div>
+                          {deal.phone && <div className="text-[10px] text-slate-400">{deal.phone}</div>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-slate-700 dark:text-slate-300 max-w-[200px] truncate font-medium" title={deal.serviceType || (deal as any).catalogSelection || '—'}>
+                            {deal.serviceType || (deal as any).catalogSelection || 'Оборудование / Услуги'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-bold text-slate-900 dark:text-white font-mono">
+                            {deal.estimatedPrice ? formatCurrency(deal.estimatedPrice, deal.currency) : 'По запросу'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold border ${stageTheme.badge}`}>
+                            {currentStageObj.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                            {currentStageObj.winRate}%
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                            <User className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                            <span className="truncate max-w-[140px]">{deal.responsibleManager || 'Не назначен'}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedDeal(deal)}
+                              className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-blue-300 rounded text-xs font-bold transition-colors cursor-pointer"
+                              title="Открыть полную карточку сделки"
+                            >
+                              Открыть
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Batch Stage Modal */}
+          {isBatchStageModalOpen && (
+            <div className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-5 max-w-md w-full shadow-2xl border border-gray-200 dark:border-slate-800">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">
+                  Сменить этап для {selectedDealIds.length} сделок
+                </h4>
+                <p className="text-xs text-slate-500 mb-4">
+                  Выберите целевой этап текущей воронки, на который будут переведены выбранные сделки.
+                </p>
+                <select
+                  value={batchTargetStage}
+                  onChange={(e) => setBatchTargetStage(e.target.value)}
+                  className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-white mb-5 focus:ring-2 focus:ring-blue-500"
+                >
+                  {currentFunnelConfig.stages.map(s => (
+                    <option key={s.id} value={s.id}>{s.label} ({s.winRate}%)</option>
+                  ))}
+                </select>
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsBatchStageModalOpen(false)}
+                    className="px-3.5 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 dark:text-slate-400"
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!batchTargetStage || selectedDealIds.length === 0) return;
+                      setDeals(prev => prev.map(deal => {
+                        if (selectedDealIds.includes(deal.id)) {
+                          return { ...deal, stage: batchTargetStage, updatedAt: new Date().toISOString() };
+                        }
+                        return deal;
+                      }));
+                      showToast(`Этап обновлен для ${selectedDealIds.length} сделок`);
+                      setSelectedDealIds([]);
+                      setIsBatchStageModalOpen(false);
+                    }}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm"
+                  >
+                    Применить этап
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Batch Manager Modal */}
+          {isBatchManagerModalOpen && (
+            <div className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-5 max-w-md w-full shadow-2xl border border-gray-200 dark:border-slate-800">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">
+                  Назначить ответственного для {selectedDealIds.length} сделок
+                </h4>
+                <p className="text-xs text-slate-500 mb-4">
+                  Выберите специалиста или ведущего менеджера, который будет назначен ответственным.
+                </p>
+                <select
+                  value={batchTargetManager}
+                  onChange={(e) => setBatchTargetManager(e.target.value)}
+                  className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-white mb-5 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Скобелев А.С.">Скобелев Александр Сергеевич (TopSolid / Постпроцессоры)</option>
+                  <option value="Ярыш И.В.">Ярыш Иван Владимирович (PolyWorks / КИМ)</option>
+                  <option value="Ярыш А.В.">Ярыш Александр Владимирович (3D-сканирование)</option>
+                  <option value="Морозов В.Г.">Морозов Владимир Георгиевич (Оснастка / Штампы)</option>
+                  <option value="Ковалёв Д.М.">Ковалёв Дмитрий Михайлович (Снабжение / Договоры)</option>
+                </select>
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsBatchManagerModalOpen(false)}
+                    className="px-3.5 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 dark:text-slate-400"
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!batchTargetManager || selectedDealIds.length === 0) return;
+                      setDeals(prev => prev.map(deal => {
+                        if (selectedDealIds.includes(deal.id)) {
+                          return { ...deal, responsibleManager: batchTargetManager, updatedAt: new Date().toISOString() };
+                        }
+                        return deal;
+                      }));
+                      showToast(`Ответственный назначен для ${selectedDealIds.length} сделок`);
+                      setSelectedDealIds([]);
+                      setIsBatchManagerModalOpen(false);
+                    }}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm"
+                  >
+                    Назначить менеджера
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       </div>
       )}
       </div>
@@ -3012,8 +4040,8 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
 
       {/* 4. Full 3-Column Interactive Deal Modal */}
       {selectedDeal && (
-        <div className={`fixed inset-0 z-[200] overflow-hidden bg-black/75 backdrop-blur-xs flex items-center justify-center animate-in fade-in duration-150 ${isFullscreenDeal ? "p-0" : "p-0 sm:p-2 md:p-4"}`}>
-          <div className={`${isFullscreenDeal ? 'w-full h-full rounded-none' : 'relative w-full max-w-[1440px] h-full max-h-[96vh] sm:max-h-[92vh] rounded-lg sm:rounded-lg'} bg-white shadow-sm border border-gray-200 overflow-hidden flex flex-col`}>
+        <div className={`fixed inset-0 z-[400] overflow-hidden bg-black/75 backdrop-blur-xs flex items-center justify-center animate-in fade-in duration-150 ${isFullscreenDeal ? "p-0" : "p-0 sm:p-2 md:p-4"}`}>
+          <div className={`${isFullscreenDeal ? 'fixed inset-0 z-[401] w-screen h-screen rounded-none' : 'relative w-full max-w-[1440px] h-full max-h-[96vh] sm:max-h-[92vh] rounded-lg sm:rounded-lg'} bg-white shadow-xl border border-gray-200 overflow-hidden flex flex-col`}>
             
             {/* Modal Header */}
             <div className="sticky top-0 z-20 flex items-center justify-between p-3.5 sm:p-5 border-b border-gray-100 bg-slate-50/95 backdrop-blur-sm shrink-0 shadow-2xs">
@@ -3149,43 +4177,358 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
               
               {/* === COL 1: Клиент, ЛПР и параметры заявки (4 / 12) === */}
               <div className={`xl:col-span-4 space-y-4 ${dealModalMobileTab !== 'info' ? 'hidden lg:block' : 'block'}`}>
-                {/* Client Card */}
-                <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-2xs space-y-3.5">
-                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                    <User className="w-4 h-4 text-blue-600" /> Клиент и ЛПР
-                  </h4>
-                  
-                  <div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Контактное лицо (ЛПР)</div>
-                    <div className="text-sm font-bold text-gray-900 mt-0.5">{selectedDeal.customerName}</div>
-                  </div>
+                {/* Client Card & Company Multi-Contacts Selector */}
+                {(() => {
+                  const matchingCompanyContacts = crmContacts.filter(c => 
+                    (selectedDeal.companyId && c.companyId === selectedDeal.companyId) ||
+                    (selectedDeal.companyName && c.companyName && c.companyName.toLowerCase() === selectedDeal.companyName.toLowerCase())
+                  );
+                  const matchedComp = crmCompanies.find(c => 
+                    (selectedDeal.companyId && c.id === selectedDeal.companyId) ||
+                    (selectedDeal.companyName && c.name.toLowerCase() === selectedDeal.companyName.toLowerCase())
+                  );
+                  const activeContact = crmContacts.find(c => c.id === selectedDeal.contactId) || matchingCompanyContacts.find(c => c.fullName === selectedDeal.customerName);
+                  const isCurrentCeo = Boolean(matchedComp?.ceoName && selectedDeal.customerName === matchedComp.ceoName);
 
-                  <div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Организация и ИНН</div>
-                    <div className="text-sm font-bold text-gray-900 flex items-center gap-1.5 mt-0.5">
-                      <Building2 className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                      <span>{selectedDeal.companyName || 'Не указано'}</span>
-                    </div>
-                    {selectedDeal.inn && (
-                      <div className="text-xs text-gray-500 mt-0.5">ИНН: <span className="font-mono">{selectedDeal.inn}</span></div>
-                    )}
-                  </div>
+                  return (
+                    <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-2xs space-y-3.5">
+                      {/* Section Header */}
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                          <User className="w-4 h-4 text-blue-600" /> Клиент и контакты предприятия
+                        </h4>
+                        {!isAddingContactInlineInDeal && !isEditingContactInlineInDeal && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              resetQuickContactForm();
+                              setIsAddingContactInlineInDeal(true);
+                            }}
+                            className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-2xs"
+                            title="Создать новое контактное лицо и привязать к этой компании и сделке"
+                          >
+                            <UserPlus className="w-3 h-3" />
+                            <span>+ Новый контакт на лету</span>
+                          </button>
+                        )}
+                      </div>
 
-                  <div className="pt-2 border-t border-gray-100 space-y-2">
-                    <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500">
-                      <Phone className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                      <a href={`tel:${selectedDeal.phone}`} className="hover:text-blue-600 font-medium truncate">
-                        {selectedDeal.phone}
-                      </a>
+                      {/* Organization Summary */}
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                          <span>Организация (Заказчик)</span>
+                          {matchingCompanyContacts.length > 0 && (
+                            <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded text-[9px] font-bold border border-emerald-200">
+                              {matchingCompanyContacts.length} контакт(ов) в базе
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                          <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
+                          <span className="truncate">{selectedDeal.companyName || 'Не указано'}</span>
+                        </div>
+                        {selectedDeal.inn && (
+                          <div className="text-[11px] text-gray-500 flex items-center gap-2">
+                            <span>ИНН: <strong className="font-mono text-gray-800">{selectedDeal.inn}</strong></span>
+                            {selectedDeal.kpp && <span>КПП: <strong className="font-mono text-gray-800">{selectedDeal.kpp}</strong></span>}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* On-the-Fly Contact Creation Form */}
+                      {isAddingContactInlineInDeal && (
+                        <div className="p-3.5 bg-blue-50/70 border-2 border-blue-300 rounded-lg space-y-2.5 animate-in fade-in zoom-in-98 duration-150 shadow-xs">
+                          <div className="flex items-center justify-between border-b border-blue-200/80 pb-1.5">
+                            <span className="text-xs font-bold text-blue-950 flex items-center gap-1.5">
+                              <UserPlus className="w-3.5 h-3.5 text-blue-700" />
+                              <span>Новый контакт для «{selectedDeal.companyName || 'Заказчика'}»</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={resetQuickContactForm}
+                              className="text-slate-400 hover:text-slate-600 p-0.5"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <div className="space-y-2 text-xs">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">
+                                ФИО контактного лица <span className="text-rose-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                value={quickContactForm.fullName}
+                                onChange={(e) => setQuickContactForm(prev => ({ ...prev, fullName: e.target.value }))}
+                                placeholder="Например: Иванов Сергей Петрович"
+                                className="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-md text-xs font-semibold focus:border-blue-500 outline-none"
+                                autoFocus
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">
+                                  Должность
+                                </label>
+                                <input
+                                  type="text"
+                                  value={quickContactForm.position}
+                                  onChange={(e) => setQuickContactForm(prev => ({ ...prev, position: e.target.value }))}
+                                  placeholder="Главный метролог / Инженер"
+                                  className="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-md text-xs focus:border-blue-500 outline-none"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">
+                                  Подразделение / Цех
+                                </label>
+                                <input
+                                  type="text"
+                                  value={quickContactForm.department}
+                                  onChange={(e) => setQuickContactForm(prev => ({ ...prev, department: e.target.value }))}
+                                  placeholder="ОТК / Лаборатория КИМ"
+                                  className="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-md text-xs focus:border-blue-500 outline-none"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">
+                                  Телефон
+                                </label>
+                                <input
+                                  type="text"
+                                  value={quickContactForm.workPhone}
+                                  onChange={(e) => setQuickContactForm(prev => ({ ...prev, workPhone: e.target.value }))}
+                                  placeholder="+7 (846) 200-00-00"
+                                  className="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-md text-xs focus:border-blue-500 outline-none"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">
+                                  Email
+                                </label>
+                                <input
+                                  type="email"
+                                  value={quickContactForm.email}
+                                  onChange={(e) => setQuickContactForm(prev => ({ ...prev, email: e.target.value }))}
+                                  placeholder="metrolog@zavod.ru"
+                                  className="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-md text-xs focus:border-blue-500 outline-none"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 pt-1">
+                              <label className="flex items-center gap-1.5 text-xs text-slate-800 font-semibold cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={quickContactForm.isDecisionMaker}
+                                  onChange={(e) => setQuickContactForm(prev => ({ ...prev, isDecisionMaker: e.target.checked }))}
+                                  className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300 cursor-pointer"
+                                />
+                                <span>⭐ Лицо, принимающее решения (ЛПР)</span>
+                              </label>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-blue-200">
+                              <button
+                                type="button"
+                                onClick={resetQuickContactForm}
+                                className="px-3 py-1 bg-white border border-gray-300 hover:bg-gray-100 text-slate-600 text-xs font-bold rounded-md cursor-pointer"
+                              >
+                                Отмена
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleCreateContactForSelectedDeal}
+                                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-md flex items-center gap-1 shadow-2xs cursor-pointer"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Создать и привязать</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Inline Contact Editing Mode */}
+                      {isEditingContactInlineInDeal && (
+                        <div className="p-3.5 bg-amber-50/70 border-2 border-amber-300 rounded-lg space-y-2.5 animate-in fade-in zoom-in-98 duration-150 shadow-xs">
+                          <div className="flex items-center justify-between border-b border-amber-200/80 pb-1.5">
+                            <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                              <Edit3 className="w-3.5 h-3.5 text-amber-700" />
+                              <span>Редактирование контактных данных сделки</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingContactInlineInDeal(false)}
+                              className="text-slate-400 hover:text-slate-600 p-0.5"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <div className="space-y-2 text-xs">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">
+                                ФИО контактного лица
+                              </label>
+                              <input
+                                type="text"
+                                value={editDealContactForm.customerName}
+                                onChange={(e) => setEditDealContactForm(prev => ({ ...prev, customerName: e.target.value }))}
+                                className="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-md text-xs font-semibold focus:border-amber-500 outline-none"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">
+                                Должность
+                              </label>
+                              <input
+                                type="text"
+                                value={editDealContactForm.customerPost}
+                                onChange={(e) => setEditDealContactForm(prev => ({ ...prev, customerPost: e.target.value }))}
+                                className="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-md text-xs focus:border-amber-500 outline-none"
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">
+                                  Телефон
+                                </label>
+                                <input
+                                  type="text"
+                                  value={editDealContactForm.phone}
+                                  onChange={(e) => setEditDealContactForm(prev => ({ ...prev, phone: e.target.value }))}
+                                  className="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-md text-xs focus:border-amber-500 outline-none"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">
+                                  Email
+                                </label>
+                                <input
+                                  type="email"
+                                  value={editDealContactForm.email}
+                                  onChange={(e) => setEditDealContactForm(prev => ({ ...prev, email: e.target.value }))}
+                                  className="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-md text-xs focus:border-amber-500 outline-none"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-amber-200">
+                              <button
+                                type="button"
+                                onClick={() => setIsEditingContactInlineInDeal(false)}
+                                className="px-3 py-1 bg-white border border-gray-300 hover:bg-gray-100 text-slate-600 text-xs font-bold rounded-md cursor-pointer"
+                              >
+                                Отмена
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleSaveInlineContactForDeal}
+                                className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-md flex items-center gap-1 shadow-2xs cursor-pointer"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Сохранить</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Contact Selection Dropdown (Multiple contacts of company + CEO + custom) */}
+                      {!isAddingContactInlineInDeal && !isEditingContactInlineInDeal && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                              <span>Выбор контакта компании:</span>
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingContactInlineInDeal(true)}
+                              className="text-[10px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-0.5 cursor-pointer"
+                              title="Редактировать ФИО, телефон или email"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>Редактировать</span>
+                            </button>
+                          </div>
+
+                          <select
+                            value={selectedDeal.contactId || (isCurrentCeo ? '__ceo__' : '__custom__')}
+                            onChange={(e) => handleSelectContactForSelectedDeal(e.target.value)}
+                            className="w-full p-2 text-xs bg-slate-50 border border-gray-300 rounded-lg font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                          >
+                            {/* Option for CEO */}
+                            {(matchedComp?.ceoName || selectedDeal.ceoName) && (
+                              <option value="__ceo__">
+                                👑 {matchedComp?.ceoName || selectedDeal.ceoName} — {matchedComp?.ceoPost || selectedDeal.ceoPost || 'Генеральный директор'} (Руководитель)
+                              </option>
+                            )}
+
+                            {/* Options for Company Contacts */}
+                            {matchingCompanyContacts.map(c => (
+                              <option key={c.id} value={c.id}>
+                                {c.isDecisionMaker ? '⭐' : '👤'} {c.fullName} — {c.position || 'Контактное лицо'} {c.isDecisionMaker ? '[ЛПР]' : ''}
+                              </option>
+                            ))}
+
+                            <option value="__custom__">
+                              ✏️ {selectedDeal.customerName} — {selectedDeal.customerPost || 'Контакт'} (Текущий / Вручную)
+                            </option>
+                          </select>
+
+                          {/* Active Contact Detail Card */}
+                          <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-lg space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <div className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                                  <span>{selectedDeal.customerName}</span>
+                                  {activeContact?.isDecisionMaker && (
+                                    <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-black border border-amber-200">
+                                      ЛПР
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-slate-600 font-medium mt-0.5">
+                                  {selectedDeal.customerPost || activeContact?.position || 'Контактное лицо'}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="pt-2 border-t border-blue-100/80 space-y-1.5">
+                              {selectedDeal.phone && (
+                                <div className="flex items-center gap-2 text-xs text-slate-600">
+                                  <Phone className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                                  <a href={`tel:${selectedDeal.phone}`} className="hover:text-blue-600 font-medium truncate">
+                                    {selectedDeal.phone}
+                                  </a>
+                                </div>
+                              )}
+                              {selectedDeal.email && (
+                                <div className="flex items-center gap-2 text-xs text-slate-600">
+                                  <Mail className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                                  <a href={`mailto:${selectedDeal.email}`} className="hover:text-blue-600 font-medium truncate">
+                                    {selectedDeal.email}
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500">
-                      <Mail className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                      <a href={`mailto:${selectedDeal.email}`} className="hover:text-blue-600 font-medium truncate">
-                        {selectedDeal.email}
-                      </a>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 {/* Responsible Manager Selector */}
                 <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs space-y-2.5">
@@ -3391,17 +4734,31 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                   )}
                 </div>
 
-                {/* Budget */}
-                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs flex items-center justify-between">
-                  <div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Бюджет проекта ({selectedDeal.currency || 'RUB'})</div>
-                    <div className="text-lg font-black text-gray-900 font-mono">
-                      {selectedDeal.estimatedPrice.toLocaleString('ru-RU')} {getCurrencySymbol(selectedDeal.currency)}
+                {/* Budget & VAT Mode */}
+                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-2xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Бюджет проекта ({selectedDeal.currency || 'RUB'})</div>
+                      <div className="text-lg font-black text-gray-900 font-mono">
+                        {selectedDeal.estimatedPrice.toLocaleString('ru-RU')} {getCurrencySymbol(selectedDeal.currency)}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${
+                        selectedDeal.vatMode === 'export_zero'
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                          : selectedDeal.vatMode === 'no_vat'
+                          ? 'bg-slate-100 text-slate-700 border-slate-200'
+                          : 'bg-blue-50 text-blue-700 border-blue-200'
+                      }`}>
+                        {selectedDeal.vatMode === 'export_zero' 
+                          ? 'НДС 0% (Экспорт)' 
+                          : selectedDeal.vatMode === 'no_vat' 
+                          ? 'Без НДС (УСН)' 
+                          : `НДС ${getDealEffectiveVatRate(selectedDeal)}% включен`}
+                      </span>
                     </div>
                   </div>
-                  <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg">
-                    НДС 22% включен
-                  </span>
                 </div>
 
                 {/* Manager Action Plan & Task Scheduler: Что и когда сделать */}
@@ -3551,7 +4908,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {/* Currency selector for specification */}
                       <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-gray-200" title="Выбор валюты спецификации">
                         <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Валюта:</label>
@@ -3565,6 +4922,50 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                           <option value="USD">Доллар США ($)</option>
                           <option value="EUR">Евро (€)</option>
                           <option value="CNY">Юани (¥)</option>
+                        </select>
+                      </div>
+
+                      {/* VAT Mode & Rate selector for deal specification */}
+                      <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-gray-200" title="Режим и ставка НДС по сделке">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">НДС:</label>
+                        <select
+                          value={selectedDeal.vatMode === 'custom' ? `custom_${selectedDeal.vatRate ?? 22}` : (selectedDeal.vatMode || 'standard')}
+                          disabled={!canEditDeals}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === 'standard') {
+                              handleUpdateDealVat(selectedDeal.id, 'standard', crmSettings?.defaultVatRate ?? 22);
+                            } else if (val === 'export_zero') {
+                              handleUpdateDealVat(selectedDeal.id, 'export_zero', 0);
+                            } else if (val === 'no_vat') {
+                              handleUpdateDealVat(selectedDeal.id, 'no_vat', 0);
+                            } else if (val === 'custom_20') {
+                              handleUpdateDealVat(selectedDeal.id, 'custom', 20);
+                            } else if (val === 'custom_10') {
+                              handleUpdateDealVat(selectedDeal.id, 'custom', 10);
+                            } else if (val === 'custom_prompt') {
+                              const input = prompt('Введите произвольную ставку НДС в % (например: 5, 7, 10, 18, 20):', String(selectedDeal.vatRate ?? 20));
+                              if (input !== null) {
+                                const parsed = parseFloat(input);
+                                if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
+                                  handleUpdateDealVat(selectedDeal.id, 'custom', parsed);
+                                } else {
+                                  showToast('Укажите корректный процент от 0 до 100');
+                                }
+                              }
+                            }
+                          }}
+                          className="bg-transparent text-xs font-bold text-gray-800 cursor-pointer outline-none"
+                        >
+                          <option value="standard">НДС {crmSettings?.defaultVatRate ?? 22}% (РФ)</option>
+                          <option value="custom_20">НДС 20%</option>
+                          <option value="custom_10">НДС 10%</option>
+                          <option value="export_zero">НДС 0% (Экспорт)</option>
+                          <option value="no_vat">Без НДС (УСН)</option>
+                          {selectedDeal.vatMode === 'custom' && selectedDeal.vatRate !== 20 && selectedDeal.vatRate !== 10 && (
+                            <option value={`custom_${selectedDeal.vatRate}`}>НДС {selectedDeal.vatRate}% (Своя)</option>
+                          )}
+                          <option value="custom_prompt">⚙️ Другая ставка %...</option>
                         </select>
                       </div>
 
@@ -4293,10 +5694,26 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
 
                   {/* Specification Total Summary Footer: 3 Required Lines */}
                   {selectedDeal.items && selectedDeal.items.length > 0 && (() => {
+                    const vRate = getDealEffectiveVatRate(selectedDeal);
+                    const isNoVat = selectedDeal.vatMode === 'no_vat';
+                    const isExportZero = selectedDeal.vatMode === 'export_zero';
+
                     const totalWithoutVat = selectedDeal.items.reduce((acc, it) => acc + (it.quantity * it.price), 0);
-                    const vat22 = Math.round(totalWithoutVat * 0.22);
-                    const totalWithVat22 = totalWithoutVat + vat22;
+                    const vatAmount = (isNoVat || isExportZero) ? 0 : Math.round(totalWithoutVat * (vRate / 100));
+                    const totalWithVat = totalWithoutVat + vatAmount;
                     const curSym = getCurrencySymbol(selectedDeal.currency);
+
+                    const vatLabel = isExportZero 
+                      ? 'НДС 0% (Экспорт / ст. 164 НК РФ):' 
+                      : isNoVat 
+                      ? 'НДС (не облагается / УСН):' 
+                      : `В том числе НДС ${vRate}%:`;
+
+                    const totalLabel = isExportZero
+                      ? 'ИТОГО с учетом НДС 0% (Экспорт):'
+                      : isNoVat
+                      ? 'ИТОГО (без НДС):'
+                      : `ИТОГО с учетом НДС ${vRate}%:`;
 
                     return (
                       <div className="pt-3 border-t border-gray-200 space-y-2 bg-slate-50/90 -mx-5 -mb-5 p-4 rounded-b-2xl">
@@ -4307,15 +5724,15 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-xs text-slate-500">
-                          <span className="font-semibold text-slate-500">В том числе НДС 22%:</span>
+                          <span className="font-semibold text-slate-500">{vatLabel}</span>
                           <span className="font-bold text-blue-700 font-mono">
-                            {vat22.toLocaleString('ru-RU')} {curSym}
+                            {vatAmount > 0 ? `${vatAmount.toLocaleString('ru-RU')} ${curSym}` : `0 ${curSym}`}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-sm pt-2 border-t border-gray-200">
-                          <span className="font-black text-gray-900">ИТОГО с учетом НДС 22%:</span>
+                          <span className="font-black text-gray-900">{totalLabel}</span>
                           <span className="font-black text-blue-900 text-base font-mono">
-                            {totalWithVat22.toLocaleString('ru-RU')} {curSym}
+                            {totalWithVat.toLocaleString('ru-RU')} {curSym}
                           </span>
                         </div>
                       </div>
@@ -4453,7 +5870,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
 
       {/* 5. Loss / Cancellation Modal with Reasons */}
       {isLossModalOpen && selectedDeal && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-start justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[600] bg-black/60 backdrop-blur-xs flex items-start justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-sm border border-gray-200 space-y-4">
             <div className="flex items-center gap-3 text-rose-600">
               <div className="p-2 rounded-lg bg-rose-100">
@@ -4510,7 +5927,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
 
       {/* 6. Return to Work Modal */}
       {isReturnModalOpen && selectedDeal && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-start justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[600] bg-black/60 backdrop-blur-xs flex items-start justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-sm border border-gray-200 space-y-4">
             <div className="flex items-center gap-3 text-amber-600">
               <div className="p-2 rounded-lg bg-amber-100">
@@ -4567,7 +5984,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
 
       {/* 7. New Deal Modal */}
       {isNewDealModalOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-start justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-xs flex items-start justify-center p-4 overflow-y-auto">
           <form onSubmit={handleCreateNewDeal} className="bg-white rounded-lg p-6 max-w-lg w-full shadow-sm border border-gray-200 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
@@ -4582,53 +5999,389 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Организация <span className="text-red-500">*</span></label>
-                <input 
-                  type="text"
-                  required
-                  placeholder="ПАО «Авиаагрегат»"
-                  value={newDealForm.companyName}
-                  onChange={(e) => setNewDealForm({...newDealForm, companyName: e.target.value})}
-                  className="w-full p-2.5 text-xs bg-slate-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none mt-1"
-                />
+            {/* 1. Organization with CRM & DaData Auto-complete */}
+            <div className="space-y-1.5" ref={companyDropdownRef}>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Организация (Заказчик)</span>
+                  <span className="text-red-500">*</span>
+                </label>
+                {newDealForm.companyId && (
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-semibold border border-emerald-200">
+                    ✓ Связано с базой
+                  </span>
+                )}
               </div>
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Контактное лицо (ЛПР) <span className="text-red-500">*</span></label>
-                <input 
-                  type="text"
-                  required
-                  placeholder="Иванов Сергей"
-                  value={newDealForm.customerName}
-                  onChange={(e) => setNewDealForm({...newDealForm, customerName: e.target.value})}
-                  className="w-full p-2.5 text-xs bg-slate-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none mt-1"
-                />
+
+              <div className="relative">
+                <div className="flex gap-1.5">
+                  <div className="relative flex-1">
+                    <input 
+                      type="text"
+                      required
+                      placeholder="Название компании или ИНН (например, ПАО «ОДК» или 6312004455)"
+                      value={newDealForm.companyName}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewDealForm(prev => ({ 
+                          ...prev, 
+                          companyName: val,
+                          companyId: prev.companyName === val ? prev.companyId : ''
+                        }));
+                        if (val.length >= 2) {
+                          setIsCompanyDropdownOpen(true);
+                        }
+                      }}
+                      onFocus={() => {
+                        if (crmCompanies.length > 0 || dadataDealResults.length > 0) {
+                          setIsCompanyDropdownOpen(true);
+                        }
+                      }}
+                      className="w-full p-2.5 pr-8 text-xs bg-slate-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none font-medium"
+                    />
+                    {newDealForm.companyName && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewDealForm(prev => ({
+                            ...prev,
+                            companyId: '',
+                            companyName: '',
+                            inn: '',
+                            kpp: '',
+                            address: '',
+                            ceoName: '',
+                            ceoPost: 'Генеральный директор',
+                            customerName: '',
+                            customerPost: '',
+                            contactId: '',
+                            phone: '',
+                            email: ''
+                          }));
+                          setDadataDealResults([]);
+                          setSelectedContactMode('custom');
+                        }}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-slate-600 p-0.5"
+                        title="Очистить"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* DaData Search Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleSearchDadataForDeal()}
+                    disabled={isSearchingDadataDeal || !newDealForm.companyName.trim()}
+                    className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shrink-0"
+                    title="Поиск реквизитов и руководства в ЕГРЮЛ через DaData"
+                  >
+                    {isSearchingDadataDeal ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Globe className="w-3.5 h-3.5 text-blue-600" />
+                    )}
+                    <span>DaData / ЕГРЮЛ</span>
+                  </button>
+                </div>
+
+                {/* Company Dropdown List (CRM & DaData) */}
+                {isCompanyDropdownOpen && (
+                  <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden max-h-72 overflow-y-auto animate-in fade-in slide-in-from-top-1">
+                    {/* 1. CRM Database matches */}
+                    {crmCompanies.filter(c => 
+                      !newDealForm.companyName.trim() ||
+                      c.name.toLowerCase().includes(newDealForm.companyName.toLowerCase()) ||
+                      (c.inn && c.inn.includes(newDealForm.companyName.trim()))
+                    ).length > 0 && (
+                      <div className="p-1">
+                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 rounded flex items-center justify-between">
+                          <span>🏢 Компании из базы CRM</span>
+                          <span>{crmCompanies.length} в базе</span>
+                        </div>
+                        {crmCompanies
+                          .filter(c => 
+                            !newDealForm.companyName.trim() ||
+                            c.name.toLowerCase().includes(newDealForm.companyName.toLowerCase()) ||
+                            (c.inn && c.inn.includes(newDealForm.companyName.trim()))
+                          )
+                          .slice(0, 5)
+                          .map((comp) => {
+                            const contCount = crmContacts.filter(ct => ct.companyId === comp.id).length;
+                            return (
+                              <button
+                                key={comp.id}
+                                type="button"
+                                onClick={() => selectCrmCompanyForDeal(comp)}
+                                className="w-full text-left p-2.5 hover:bg-blue-50 rounded-lg transition-colors border-b border-gray-50 last:border-0 flex items-start justify-between gap-2"
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-bold text-xs text-gray-900 truncate">{comp.name}</div>
+                                  <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
+                                    {comp.inn && <span>ИНН: {comp.inn}</span>}
+                                    {comp.ceoName && <span>• Рук: {comp.ceoName}</span>}
+                                  </div>
+                                </div>
+                                <div className="text-right shrink-0">
+                                  <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">
+                                    CRM
+                                  </span>
+                                  {contCount > 0 && (
+                                    <div className="text-[9px] text-slate-400 mt-0.5">
+                                      {contCount} конт.
+                                    </div>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
+                      </div>
+                    )}
+
+                    {/* 2. DaData suggestions */}
+                    {dadataDealResults.length > 0 && (
+                      <div className="p-1 border-t border-gray-100">
+                        <div className="px-3 py-1 text-[10px] font-bold text-blue-800 uppercase tracking-wider bg-blue-50 rounded flex items-center justify-between">
+                          <span>🌐 Найдено в ЕГРЮЛ (DaData)</span>
+                          <span>{dadataDealResults.length}</span>
+                        </div>
+                        {dadataDealResults.map((sug, idx) => (
+                          <button
+                            key={`dadata_${idx}`}
+                            type="button"
+                            onClick={() => selectDadataCompanyForDeal(sug)}
+                            className="w-full text-left p-2.5 hover:bg-blue-50 rounded-lg transition-colors border-b border-gray-50 last:border-0 flex items-start justify-between gap-2"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="font-bold text-xs text-gray-900 truncate">{sug.value}</div>
+                              <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
+                                {sug.data?.inn && <span>ИНН: {sug.data.inn}</span>}
+                                {sug.data?.management?.name && <span>• Рук: {sug.data.management.name}</span>}
+                              </div>
+                            </div>
+                            <span className="text-[9px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold shrink-0">
+                              ЕГРЮЛ
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Footer / Manual option */}
+                    <div className="p-2 bg-slate-50 border-t border-gray-100 flex items-center justify-between text-[11px]">
+                      <span className="text-slate-500">
+                        {dadataDealStatus || 'Выберите из списка или введите данные вручную'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsCompanyDropdownOpen(false)}
+                        className="text-blue-600 font-bold hover:underline"
+                      >
+                        Готово
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* Selected Company Details Card */}
+              {(newDealForm.inn || newDealForm.ceoName || newDealForm.address) && (
+                <div className="p-2.5 bg-blue-50/60 border border-blue-200/80 rounded-lg text-xs space-y-1 text-slate-700">
+                  <div className="flex flex-wrap items-center justify-between gap-1">
+                    <span className="font-bold text-slate-900 text-[11px]">
+                      {newDealForm.companyName}
+                    </span>
+                    {newDealForm.inn && (
+                      <span className="text-[10px] bg-white px-2 py-0.5 rounded border border-blue-200 font-mono font-bold text-blue-900">
+                        ИНН: {newDealForm.inn} {newDealForm.kpp ? `| КПП: ${newDealForm.kpp}` : ''}
+                      </span>
+                    )}
+                  </div>
+                  {newDealForm.ceoName && (
+                    <div className="text-[11px] text-slate-600 flex items-center gap-1">
+                      <span className="text-slate-400">Руководитель:</span>
+                      <span className="font-semibold text-slate-800">{newDealForm.ceoName}</span>
+                      <span className="text-slate-400">({newDealForm.ceoPost || 'Генеральный директор'})</span>
+                    </div>
+                  )}
+                  {newDealForm.address && (
+                    <div className="text-[10px] text-slate-500 truncate" title={newDealForm.address}>
+                      {newDealForm.address}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Телефон <span className="text-red-500">*</span></label>
-                <input 
-                  type="text"
-                  required
-                  placeholder="+7 (846) 000-00-00"
-                  value={newDealForm.phone}
-                  onChange={(e) => setNewDealForm({...newDealForm, phone: e.target.value})}
-                  className="w-full p-2.5 text-xs bg-slate-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none mt-1"
-                />
+            {/* 2. Contact Person & Selector (CEO vs Company Contacts vs Custom) */}
+            <div className="space-y-2 p-3 bg-slate-50/80 border border-gray-200 rounded-lg">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                <label className="text-[11px] font-bold text-slate-700 uppercase flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Контактное лицо (Получатель / ЛПР)</span>
+                  <span className="text-red-500">*</span>
+                </label>
+                
+                {/* Mode Selector */}
+                <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-gray-200 self-start sm:self-auto">
+                  {newDealForm.ceoName && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedContactMode('ceo');
+                        setNewDealForm(prev => ({
+                          ...prev,
+                          customerName: prev.ceoName || prev.customerName,
+                          customerPost: prev.ceoPost || 'Генеральный директор',
+                          contactId: ''
+                        }));
+                      }}
+                      className={`px-2 py-1 rounded text-[10px] font-bold transition-all flex items-center gap-1 ${
+                        selectedContactMode === 'ceo'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span>👑 Руководитель</span>
+                    </button>
+                  )}
+
+                  {availableDealContacts.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedContactMode('crm_contact');
+                        const first = availableDealContacts[0];
+                        if (first) {
+                          setNewDealForm(prev => ({
+                            ...prev,
+                            customerName: first.fullName,
+                            customerPost: first.position || 'Контактное лицо',
+                            contactId: first.id,
+                            phone: first.workPhone || first.mobilePhone || prev.phone,
+                            email: first.email || prev.email
+                          }));
+                        }
+                      }}
+                      className={`px-2 py-1 rounded text-[10px] font-bold transition-all flex items-center gap-1 ${
+                        selectedContactMode === 'crm_contact'
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Users className="w-3 h-3" />
+                      <span>Контакты ({availableDealContacts.length})</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedContactMode('custom');
+                      setNewDealForm(prev => ({ ...prev, contactId: '' }));
+                    }}
+                    className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${
+                      selectedContactMode === 'custom'
+                        ? 'bg-slate-700 text-white shadow-xs'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    ✏️ Вручную
+                  </button>
+                </div>
               </div>
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Email <span className="text-red-500">*</span></label>
-                <input 
-                  type="email"
-                  required
-                  placeholder="contact@company.ru"
-                  value={newDealForm.email}
-                  onChange={(e) => setNewDealForm({...newDealForm, email: e.target.value})}
-                  className="w-full p-2.5 text-xs bg-slate-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none mt-1"
-                />
+
+              {/* If CRM Contacts mode: Dropdown to pick from company contacts */}
+              {selectedContactMode === 'crm_contact' && availableDealContacts.length > 0 && (
+                <div className="p-2 bg-indigo-50/70 border border-indigo-200 rounded-lg space-y-1.5">
+                  <label className="text-[10px] font-bold text-indigo-900 uppercase">
+                    Выберите контактное лицо компании:
+                  </label>
+                  <select
+                    value={newDealForm.contactId || availableDealContacts[0]?.id}
+                    onChange={(e) => {
+                      const selId = e.target.value;
+                      const cont = availableDealContacts.find(c => c.id === selId);
+                      if (cont) {
+                        setNewDealForm(prev => ({
+                          ...prev,
+                          contactId: cont.id,
+                          customerName: cont.fullName,
+                          customerPost: cont.position || 'Контактное лицо',
+                          phone: cont.workPhone || cont.mobilePhone || prev.phone,
+                          email: cont.email || prev.email
+                        }));
+                      }
+                    }}
+                    className="w-full p-2 text-xs bg-white border border-indigo-300 rounded-md font-bold text-indigo-950 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  >
+                    {availableDealContacts.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.fullName} — {c.position || 'Контакт'} {c.isDecisionMaker ? '★ ЛПР' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Contact Form Fields: Name, Post, Phone, Email */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">
+                    ФИО контактного лица <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text"
+                    required
+                    placeholder="Иванов Сергей Викторович"
+                    value={newDealForm.customerName}
+                    onChange={(e) => setNewDealForm({...newDealForm, customerName: e.target.value})}
+                    className="w-full p-2.5 text-xs bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mt-0.5 font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">
+                    Должность
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="Главный метролог / Начальник цеха"
+                    value={newDealForm.customerPost}
+                    onChange={(e) => setNewDealForm({...newDealForm, customerPost: e.target.value})}
+                    className="w-full p-2.5 text-xs bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mt-0.5 font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">
+                    Телефон <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text"
+                    required
+                    placeholder="+7 (846) 000-00-00"
+                    value={newDealForm.phone}
+                    onChange={(e) => setNewDealForm({...newDealForm, phone: e.target.value})}
+                    className="w-full p-2.5 text-xs bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mt-0.5 font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="email"
+                    required
+                    placeholder="contact@company.ru"
+                    value={newDealForm.email}
+                    onChange={(e) => setNewDealForm({...newDealForm, email: e.target.value})}
+                    className="w-full p-2.5 text-xs bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mt-0.5 font-medium"
+                  />
+                </div>
               </div>
             </div>
 
@@ -4766,8 +6519,57 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
                   placeholder="Например: Поставка КИМ Mitutoyo CRYSTA-Apex S + ПО PolyWorks"
                   value={newDealForm.serviceType}
                   onChange={(e) => setNewDealForm({...newDealForm, serviceType: e.target.value})}
-                  className="w-full p-2.5 text-xs bg-slate-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none mt-1"
+                  className={`w-full p-2.5 text-xs rounded-lg focus:bg-white focus:ring-2 outline-none mt-1 ${
+                    duplicateExistingDeal 
+                      ? 'border-2 border-rose-400 bg-rose-50/50 focus:ring-rose-500' 
+                      : 'bg-slate-50 border border-gray-300 focus:ring-blue-500'
+                  }`}
                 />
+              </div>
+            )}
+
+            {/* Duplicate Deal Alert Card */}
+            {duplicateExistingDeal && (
+              <div className="p-3.5 bg-rose-50 border-2 border-rose-300 rounded-xl text-xs space-y-2 animate-in fade-in slide-in-from-top-1 text-rose-950 shadow-sm">
+                <div className="flex items-center gap-2 font-bold text-rose-800">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>Сделка с таким наименованием уже существует для данной компании!</span>
+                </div>
+                <p className="text-[11px] text-rose-700 leading-relaxed">
+                  В системе уже зарегистрирована аналогичная сделка для контрагента <strong>«{duplicateExistingDeal.companyName || newDealForm.companyName}»</strong>:
+                </p>
+                <div className="p-2.5 bg-white/95 rounded-lg border border-rose-200 text-[11px] grid grid-cols-1 sm:grid-cols-2 gap-1.5 shadow-2xs">
+                  <div>
+                    <span className="text-slate-500">ID сделки:</span> <strong className="font-mono text-rose-950">{duplicateExistingDeal.id}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Воронка:</span> <span className="font-semibold text-slate-800">{activeFunnels[duplicateExistingDeal.funnel]?.name || duplicateExistingDeal.funnel}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Этап:</span> <span className="font-semibold text-rose-900">{activeFunnels[duplicateExistingDeal.funnel]?.stages.find(s => s.id === duplicateExistingDeal.stage)?.label || duplicateExistingDeal.stage}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Ответственный:</span> <span className="font-semibold text-slate-800">{duplicateExistingDeal.responsibleManager || duplicateExistingDeal.createdByManager || 'Не назначен'}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
+                  <span className="text-[10px] text-rose-700 font-bold flex items-center gap-1">
+                    <span>⛔ Добавление заблокировано во избежание дублирования</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsNewDealModalOpen(false);
+                      setSelectedDeal(duplicateExistingDeal);
+                      setActiveFunnel(duplicateExistingDeal.funnel);
+                      showToast(`Открыта существующая сделка ${duplicateExistingDeal.id}`);
+                    }}
+                    className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-md text-[10px] font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Перейти к сделке {duplicateExistingDeal.id}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -4865,9 +6667,22 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
               </button>
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-blue-600/20"
+                disabled={Boolean(duplicateExistingDeal)}
+                className={`px-5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-md flex items-center gap-1.5 ${
+                  duplicateExistingDeal 
+                    ? 'bg-gray-200 text-gray-400 border border-gray-300 cursor-not-allowed shadow-none' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20 cursor-pointer active:scale-95'
+                }`}
+                title={duplicateExistingDeal ? 'Сделка с таким наименованием уже существует для данной компании' : 'Создать сделку'}
               >
-                Создать сделку
+                {duplicateExistingDeal ? (
+                  <>
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Дубликат сделки (заблокировано)</span>
+                  </>
+                ) : (
+                  <span>Создать сделку</span>
+                )}
               </button>
             </div>
           </form>
@@ -4906,7 +6721,7 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
 
       {/* 8. Safe Delete Deal Confirmation Modal (No window.confirm, 100% iframe-safe) */}
       {dealToDelete && (
-        <div className="fixed inset-0 z-[250] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[800] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 max-w-md w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
             <div className="w-12 h-12 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
               <Trash2 className="w-6 h-6" />
@@ -4945,6 +6760,21 @@ export const CrmPanel: React.FC<CrmPanelProps> = ({ activeTab = 'funnels' }) => 
             </div>
           </div>
         </div>
+      )}
+
+      {/* 9. Sales Funnel Stages Editor Modal */}
+      {isStageEditorOpen && (
+        <FunnelStagesEditorModal
+          initialFunnelId={activeFunnel}
+          onClose={() => setIsStageEditorOpen(false)}
+        />
+      )}
+
+      {/* 10. Global CRM VAT & Tax Settings Modal */}
+      {isVatSettingsOpen && (
+        <CrmVatSettingsModal
+          onClose={() => setIsVatSettingsOpen(false)}
+        />
       )}
     </div>
   );

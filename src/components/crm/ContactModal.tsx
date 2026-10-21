@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, 
   User, 
@@ -16,6 +16,9 @@ import {
   Maximize
 } from 'lucide-react';
 import { CrmContact, CrmCompany, ContactInteraction } from '../../types';
+import { useFormAutoSave } from '../../hooks/useFormAutoSave';
+import { AutoSaveDraftBanner } from '../common/AutoSaveDraftBanner';
+import { useModalStack } from '../../hooks/useModalStack';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -57,6 +60,13 @@ export const ContactModal: React.FC<ContactModalProps> = ({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { containerRef, zIndex } = useModalStack({
+    id: `crm-contact-${contact?.id || 'new'}`,
+    isOpen,
+    onClose,
+    baseZIndex: 550,
+  });
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -84,6 +94,27 @@ export const ContactModal: React.FC<ContactModalProps> = ({
     setInteractionComment('');
     setError(null);
   }, [isOpen, contact, initialCompanyId]);
+
+  const contactFormData = useMemo(() => ({
+    companyId, fullName, position, department, workPhone, mobilePhone, email, isDecisionMaker, notes
+  }), [companyId, fullName, position, department, workPhone, mobilePhone, email, isDecisionMaker, notes]);
+
+  const autoSave = useFormAutoSave({
+    formKey: `contact_modal_${contact?.id || 'new'}`,
+    formData: contactFormData,
+    enabled: isOpen,
+    onRestore: (saved) => {
+      if (saved.companyId) setCompanyId(saved.companyId);
+      if (saved.fullName) setFullName(saved.fullName);
+      if (saved.position) setPosition(saved.position);
+      if (saved.department) setDepartment(saved.department);
+      if (saved.workPhone) setWorkPhone(saved.workPhone);
+      if (saved.mobilePhone) setMobilePhone(saved.mobilePhone);
+      if (saved.email) setEmail(saved.email);
+      if (saved.isDecisionMaker !== undefined) setIsDecisionMaker(saved.isDecisionMaker);
+      if (saved.notes) setNotes(saved.notes);
+    }
+  });
 
   if (!isOpen) return null;
 
@@ -114,6 +145,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
         isDecisionMaker,
         notes: notes.trim(),
       });
+      autoSave.clearDraft();
       onClose();
     } catch (err: any) {
       setError(err.message || 'Ошибка сохранения контакта');
@@ -140,11 +172,19 @@ export const ContactModal: React.FC<ContactModalProps> = ({
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-[120] flex items-start justify-center bg-black/60 p-4 backdrop-blur-xs overflow-y-auto">
+    <div 
+      className={`fixed inset-0 flex items-start justify-center bg-black/70 p-2 sm:p-4 backdrop-blur-xs overflow-y-auto ${isFullscreen ? 'p-0' : ''}`}
+      style={{ zIndex }}
+    >
       <div 
+        ref={containerRef}
+        tabIndex={-1}
         id="contact-modal"
-        className={`${isFullscreen ? 'max-w-none w-full h-full min-h-screen rounded-none' : 'max-w-2xl rounded-lg max-h-[92vh] my-4 sm:my-8'} bg-white shadow-sm border border-gray-100 w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200`}
+        className={`${isFullscreen ? 'fixed inset-0 max-w-none w-screen h-screen rounded-none' : 'relative max-w-2xl rounded-lg max-h-[92vh] my-4 sm:my-8'} bg-white shadow-xl border border-gray-200 w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200`}
+        style={isFullscreen ? { zIndex: zIndex + 1 } : undefined}
       >
         {/* Header */}
         <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-slate-50/80">
@@ -185,6 +225,17 @@ export const ContactModal: React.FC<ContactModalProps> = ({
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* AutoSave Draft Banner */}
+        <div className="px-4 py-1.5 bg-slate-50 border-b border-gray-100">
+          <AutoSaveDraftBanner
+            hasDraft={autoSave.hasDraft}
+            lastSavedAt={autoSave.lastSavedAt}
+            statusText={autoSave.statusText}
+            onRestore={autoSave.restoreDraft}
+            onClear={autoSave.clearDraft}
+          />
         </div>
 
         {/* Quick action strip */}

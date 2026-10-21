@@ -239,7 +239,7 @@ export const JSON_SCHEMAS: Record<string, SchemaDefinition> = {
   ticketCreate: {
     $id: 'https://ds-enginering.ru/schemas/ticket-create.json',
     $schema: 'http://json-schema.org/draft-07/schema#',
-    title: 'Создание инцидента / тикета техподдержки',
+    title: 'Создание инцидента / сервисной заявки техподдержки',
     description: 'Схема создания заявки на сервисное обслуживание, калибровку КИМ или техподдержку ПО',
     type: 'object',
     required: ['title', 'category', 'urgency', 'description'],

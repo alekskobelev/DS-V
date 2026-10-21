@@ -1,5 +1,536 @@
 [
   {
+    "id": "CHAT-2026-884",
+    "visitorId": "visitor-test-1790588996060",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-28T09:49:56.060Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-28T09:49:56.060Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-28T09:49:56.065Z",
+    "updatedAt": "2026-09-28T09:49:56.065Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-3906",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-28T09:49:56.065Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-993",
+    "visitorId": "visitor-test-1790588614303",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-28T09:43:34.303Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-28T09:43:34.303Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-28T09:43:34.307Z",
+    "updatedAt": "2026-09-28T09:43:34.307Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-9859",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-28T09:43:34.307Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-441",
+    "visitorId": "visitor-test-1790586976496",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-28T09:16:16.496Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-28T09:16:16.496Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-28T09:16:16.501Z",
+    "updatedAt": "2026-09-28T09:16:16.501Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-6754",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-28T09:16:16.501Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-991",
+    "visitorId": "visitor-test-1790352271524",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-25T16:04:31.524Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-25T16:04:31.524Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-25T16:04:31.528Z",
+    "updatedAt": "2026-09-25T16:04:31.528Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-1463",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-25T16:04:31.528Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-304",
+    "visitorId": "visitor-test-1790351447535",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-25T15:50:47.535Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-25T15:50:47.535Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-25T15:50:47.538Z",
+    "updatedAt": "2026-09-25T15:50:47.538Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-8818",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-25T15:50:47.538Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-225",
+    "visitorId": "visitor-test-1790349206300",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-25T15:13:26.301Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-25T15:13:26.301Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-25T15:13:26.305Z",
+    "updatedAt": "2026-09-25T15:13:26.305Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-4913",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-25T15:13:26.305Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-208",
+    "visitorId": "visitor-test-1790348093240",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-25T14:54:53.241Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-25T14:54:53.241Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-25T14:54:53.245Z",
+    "updatedAt": "2026-09-25T14:54:53.245Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-6939",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-25T14:54:53.245Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-808",
+    "visitorId": "visitor-test-1790347668207",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-25T14:47:48.207Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-25T14:47:48.207Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-25T14:47:48.217Z",
+    "updatedAt": "2026-09-25T14:47:48.217Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-3522",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-25T14:47:48.217Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-392",
+    "visitorId": "visitor-test-1790339899705",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-25T12:38:19.705Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-25T12:38:19.705Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-25T12:38:19.710Z",
+    "updatedAt": "2026-09-25T12:38:19.710Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-4504",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-25T12:38:19.710Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-059",
+    "visitorId": "visitor-test-1790338792159",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-25T12:19:52.159Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-25T12:19:52.159Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-25T12:19:52.162Z",
+    "updatedAt": "2026-09-25T12:19:52.162Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-6162",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-25T12:19:52.162Z"
+    }
+  },
+  {
+    "id": "CHAT-613403",
+    "visitorId": "vis-dv9r8ty",
+    "visitorName": "Посетитель сайта",
+    "currentPage": "home",
+    "currentPath": "/main",
+    "status": "active",
+    "messages": [
+      {
+        "id": "msg-init",
+        "sender": "engineer",
+        "text": "Здравствуйте! Я интеллектуальный инженер-консультант «ДС‑Инжиниринг».\n\nЯ знаю всё о нашем промышленном софте (TopSolid 7, PolyWorks), метрологическом оборудовании (КИМ, руки PMT, 3D-сканеры Shining 3D) и услугах 3D-контроля. Чем могу помочь?",
+        "time": "только что",
+        "suggestions": [
+          {
+            "label": "🚀 Каталог ПО TopSolid 7",
+            "actionType": "navigate",
+            "page": "software"
+          },
+          {
+            "label": "🔬 КИМ и 3D-сканеры",
+            "actionType": "navigate",
+            "page": "hardware"
+          },
+          {
+            "label": "📐 Онлайн-калькулятор сметы",
+            "actionType": "navigate",
+            "page": "services"
+          },
+          {
+            "label": "👤 Позвать менеджера",
+            "actionType": "handover"
+          }
+        ]
+      }
+    ],
+    "lastMessageText": "Здравствуйте! Я интеллектуальный инженер-консультант «ДС‑Инжиниринг».\n\nЯ знаю всё о нашем промышленном софте (TopSolid 7, PolyWorks), метрологическом оборудовании (КИМ, руки PMT, 3D-сканеры Shining 3D) и услугах 3D-контроля. Чем могу помочь?",
+    "createdAt": "2026-09-25T11:06:29.824Z",
+    "updatedAt": "2026-09-28T09:43:17.834Z",
+    "unreadByManager": true
+  },
+  {
+    "id": "CHAT-2026-297",
+    "visitorId": "visitor-test-1790331562206",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-25T10:19:22.206Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-25T10:19:22.206Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-25T10:19:22.210Z",
+    "updatedAt": "2026-09-25T10:19:22.210Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-2643",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-25T10:19:22.210Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-961",
+    "visitorId": "visitor-test-1790327193862",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-25T09:06:33.862Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-25T09:06:33.862Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-25T09:06:33.866Z",
+    "updatedAt": "2026-09-25T09:06:33.866Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-1387",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-25T09:06:33.866Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-771",
+    "visitorId": "visitor-test-1790326106625",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-25T08:48:26.625Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-25T08:48:26.625Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-25T08:48:26.629Z",
+    "updatedAt": "2026-09-25T08:48:26.629Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-4456",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-25T08:48:26.629Z"
+    }
+  },
+  {
+    "id": "CHAT-2026-755",
+    "visitorId": "visitor-test-1790324604077",
+    "visitorName": "Григорьев Роман Валерьевич",
+    "contactPhone": "+7 (925) 777-88-99",
+    "contactEmail": "r.grigoriev@turbomash.ru",
+    "companyName": "НПП «Турбо-Маш»",
+    "currentPage": "Каталог оборудования / Портативные КИМ",
+    "currentPath": "/hardware/pmt-alpha-arm",
+    "status": "handover_requested",
+    "messages": [
+      {
+        "id": "1",
+        "sender": "user",
+        "text": "Здравствуйте, есть ли в наличии рука с вылетом 3.0 метра?",
+        "timestamp": "2026-09-25T08:23:24.077Z"
+      },
+      {
+        "id": "2",
+        "sender": "system",
+        "text": "Здравствуйте! Да, модель PMT Alpha Arm 3.0m в наличии на демонстрационном складе в Москве.",
+        "timestamp": "2026-09-25T08:23:24.077Z"
+      }
+    ],
+    "lastMessageText": "Интересует комплект поставки КИМ PMT Alpha Arm со сканером RS6 и обучение 2 операторов.",
+    "createdAt": "2026-09-25T08:23:24.081Z",
+    "updatedAt": "2026-09-25T08:23:24.081Z",
+    "unreadByManager": true,
+    "leadId": "RFQ-2026-CH-9215",
+    "urgentAlert": true,
+    "metadata": {
+      "alertDispatched": true,
+      "alertedAt": "2026-09-25T08:23:24.081Z"
+    }
+  },
+  {
     "id": "CHAT-2026-623",
     "visitorId": "visitor-test-1789918646728",
     "visitorName": "Григорьев Роман Валерьевич",

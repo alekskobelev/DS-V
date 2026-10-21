@@ -13,10 +13,17 @@ import {
   ShieldCheck, 
   Clock,
   Layers,
-  Sparkles,
+  Target,
   Box,
   Eye,
-  Link2
+  Link2,
+  UserCheck,
+  Phone,
+  Mail,
+  MapPin,
+  FileCheck2,
+  UploadCloud,
+  Lock
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { SERVICES_DATA, CASE_STUDIES } from '../data/mockData';
@@ -27,6 +34,7 @@ import { useSEO } from '../hooks/useSEO';
 import { copyToClipboard } from '../utils/clipboard';
 
 import { CadModel3DViewer } from '../components/common/CadModel3DViewer';
+import { MeshCadComparisonSlider } from '../components/common/MeshCadComparisonSlider';
 
 export const ServicesPage: React.FC = () => {
   const { customPages, services, selectedServiceId, setSelectedServiceId, openContactModal, navigateTo, siteTexts, showToast } = useApp();
@@ -52,7 +60,8 @@ export const ServicesPage: React.FC = () => {
     }
   }, [selectedServiceId]);
 
-  const activeService = services.find((s) => s.id === activeServiceId) || services[0] || SERVICES_DATA[0];
+  const servicesToUse = services && services.length > 0 ? services : SERVICES_DATA;
+  const activeService = servicesToUse.find((s) => s.id === activeServiceId) || servicesToUse[0] || SERVICES_DATA[0];
 
   const handleCopyServiceLink = async () => {
     let url = typeof window !== 'undefined' ? window.location.href : '';
@@ -66,18 +75,19 @@ export const ServicesPage: React.FC = () => {
     setTimeout(() => {
       setIsServiceCopied(false);
     }, 2500);
-    showToast('Copied!');
+    showToast('Ссылка на услугу скопирована в буфер обмена');
   };
 
   const getServiceIcon = (id: string) => {
     switch (id) {
       case '3d-scanning': return <Scan className="w-5 h-5 text-current" />;
-      case 'reverse-engineering': return <Cpu className="w-5 h-5 text-current" />;
+      case 'measurements':
       case 'parts-inspection': return <CheckCircle2 className="w-5 h-5 text-current" />;
+      case 'reverse-engineering': return <Cpu className="w-5 h-5 text-current" />;
+      case 'postprocessors-dev': return <Terminal className="w-5 h-5 text-current" />;
       case 'tooling-design': return <Wrench className="w-5 h-5 text-current" />;
       case 'cmm-service':
       case 'cmm-maintenance': return <Activity className="w-5 h-5 text-current" />;
-      case 'postprocessors-dev': return <Terminal className="w-5 h-5 text-current" />;
       default: return <Wrench className="w-5 h-5 text-current" />;
     }
   };
@@ -86,7 +96,7 @@ export const ServicesPage: React.FC = () => {
     { id: 'services-hero', label: 'Услуги' },
     { id: 'services-nav', label: 'Выбор направления' },
     { id: 'services-detail', label: 'Описание услуги' },
-    { id: 'services-viewer', label: '3D Лаборатория' },
+    { id: 'services-viewer', label: 'Интерактивный 3D-просмотрщик контроля GD&T' },
     { id: 'service-calculator', label: 'Калькулятор стоимости' },
   ];
 
@@ -105,7 +115,7 @@ export const ServicesPage: React.FC = () => {
             {siteTexts.services.bannerTitle || 'Инжиниринговые услуги и метрологический контроль'}
           </h1>
           <p className="text-xs sm:text-sm text-blue-100 leading-relaxed">
-            {siteTexts.services.bannerSubtitle || 'Главный офис в Самаре, метрологический зал в Тольятти, парк 3D-сканеров и мобильных КИМ, сертифицированные инженеры-технологи и программисты ЧПУ. Выполняем работы любой сложности с выездом по всей России.'}
+            {siteTexts.services.bannerSubtitle || 'Центральный офис в Самаре, представительство в Тольятти, парк прецизионных 3D-сканеров и мобильных КИМ, сертифицированные инженеры-технологи и программисты ЧПУ. Выполняем работы любой сложности с оперативным выездом по всей России.'}
           </p>
           <div className="pt-2 flex flex-wrap items-center gap-3 text-xs">
             <button
@@ -149,15 +159,15 @@ export const ServicesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 6 Services Navigation Selector Tabs */}
+      {/* Services Navigation Selector Tabs */}
       <div id="services-nav" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-        {SERVICES_DATA.map((srv, idx) => {
+        {servicesToUse.map((srv, idx) => {
           const navTitle = srv.id === '3d-scanning' ? '3D-сканирование деталей и объектов' :
-            srv.id === 'reverse-engineering' ? '3D-моделирование и реверс-инжиниринг' :
-            srv.id === 'parts-inspection' ? 'Контроль геометрии деталей и оснастки' :
-            srv.id === 'tooling-design' ? 'Проектирование и расчет оснастки' :
-            (srv.id === 'cmm-service' || srv.id === 'cmm-maintenance') ? 'Сервис, ремонт и калибровка КИМ' :
-            srv.id === 'postprocessors-dev' ? 'Разработка постпроцессоров ЧПУ' : srv.title;
+            srv.id === 'reverse-engineering' ? 'Обратный инжиниринг и выпуск КД' :
+            srv.id === 'parts-inspection' || srv.id === 'measurements' ? 'Контроль геометрии на КИМ и GD&T' :
+            srv.id === 'postprocessors-dev' ? 'Разработка постпроцессоров и УП ЧПУ' :
+            srv.id === 'tooling-design' ? 'Сквозное проектирование оснастки' :
+            (srv.id === 'cmm-service' || srv.id === 'cmm-maintenance') ? 'ТО, модернизация и сервис КИМ' : srv.title;
 
           const isActive = activeServiceId === srv.id;
 
@@ -233,8 +243,8 @@ export const ServicesPage: React.FC = () => {
                     ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-400 dark:border-emerald-700 shadow-xs'
                     : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
                 }`}
-                title="Copy link / Скопировать ссылку на услугу"
-                aria-label="Copy link"
+                title="Скопировать ссылку на услугу"
+                aria-label="Скопировать ссылку на услугу"
                 data-testid="copy-link-service-header"
               >
                 {isServiceCopied ? (
@@ -242,7 +252,7 @@ export const ServicesPage: React.FC = () => {
                 ) : (
                   <Link2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 )}
-                <span>{isServiceCopied ? 'Copied!' : 'Copy link'}</span>
+                <span>{isServiceCopied ? 'Скопировано!' : 'Скопировать ссылку'}</span>
               </button>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
@@ -284,20 +294,19 @@ export const ServicesPage: React.FC = () => {
                     ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-400 dark:border-emerald-700 shadow-xs'
                     : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700'
                 }`}
-                title="Copy link / Скопировать ссылку на услугу"
-                aria-label="Copy link"
+                title="Скопировать ссылку на услугу"
+                aria-label="Скопировать ссылку на услугу"
                 data-testid="copy-link-button"
               >
                 {isServiceCopied ? (
                   <>
                     <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span className="font-bold text-emerald-700 dark:text-emerald-300">Copied!</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-300">Скопировано!</span>
                   </>
                 ) : (
                   <>
                     <Link2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     <span>Скопировать ссылку</span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">Copy link</span>
                   </>
                 )}
               </button>
@@ -343,77 +352,178 @@ export const ServicesPage: React.FC = () => {
         </div>
 
         {/* Deliverables & Equipment Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100 dark:border-slate-800">
-          <div className="bg-blue-50/60 dark:bg-blue-950/30 rounded-xl p-6 border border-blue-100 dark:border-blue-900/40">
-            <h4 className="text-xs font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider mb-3">
-              Что получает заказчик по итогам:
-            </h4>
-            <ul className="space-y-2 text-xs text-slate-800 dark:text-slate-200">
-              {activeService.deliverables.map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
+        <div className="space-y-6 pt-4 border-t border-gray-100 dark:border-slate-800">
+          {/* Deliverables Formats Header Banner */}
+          <div className="bg-gradient-to-r from-blue-900/90 via-slate-900 to-slate-900 text-white rounded-xl p-4 sm:p-5 border border-blue-800/60 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <FileCheck2 className="w-4 h-4 text-cyan-400" />
+                <span className="text-xs font-mono uppercase tracking-wider text-cyan-300 font-bold">
+                  Выходная документация и форматы файлов
+                </span>
+              </div>
+              <h4 className="text-sm sm:text-base font-extrabold text-white">
+                Что вы получаете на руки по завершении работ
+              </h4>
+              <p className="text-xs text-slate-300 max-w-xl">
+                Полный комплект конструкторской и метрологической отчетности: оригинальные CAD-модели без потери точности, протоколы первого изделия FAI по ГОСТ и проект PolyWorks.
+              </p>
+            </div>
+
+            <button
+              onClick={() => openContactModal({
+                title: `Оценка чертежа или 3D-модели: ${activeService.title}`,
+                defaultService: activeService.title,
+                formType: activeService.id === 'postprocessors-dev' ? 'postprocessor' : 'service'
+              })}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition-all shrink-0 cursor-pointer"
+            >
+              <UploadCloud className="w-4 h-4" />
+              <span>Оценить ТЗ / Чертеж</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
-          <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
-            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-3">
-              Используемое оборудование и ПО:
-            </h4>
-            <ul className="space-y-2 text-xs text-slate-800 dark:text-slate-200">
-              {activeService.equipmentUsed.map((eq, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <Wrench className="w-4 h-4 text-[#F59E0B] shrink-0 mt-0.5" />
-                  <span className="font-medium">{eq}</span>
-                </li>
-              ))}
-            </ul>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-blue-50/60 dark:bg-blue-950/30 rounded-xl p-5 sm:p-6 border border-blue-100 dark:border-blue-900/40 space-y-3">
+              <h4 className="text-xs font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider flex items-center justify-between">
+                <span>Материалы на руки заказчику:</span>
+                <span className="text-[10px] font-mono font-bold bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded">
+                  {activeService.deliverables.length} позиций
+                </span>
+              </h4>
+              <ul className="space-y-2 text-xs text-slate-800 dark:text-slate-200">
+                {activeService.deliverables.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                    <span className="leading-snug">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-5 sm:p-6 border border-gray-200 dark:border-slate-700 space-y-3">
+              <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center justify-between">
+                <span>Используемое оборудование и ПО:</span>
+                <span className="text-[10px] font-mono font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded">
+                  ФГИС «АРШИН»
+                </span>
+              </h4>
+              <ul className="space-y-2 text-xs text-slate-800 dark:text-slate-200">
+                {activeService.equipmentUsed.map((eq, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <Wrench className="w-4 h-4 text-[#F59E0B] shrink-0 mt-0.5" />
+                    <span className="font-medium leading-snug">{eq}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
 
-        {/* SPECIAL 3D WEBGL CAD & METROLOGY LABORATORY SHOWCASE */}
-        {(activeService.id === '3d-scanning' || activeService.id === 'reverse-engineering' || activeService.id === 'parts-inspection') && (
-          <div id="services-viewer" className="mt-8 pt-8 border-t border-gray-200 dark:border-slate-800 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <div className="inline-flex items-center gap-2 px-4 py-1 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 rounded-full text-xs font-semibold mb-2 border border-blue-200 dark:border-blue-800">
-                  <Scan className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 animate-pulse" />
-                  <span>Интерактивный 3D-модуль оцифровки и контроля геометрии (WebGL)</span>
+        {/* Responsible Specialists & Service Contacts */}
+        {((activeService.contacts && activeService.contacts.length > 0) || activeService.responsiblePerson || activeService.slaResponseTime || activeService.workLocationNote) && (
+          <div className="bg-gradient-to-br from-blue-50/70 via-slate-50 to-white dark:from-slate-800/80 dark:to-slate-900 rounded-xl p-6 border border-blue-100 dark:border-slate-700 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-blue-100 dark:border-slate-700 pb-3">
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  Ответственные инженеры и прямые контакты по направлению
+                </h4>
+              </div>
+              {activeService.slaResponseTime && (
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-100/80 dark:bg-blue-950/80 px-3 py-1 rounded-full">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>{activeService.slaResponseTime}</span>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  Интерактивный 3D-просмотрщик моделей, сеток сканирования и карт отклонений
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-3xl mt-1">
-                  Оцените качество оцифровки в реальном времени: вращайте модель, переключайте режимы («CAD-модель», «Сетка 3D-скана», «Метрологическая карта отклонений GD&T»), делайте сечения и кликайте по контрольным точкам для проверки геометрических допусков.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => openContactModal({
-                    title: `Заказ 3D-сканирования и контроля геометрии (${activeService.title})`,
-                    defaultService: activeService.title,
-                    formType: 'service'
-                  })}
-                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer"
-                >
-                  Оцифровать мою деталь
-                </button>
-              </div>
+              )}
             </div>
 
-            {/* Embedded 3D WebGL Canvas Component (Lazy Loaded) */}
-            <div className="w-full max-h-[600px] overflow-hidden rounded-xl">
-              <CadModel3DViewer 
-                initialModel={activeService.id === 'reverse-engineering' ? 'mold' : activeService.id === 'parts-inspection' ? 'housing' : 'impeller'}
-                initialMode={activeService.id === 'reverse-engineering' ? 'cad' : 'colormap'}
-                className="max-h-[600px]"
-              />
-            </div>
+            {activeService.workLocationNote && (
+              <div className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
+                <MapPin className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                <span>{activeService.workLocationNote}</span>
+              </div>
+            )}
+
+            {activeService.contacts && activeService.contacts.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+                {activeService.contacts.map((contact, idx) => (
+                  <div key={idx} className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs space-y-2">
+                    <div>
+                      <div className="font-bold text-xs text-slate-900 dark:text-white">{contact.name}</div>
+                      <div className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">{contact.role}</div>
+                    </div>
+                    <div className="space-y-1 text-xs pt-2 border-t border-slate-100 dark:border-slate-700">
+                      {contact.phone && (
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <a href={`tel:${contact.phone}`} className="font-semibold text-slate-800 dark:text-slate-200 hover:text-blue-600">
+                            {contact.phone}
+                          </a>
+                        </div>
+                      )}
+                      {contact.email && (
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <a href={`mailto:${contact.email}`} className="text-slate-600 dark:text-slate-300 hover:text-blue-600">
+                            {contact.email}
+                          </a>
+                        </div>
+                      )}
+                      {contact.location && (
+                        <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>{contact.location}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
+
+        {/* SPECIAL 3D WEBGL CAD & GD&T METROLOGY SHOWCASE */}
+        <div id="services-viewer" className="mt-8 pt-8 border-t border-gray-200 dark:border-slate-800 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-1 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 rounded-full text-xs font-semibold mb-2 border border-blue-200 dark:border-blue-800">
+                <Scan className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 animate-pulse" />
+                <span>Интерактивный 3D-модуль оцифровки и контроля геометрии (WebGL)</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Интерактивный 3D-просмотрщик контроля GD&T, моделей и карт отклонений
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-3xl mt-1">
+                Оцените качество оцифровки и метрологического контроля в реальном времени: вращайте деталь, переключайте режимы («CAD-модель», «Сетка 3D-скана», «Метрологическая карта отклонений GD&T»), делайте динамические сечения и анализируйте значения допусков в контрольных точках.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => openContactModal({
+                  title: `Заказ 3D-контроля геометрии и сканирования (${activeService.title})`,
+                  defaultService: activeService.title,
+                  formType: 'service'
+                })}
+                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer"
+              >
+                Оцифровать мою деталь
+              </button>
+            </div>
+          </div>
+
+          {/* Embedded 3D WebGL Canvas Component (Lazy Loaded) */}
+          <div className="w-full max-h-[600px] overflow-hidden rounded-xl">
+            <CadModel3DViewer 
+              initialModel={activeService.id === 'reverse-engineering' ? 'mold' : activeService.id === 'parts-inspection' ? 'housing' : 'impeller'}
+              initialMode={activeService.id === 'reverse-engineering' ? 'cad' : activeService.id === '3d-scanning' ? 'mesh' : 'colormap'}
+              className="max-h-[600px]"
+            />
+          </div>
+        </div>
 
         {/* SPECIAL TOOLING DESIGN SHOWCASE: Complete Tooling Engineering Pipeline */}
         {activeService.id === 'tooling-design' && (
@@ -422,7 +532,7 @@ export const ServicesPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-300/80 dark:border-slate-800">
                 <div>
                   <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-amber-500/15 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 rounded-full text-xs font-semibold mb-2 border border-amber-500/30">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <Wrench className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                     <span>Инжиниринговый центр «ДС‑Инжиниринг» • Полный цикл от ТЗ до готовой оснастки</span>
                   </div>
                   <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
@@ -498,7 +608,7 @@ export const ServicesPage: React.FC = () => {
                     Многоместная горячеканальная пресс-форма точного литья разъемов автоэлектроники
                   </h4>
                   <p className="text-xs text-slate-600 dark:text-slate-300">
-                    Разработан полный 3D CAD-проект 8-местной пресс-формы с кинематическим расчетом хода шиберов, выпущен комплект рабочей КД по ЕСКД, изготовлены формообразующие матрицы и электроды на прецизионных станках с ЧПУ и проведен метрологический контроль на КИМ <strong>Mitutoyo</strong> с испытанием опытной партии деталей.
+                    Разработан полный 3D CAD-проект 8-местной пресс-формы с кинематическим расчетом хода шиберов, выпущен комплект рабочей КД по ЕСКД, изготовлены формообразующие матрицы и электроды на прецизионных станках с ЧПУ и проведен прецизионный метрологический контроль мобильным 3D-комплексом <strong>ScanLine / PolyWorks</strong> с испытанием опытной партии деталей.
                   </p>
                 </div>
                 <button
@@ -523,14 +633,14 @@ export const ServicesPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-300/80 dark:border-slate-800">
                 <div>
                   <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 rounded-full text-xs font-semibold mb-2 border border-blue-200 dark:border-blue-800">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <Target className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                     <span>Специализированная технологическая цепочка Mesh-to-CAD</span>
                   </div>
                   <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                    Сквозной реверс-инжиниринг: Shining 3D + Geomagic Design X
+                    Сквозной реверс-инжиниринг: 3D-сканирование, КИМ и моделирование в Geomagic Design X
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-3xl mt-1">
-                    Трансформация неструктурированных полигональных сеток (STL) в полноценные параметрические твердотельные CAD-модели с полным деревом построения (Feature Tree) и передачей в целевой CAD.
+                    Трансформация контактных измерений КИМ и полигональных сеток (STL) в точные твердотельные и поверхностные CAD-модели (STEP, Parasolid, IGES). Построение параметрических моделей с деревом выполняется по отдельному техническому заданию.
                   </p>
                 </div>
                 <div className="bg-white dark:bg-slate-800/90 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-center shrink-0 shadow-2xs">
@@ -544,9 +654,9 @@ export const ServicesPage: React.FC = () => {
                 {[
                   {
                     step: '01',
-                    title: '3D-сканирование',
-                    tool: 'Shining 3D FreeScan / PMT Arm',
-                    desc: 'Сбор высокоплотного облака точек синим лазером без матирующего спрея. Фиксация посадочных баз и микрорельефа.',
+                    title: 'Оцифровка и обмер',
+                    tool: 'Hexagon Arm / Shining 3D FreeScan',
+                    desc: 'Сбор высокоплотного облака точек лазером и контактный щуповой замер базовых плоскостей и отверстий мобильной КИМ.',
                   },
                   {
                     step: '02',
@@ -556,21 +666,21 @@ export const ServicesPage: React.FC = () => {
                   },
                   {
                     step: '03',
-                    title: 'Параметрические эскизы',
+                    title: 'Эскизы сечений',
                     tool: 'Mesh Sketch & Auto-Profile',
                     desc: 'Извлечение сечений из сетки, наложение геометрических взаимосвязей (касательность, перпендикулярность, размеры).',
                   },
                   {
                     step: '04',
-                    title: 'Твердотельное дерево',
-                    tool: 'LiveTransfer Technology',
-                    desc: 'Формирование редактируемого дерева (выдавливания, вращения, фаски, скругления) и экспорт в TopSolid, NX, SolidWorks.',
+                    title: 'Твердотельное B-Rep моделирование',
+                    tool: 'B-Rep / Auto Surface (STEP, Parasolid)',
+                    desc: 'Построение геометрически точных твердых тел и сопряжений. Экспорт в нейтральные форматы STEP/Parasolid, в TopSolid и ЧПУ.',
                   },
                   {
                     step: '05',
                     title: 'Метрологический контроль',
                     tool: 'PolyWorks / Control X Deviation',
-                    desc: 'Построение цветовой карты отклонений CAD от исходной сетки с выдачей акта точности и оформлением чертежей по ЕСКД.',
+                    desc: 'Построение цветовой карты отклонений CAD от исходной сетки с выдачей протокола точности и оформлением чертежей по ЕСКД.',
                   },
                 ].map((item, idx) => (
                   <div key={idx} className="bg-white dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700/80 rounded-xl p-4 flex flex-col justify-between shadow-2xs">
@@ -589,6 +699,11 @@ export const ServicesPage: React.FC = () => {
                 ))}
               </div>
 
+              {/* Interactive Comparison: Mesh (STL) vs Solid CAD (STEP) */}
+              <div className="pt-6">
+                <MeshCadComparisonSlider />
+              </div>
+
               {/* User Story & Case Highlight */}
               <div className="mt-6 p-4 sm:p-5 bg-blue-50/80 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-900/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="space-y-1">
@@ -599,14 +714,14 @@ export const ServicesPage: React.FC = () => {
                     Реверс-инжиниринг рабочего колеса насоса Sulzer и спирального корпуса
                   </h4>
                   <p className="text-xs text-slate-600 dark:text-slate-300">
-                    Изношенная деталь оцифрована сканером <strong>Shining 3D FreeScan Combo</strong> (погрешность 0.02 мм), в <strong>Geomagic Design X</strong> восстановлены теоретические профили пера лопаток и сформирована параметрическая модель в <strong>TopSolid 7</strong> с выпуском УП для 5-осевого ЧПУ станка.
+                    Изношенная деталь оцифрована сканером <strong>Shining 3D FreeScan Combo</strong> (погрешность 0.02 мм) и мобильной КИМ Hexagon, в <strong>Geomagic Design X</strong> восстановлены теоретические профили пера лопаток и сформирована твердотельная CAD-модель (STEP) в <strong>TopSolid 7</strong> с выпуском УП для 5-осевого ЧПУ станка.
                   </p>
                 </div>
                 <button
                   onClick={() =>
                     openContactModal({
-                      title: 'Запрос на реверс-инжиниринг (Shining 3D + Geomagic)',
-                      defaultService: 'Реверс-инжиниринг и параметрическое моделирование (Mesh-to-CAD)',
+                      title: 'Запрос на реверс-инжиниринг деталей',
+                      defaultService: 'Реверс-инжиниринг и твердотельное CAD-моделирование',
                       formType: 'service',
                     })
                   }
@@ -625,3 +740,6 @@ export const ServicesPage: React.FC = () => {
     </div>
   );
 };
+
+export default ServicesPage;
+

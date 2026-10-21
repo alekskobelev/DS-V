@@ -1,7 +1,7 @@
 import React from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
-import { Breadcrumbs } from './Breadcrumbs';
+import { Breadcrumbs } from '../common/Breadcrumbs';
 import { BottomNavigationActions } from './BottomNavigationActions';
 import { MobileTabBar } from './MobileTabBar';
 import { ContactModal } from '../modals/ContactModal';
@@ -10,6 +10,8 @@ import { CompareDrawer } from '../modals/CompareDrawer';
 import { SearchModal } from '../modals/SearchModal';
 import { PrivacyModal } from '../modals/PrivacyModal';
 import { SmartLeadPopup } from '../modals/SmartLeadPopup';
+import { MetrologyConfiguratorModal } from '../modals/MetrologyConfiguratorModal';
+import { RoiCalculatorModal } from '../modals/RoiCalculatorModal';
 import { ManagerLiveAlerts } from '../notifications/ManagerLiveAlerts';
 import { FluidBackgroundCanvas } from '../common/FluidBackgroundCanvas';
 import { OfflineIndicator } from '../OfflineIndicator';
@@ -29,10 +31,16 @@ interface LayoutProps {
  * - Responsive on Mobile, Tablet, and Desktop without content overlap
  */
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { toastMessage } = useApp();
+  const { 
+    toastMessage, 
+    isConfiguratorModalOpen, 
+    closeConfiguratorModal,
+    isRoiCalculatorModalOpen,
+    closeRoiCalculatorModal
+  } = useApp();
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col overflow-x-clip pb-14 sm:pb-16 xl:pb-0 bg-slate-50/50 dark:bg-[#070e1b]/60 text-slate-900 dark:text-slate-100 font-sans selection:bg-blue-600 selection:text-white transition-colors duration-200">
+    <div className="relative min-h-screen w-full flex flex-col overflow-x-clip pb-24 sm:pb-28 xl:pb-0 bg-slate-50/50 dark:bg-[#070e1b]/60 text-slate-900 dark:text-slate-100 font-sans selection:bg-blue-600 selection:text-white transition-colors duration-200">
       {/* Universal 3D Canvas Fluid & Particles background across all pages */}
       <FluidBackgroundCanvas />
 
@@ -63,6 +71,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <CallbackModal />
       <PrivacyModal />
       <SmartLeadPopup />
+      <MetrologyConfiguratorModal 
+        isOpen={isConfiguratorModalOpen} 
+        onClose={closeConfiguratorModal} 
+      />
+      <RoiCalculatorModal
+        isOpen={isRoiCalculatorModalOpen}
+        onClose={closeRoiCalculatorModal}
+      />
       <ManagerLiveAlerts />
       <OfflineIndicator />
 

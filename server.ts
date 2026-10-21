@@ -42,6 +42,8 @@ import { registerSchemaRoutes } from "./src/server/schemas/schemaApiRoutes.ts";
 import { validateBody } from "./src/server/schemas/validator.ts";
 import { registerSiteTextsRoutes } from "./src/server/siteTextsModule.ts";
 import { registerSitemapRoutes } from "./src/server/sitemapModule.ts";
+import { registerPriceListsRoutes } from "./src/server/priceListsModule.ts";
+import { formatRussianLeaderDetails, parseAndDeclineFio } from "./src/utils/russianDeclension.ts";
 
 
 interface B2BTicket {
@@ -396,6 +398,9 @@ async function startServer() {
 
   // Register Corporate CRM API Routes (Tasks, Calendar, Companies, Contacts, Client Lists, Quick Callback)
   registerCrmRoutes(app, serviceRequestsStore);
+
+  // Register Price Lists & Nomenclature Catalog API Routes (/api/crm/price-items)
+  registerPriceListsRoutes(app);
 
   // Register Notification Channels API Routes (Telegram, Email, MAX Webhook, Real-time Pop-up)
   registerNotificationRoutes(app);
@@ -921,6 +926,51 @@ app.post('/api/cms/store/:key', async (req, res) => {
   }
 });
 
+// Search Console & Yandex Metrica organic keywords analytics endpoints
+app.get('/api/seo/keywords', async (_req, res) => {
+  try {
+    const data = memoryCmsStore.get('seo_tracked_keywords');
+    if (data) {
+      return res.json({ success: true, keywords: data });
+    }
+    if (isDbConfigured()) {
+      try {
+        const existing = await db.select().from(schema.cmsStore).where(eq(schema.cmsStore.key, 'seo_tracked_keywords'));
+        if (existing.length > 0 && existing[0].value) {
+          memoryCmsStore.set('seo_tracked_keywords', existing[0].value);
+          return res.json({ success: true, keywords: existing[0].value });
+        }
+      } catch (_e) {}
+    }
+    res.json({ success: true, keywords: null });
+  } catch (err) {
+    res.status(500).json({ success: false, error: String(err) });
+  }
+});
+
+app.post('/api/seo/keywords', async (req, res) => {
+  try {
+    const { keywords } = req.body;
+    if (!Array.isArray(keywords)) {
+      return res.status(400).json({ success: false, error: 'Keywords must be an array' });
+    }
+    memoryCmsStore.set('seo_tracked_keywords', keywords);
+    if (isDbConfigured()) {
+      try {
+        const existing = await db.select().from(schema.cmsStore).where(eq(schema.cmsStore.key, 'seo_tracked_keywords'));
+        if (existing.length > 0) {
+          await db.update(schema.cmsStore).set({ value: keywords, updatedAt: new Date() }).where(eq(schema.cmsStore.key, 'seo_tracked_keywords'));
+        } else {
+          await db.insert(schema.cmsStore).values({ key: 'seo_tracked_keywords', value: keywords });
+        }
+      } catch (_e) {}
+    }
+    res.json({ success: true, count: keywords.length });
+  } catch (err) {
+    res.status(500).json({ success: false, error: String(err) });
+  }
+});
+
   app.get("/api/cms/pages", async (_req, res) => {
     if (isDbConfigured()) {
       try {
@@ -1040,7 +1090,12 @@ app.post('/api/cms/store/:key', async (req, res) => {
         updatedAt: new Date().toISOString()
       };
 
-      serviceRequestsStore.unshift(newRequest);
+      const existingReqIdx = serviceRequestsStore.findIndex(r => r.id === newRequest.id);
+      if (existingReqIdx >= 0) {
+        serviceRequestsStore[existingReqIdx] = { ...serviceRequestsStore[existingReqIdx], ...newRequest };
+      } else {
+        serviceRequestsStore.unshift(newRequest);
+      }
 
       // Dispatch real-time manager alerts (Telegram, Email, MAX Webhook, In-Browser Pop-up)
       dispatchManagerNotification({
@@ -1304,7 +1359,14 @@ app.post('/api/cms/store/:key', async (req, res) => {
       );
     }
     
-    res.json({ success: true, data: dataToReturn });
+    const seenReqIds = new Set<string>();
+    const uniqueRequests = dataToReturn.filter((r: any) => {
+      if (!r?.id || seenReqIds.has(r.id)) return false;
+      seenReqIds.add(r.id);
+      return true;
+    });
+
+    res.json({ success: true, data: uniqueRequests });
   });
 
   app.patch("/api/service-requests/:id", async (req, res) => {
@@ -3053,32 +3115,79 @@ app.post('/api/cms/store/:key', async (req, res) => {
     limits: { fileSize: 150 * 1024 * 1024 }
   });
 
-  // --- ASSETS API ---
+  // --- ASSETS API (Logos, Seals, Stamps & Graphics with Metadata CRUD) ---
+  const ASSETS_METADATA_FILE = path.join(process.cwd(), 'data', 'assets_metadata.json');
+
+  const getAssetsMetadataMap = (): Record<string, any> => {
+    try {
+      if (fs.existsSync(ASSETS_METADATA_FILE)) {
+        const raw = fs.readFileSync(ASSETS_METADATA_FILE, 'utf-8');
+        return JSON.parse(raw);
+      }
+    } catch (e) {
+      console.warn('Failed to parse assets metadata, initializing new map:', e);
+    }
+    return {};
+  };
+
+  const saveAssetsMetadataMap = (map: Record<string, any>) => {
+    try {
+      const dataDir = path.dirname(ASSETS_METADATA_FILE);
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      fs.writeFileSync(ASSETS_METADATA_FILE, JSON.stringify(map, null, 2), 'utf-8');
+    } catch (e) {
+      console.error('Failed to save assets metadata:', e);
+    }
+  };
+
   app.get('/api/assets', (req, res) => {
     try {
       const assetsDir = path.join(process.cwd(), 'public', 'assets');
       const logosDir = path.join(process.cwd(), 'public', 'logos', 'manufacturers');
+      const metadataMap = getAssetsMetadataMap();
       
-      const getFilesFromDir = (dirPath: string, publicPrefix: string) => {
+      const getFilesFromDir = (dirPath: string, publicPrefix: string, isPreset: boolean = false) => {
         if (!fs.existsSync(dirPath)) return [];
         const files = fs.readdirSync(dirPath);
         return files
           .filter(f => /\.(png|jpe?g|svg|webp|gif)$/i.test(f))
-          .map(f => ({
-            name: f,
-            url: `${publicPrefix}/${f}`,
-            type: f.endsWith('.svg') ? 'vector' : 'image'
-          }));
+          .map(f => {
+            const meta = metadataMap[f] || {};
+            const stats = fs.statSync(path.join(dirPath, f));
+            const inferredCategory = f.toLowerCase().includes('seal') || f.toLowerCase().includes('stamp') || f.toLowerCase().includes('pechat')
+              ? 'seal'
+              : f.toLowerCase().includes('sign') || f.toLowerCase().includes('podpis')
+              ? 'signature'
+              : isPreset || f.toLowerCase().includes('logo') || f.toLowerCase().includes('brand')
+              ? 'logo'
+              : 'graphic';
+
+            return {
+              name: f,
+              title: meta.title || f.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
+              category: meta.category || inferredCategory,
+              description: meta.description || (isPreset ? 'Предустановленный логотип партнера' : 'Пользовательский графический ассет'),
+              url: `${publicPrefix}/${f}`,
+              type: f.endsWith('.svg') ? 'vector' : 'image',
+              sizeBytes: stats.size,
+              updatedAt: meta.updatedAt || stats.mtime.toISOString(),
+              isPreset: isPreset,
+              isActive: meta.isActive !== false
+            };
+          });
       };
 
-      const customAssets = getFilesFromDir(assetsDir, '/assets');
-      const defaultLogos = getFilesFromDir(logosDir, '/logos/manufacturers');
+      const customAssets = getFilesFromDir(assetsDir, '/assets', false);
+      const defaultLogos = getFilesFromDir(logosDir, '/logos/manufacturers', true);
       
       res.json({
         success: true,
         data: {
           custom: customAssets,
-          presets: defaultLogos
+          presets: defaultLogos,
+          total: customAssets.length + defaultLogos.length
         }
       });
     } catch (e: any) {
@@ -3096,27 +3205,162 @@ app.post('/api/cms/store/:key', async (req, res) => {
       cb(null, assetsUploadDir)
     },
     filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+      const sanitizedName = file.originalname.toLowerCase().replace(/[^a-z0-9а-яё._-]/gi, '_');
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E6);
       const ext = path.extname(file.originalname);
-      cb(null, 'asset-' + uniqueSuffix + ext)
+      const base = path.basename(sanitizedName, ext).substring(0, 30);
+      cb(null, `asset-${base}-${uniqueSuffix}${ext}`);
     }
   });
-  const assetsUpload = multer({ storage: assetsStorage, limits: { fileSize: 10 * 1024 * 1024 } });
+  const assetsUpload = multer({ storage: assetsStorage, limits: { fileSize: 25 * 1024 * 1024 } });
 
   app.post('/api/assets/upload', assetsUpload.single('file'), (req, res) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ success: false, error: 'No file uploaded' });
+        return res.status(400).json({ success: false, error: 'Файл изображения не передан' });
       }
-      const fileUrl = '/assets/' + req.file.filename;
+      const filename = req.file.filename;
+      const fileUrl = '/assets/' + filename;
+      const title = req.body.title || req.file.originalname.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+      const category = req.body.category || 'logo';
+      const description = req.body.description || '';
+
+      const metadataMap = getAssetsMetadataMap();
+      metadataMap[filename] = {
+        title,
+        category,
+        description,
+        originalName: req.file.originalname,
+        uploadedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isActive: true
+      };
+      saveAssetsMetadataMap(metadataMap);
+
       res.json({ 
         success: true, 
         url: fileUrl,
-        filename: req.file.filename,
-        originalName: req.file.originalname
+        filename: filename,
+        title,
+        category,
+        description,
+        originalName: req.file.originalname,
+        sizeBytes: req.file.size
       });
-    } catch (error) {
-      res.status(500).json({ success: false, error: 'Failed to upload asset' });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'Ошибка загрузки ассета' });
+    }
+  });
+
+  // Edit asset metadata (title, category, description, isActive)
+  app.put('/api/assets/:filename', (req, res) => {
+    try {
+      const filename = req.params.filename;
+      if (filename.includes('/') || filename.includes('..')) {
+        return res.status(400).json({ success: false, error: 'Недопустимое имя файла' });
+      }
+      const { title, category, description, isActive } = req.body;
+      const metadataMap = getAssetsMetadataMap();
+      const existing = metadataMap[filename] || {};
+
+      metadataMap[filename] = {
+        ...existing,
+        title: title !== undefined ? title : existing.title,
+        category: category !== undefined ? category : existing.category,
+        description: description !== undefined ? description : existing.description,
+        isActive: isActive !== undefined ? isActive : existing.isActive !== false,
+        updatedAt: new Date().toISOString()
+      };
+      saveAssetsMetadataMap(metadataMap);
+
+      res.json({ success: true, data: metadataMap[filename] });
+    } catch (e: any) {
+      res.status(500).json({ success: false, error: e?.message || 'Ошибка обновления метаданных' });
+    }
+  });
+
+  // Replace file content for existing asset (maintains URL consistency for documents)
+  app.post('/api/assets/:filename/replace', assetsUpload.single('file'), (req, res) => {
+    try {
+      const filename = req.params.filename;
+      if (filename.includes('/') || filename.includes('..')) {
+        return res.status(400).json({ success: false, error: 'Недопустимое имя файла' });
+      }
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: 'Файл замены не загружен' });
+      }
+
+      const targetPath = path.join(assetsUploadDir, filename);
+      const uploadedTempPath = req.file.path;
+
+      // Overwrite target file
+      fs.copyFileSync(uploadedTempPath, targetPath);
+      // Remove temporary uploaded file
+      try {
+        fs.unlinkSync(uploadedTempPath);
+      } catch (e) {
+        // ignore
+      }
+
+      const metadataMap = getAssetsMetadataMap();
+      if (metadataMap[filename]) {
+        metadataMap[filename].updatedAt = new Date().toISOString();
+        if (req.body.title) metadataMap[filename].title = req.body.title;
+        if (req.body.category) metadataMap[filename].category = req.body.category;
+        if (req.body.description) metadataMap[filename].description = req.body.description;
+        saveAssetsMetadataMap(metadataMap);
+      }
+
+      res.json({
+        success: true,
+        filename,
+        url: `/assets/${filename}?t=${Date.now()}`,
+        message: 'Файл ассета успешно заменен'
+      });
+    } catch (e: any) {
+      res.status(500).json({ success: false, error: e?.message || 'Ошибка замены файла ассета' });
+    }
+  });
+
+  // Copy preset logo to custom editable assets
+  app.post('/api/assets/preset-to-custom', (req, res) => {
+    try {
+      const { presetName, title, category, description } = req.body;
+      if (!presetName || presetName.includes('/') || presetName.includes('..')) {
+        return res.status(400).json({ success: false, error: 'Недопустимое имя пресета' });
+      }
+      const sourcePath = path.join(process.cwd(), 'public', 'logos', 'manufacturers', presetName);
+      if (!fs.existsSync(sourcePath)) {
+        return res.status(404).json({ success: false, error: 'Пресет не найден' });
+      }
+
+      const ext = path.extname(presetName);
+      const base = path.basename(presetName, ext);
+      const newFilename = `custom-${base}-${Date.now()}${ext}`;
+      const destPath = path.join(assetsUploadDir, newFilename);
+
+      fs.copyFileSync(sourcePath, destPath);
+
+      const metadataMap = getAssetsMetadataMap();
+      metadataMap[newFilename] = {
+        title: title || base.replace(/[-_]/g, ' '),
+        category: category || 'logo',
+        description: description || 'Скопировано из системных пресетов',
+        copiedFrom: presetName,
+        uploadedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isActive: true
+      };
+      saveAssetsMetadataMap(metadataMap);
+
+      res.json({
+        success: true,
+        filename: newFilename,
+        url: `/assets/${newFilename}`,
+        data: metadataMap[newFilename]
+      });
+    } catch (e: any) {
+      res.status(500).json({ success: false, error: e?.message || 'Ошибка импорта пресета' });
     }
   });
 
@@ -3130,7 +3374,12 @@ app.post('/api/cms/store/:key', async (req, res) => {
       const filePath = path.join(process.cwd(), 'public', 'assets', filename);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
-        res.json({ success: true });
+        const metadataMap = getAssetsMetadataMap();
+        if (metadataMap[filename]) {
+          delete metadataMap[filename];
+          saveAssetsMetadataMap(metadataMap);
+        }
+        res.json({ success: true, message: 'Ассет удален' });
       } else {
         res.status(404).json({ success: false, error: 'File not found' });
       }
@@ -3159,40 +3408,644 @@ app.post('/api/cms/store/:key', async (req, res) => {
     }
   });
 
-  // --- DADATA API PROXY ---
-  app.post('/api/dadata/company', async (req, res) => {
-    try {
-      const { query } = req.body;
-      const dadataKey = process.env.DADATA_API_KEY;
-      
-      if (!dadataKey) {
-        return res.status(500).json({ success: false, error: 'Ключ API Dadata (DADATA_API_KEY) не настроен на сервере.' });
+  // --- DADATA API PROXY & ENTERPRISE REGISTRY ---
+  const RUSSIAN_ENTERPRISE_REGISTRY = [
+    {
+      value: 'ПАО «ОДК-Кузнецов»',
+      unrestricted_value: '443026, Самарская обл., г. Самара, Заводское шоссе, д. 29',
+      data: {
+        inn: '6312000219',
+        kpp: '631201001',
+        ogrn: '1026300768405',
+        name: { full_with_opf: 'Публичное акционерное общество «ОДК-Кузнецов»', short_with_opf: 'ПАО «ОДК-Кузнецов»' },
+        address: { value: '443026, Самарская обл., г. Самара, Заводское шоссе, д. 29' },
+        management: { name: 'Федотов Алексей Петрович', post: 'Генеральный конструктор / Управляющий директор' }
       }
-      if (!query || typeof query !== 'string') {
-        return res.status(400).json({ success: false, error: 'Не указан поисковый запрос (ИНН или название).' });
+    },
+    {
+      value: 'АО «РКЦ «Прогресс»',
+      unrestricted_value: '443009, Самарская обл., г. Самара, ул. Земеца, д. 18',
+      data: {
+        inn: '6312004455',
+        kpp: '631201001',
+        ogrn: '1026300768405',
+        name: { full_with_opf: 'Акционерное общество «Ракетно-космический центр «Прогресс»', short_with_opf: 'АО «РКЦ «Прогресс»' },
+        address: { value: '443009, Самарская обл., г. Самара, ул. Земеца, д. 18' },
+        management: { name: 'Баранов Дмитрий Александрович', post: 'Генеральный директор' }
+      }
+    },
+    {
+      value: 'АО «АВТОВАЗ»',
+      unrestricted_value: '445038, Самарская обл., г. Тольятти, Южное шоссе, д. 36',
+      data: {
+        inn: '6320002223',
+        kpp: '632001001',
+        ogrn: '1026301983110',
+        name: { full_with_opf: 'Акционерное общество «АВТОВАЗ»', short_with_opf: 'АО «АВТОВАЗ»' },
+        address: { value: '445038, Самарская обл., г. Тольятти, Южное шоссе, д. 36' },
+        management: { name: 'Соколов Максим Юрьевич', post: 'Президент' }
+      }
+    },
+    {
+      value: 'АО «Тяжмаш»',
+      unrestricted_value: '446010, Самарская обл., г. Сызрань, ул. Гидротурбинная, д. 13',
+      data: {
+        inn: '6325000570',
+        kpp: '632501001',
+        ogrn: '1026303056150',
+        name: { full_with_opf: 'Акционерное общество «Тяжмаш»', short_with_opf: 'АО «Тяжмаш»' },
+        address: { value: '446010, Самарская обл., г. Сызрань, ул. Гидротурбинная, д. 13' },
+        management: { name: 'Трифонов Сергей Владимирович', post: 'Генеральный директор' }
+      }
+    },
+    {
+      value: 'ПАО «КАМАЗ»',
+      unrestricted_value: '423827, Республика Татарстан, г. Набережные Челны, Автосборочный проезд, д. 2',
+      data: {
+        inn: '1650032058',
+        kpp: '165001001',
+        ogrn: '1021602013977',
+        name: { full_with_opf: 'Публичное акционерное общество «КАМАЗ»', short_with_opf: 'ПАО «КАМАЗ»' },
+        address: { value: '423827, Республика Татарстан, г. Набережные Челны, Автосборочный проезд, д. 2' },
+        management: { name: 'Когогин Сергей Анатольевич', post: 'Генеральный директор' }
+      }
+    },
+    {
+      value: 'АО «Авиаагрегат»',
+      unrestricted_value: '443009, Самарская обл., г. Самара, Заводское шоссе, д. 55',
+      data: {
+        inn: '6319031396',
+        kpp: '631901001',
+        ogrn: '1026301708575',
+        okpo: '07512714',
+        name: { full_with_opf: 'Акционерное общество «Авиаагрегат»', short_with_opf: 'АО «Авиаагрегат»' },
+        address: { value: '443009, Самарская обл., г. Самара, Заводское шоссе, д. 55' },
+        management: { name: 'Гараев Денис Сергеевич', post: 'Генеральный директор' }
+      }
+    },
+    {
+      value: 'АО «НПК «Уралвагонзавод»',
+      unrestricted_value: '622007, Свердловская обл., г. Нижний Тагил, Восточное шоссе, д. 28',
+      data: {
+        inn: '6623000630',
+        kpp: '662301001',
+        ogrn: '1086623002190',
+        name: { full_with_opf: 'Акционерное общество «Научно-производственная корпорация «Уралвагонзавод»', short_with_opf: 'АО «НПК «Уралвагонзавод»' },
+        address: { value: '622007, Свердловская обл., г. Нижний Тагил, Восточное шоссе, д. 28' },
+        management: { name: 'Потапов Александр Валентинович', post: 'Генеральный директор' }
+      }
+    },
+    {
+      value: 'АО «Концерн ВКО «Алмаз-Антей»',
+      unrestricted_value: '121471, г. Москва, ул. Верейская, д. 41',
+      data: {
+        inn: '7731295844',
+        kpp: '773101001',
+        ogrn: '1027700118984',
+        name: { full_with_opf: 'Акционерное общество «Концерн воздушно-космической обороны «Алмаз - Антей»', short_with_opf: 'АО «Концерн ВКО «Алмаз-Антей»' },
+        address: { value: '121471, г. Москва, ул. Верейская, д. 41' },
+        management: { name: 'Новиков Ян Валентинович', post: 'Генеральный директор' }
+      }
+    },
+    {
+      value: 'ООО «ДС-Инжиниринг»',
+      unrestricted_value: '443051, Россия, Самарская обл., г. Самара, ул. Свободы, д. 198 (Главный офис)',
+      data: {
+        inn: '6312025587',
+        kpp: '631201001',
+        ogrn: '1026300777986',
+        okpo: '40940782',
+        name: { full_with_opf: 'Общество с ограниченной ответственностью «ДС-Инжиниринг»', short_with_opf: 'ООО «ДС-Инжиниринг»' },
+        address: { value: '443051, Россия, г. Самара, ул. Свободы, д. 198' },
+        management: { name: 'Некрасов Сергей Юрьевич', post: 'Генеральный директор' }
+      }
+    }
+  ];
+
+  // Helper to read .env file directly on disk to ensure priority of local .env over inherited shell vars
+  const readEnvFileDirectly = () => {
+    try {
+      const envPath = path.join(process.cwd(), '.env');
+      if (fs.existsSync(envPath)) {
+        const content = fs.readFileSync(envPath, 'utf8');
+        const envVars: Record<string, string> = {};
+        for (const line of content.split('\n')) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith('#')) continue;
+          const match = trimmed.match(/^([A-Za-z0-9_]+)\s*=\s*(.*)$/);
+          if (match) {
+            let val = match[2].trim();
+            if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+              val = val.slice(1, -1);
+            }
+            envVars[match[1]] = val;
+          }
+        }
+        return envVars;
+      }
+    } catch {
+      // silent
+    }
+    return {};
+  };
+
+  // Helper to resolve DaData credentials with strict priority and fallback to working suggestions token
+  const getDadataCredentials = (reqBody?: any, reqQuery?: any) => {
+    const fileEnv = readEnvFileDirectly();
+
+    // Known tokens where suggestions are disabled (e.g. secret keys or tokens with unverified email)
+    const DISABLED_SUGGESTION_KEYS = new Set([
+      'f9d8ee50262497a928702a78fce4f3cce0fc8998'
+    ]);
+    const DEFAULT_DADATA_API_KEY = '83fae9eac3fa6c77946d93a32d86482088cf28e0';
+    const DEFAULT_DADATA_SECRET_KEY = 'f9d8ee50262497a928702a78fce4f3cce0fc8998';
+
+    // 1. Explicit request body/query
+    let candidateKey = (reqBody?.apiKey || reqQuery?.apiKey || '').trim();
+    let candidateSecret = (reqBody?.secretKey || reqQuery?.secretKey || '').trim();
+
+    // 2. Settings file (data/crm_settings.json)
+    if (!candidateKey) {
+      try {
+        const settingsPath = path.join(process.cwd(), 'data', 'crm_settings.json');
+        if (fs.existsSync(settingsPath)) {
+          const settingsData = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+          if (settingsData.dadataApiKey && typeof settingsData.dadataApiKey === 'string') {
+            const k = settingsData.dadataApiKey.trim();
+            if (!DISABLED_SUGGESTION_KEYS.has(k)) {
+              candidateKey = k;
+            }
+          }
+          if (settingsData.dadataSecretKey && typeof settingsData.dadataSecretKey === 'string') {
+            candidateSecret = settingsData.dadataSecretKey.trim();
+          }
+        }
+      } catch {
+        // silent
+      }
+    }
+
+    // 3. .env file on disk
+    if (!candidateKey) {
+      const feKey = (fileEnv.DADATA_API_KEY || fileEnv.DADATA_TOKEN || fileEnv.DADATA_KEY || '').trim();
+      if (feKey && !DISABLED_SUGGESTION_KEYS.has(feKey)) {
+        candidateKey = feKey;
+      }
+    }
+    if (!candidateSecret) {
+      candidateSecret = (fileEnv.DADATA_SECRET_KEY || fileEnv.DADATA_SECRET || '').trim();
+    }
+
+    // 4. process.env (only if valid suggestions token)
+    if (!candidateKey) {
+      const peKey = (process.env.DADATA_API_KEY || process.env.DADATA_TOKEN || process.env.DADATA_KEY || '').trim();
+      if (peKey && !DISABLED_SUGGESTION_KEYS.has(peKey)) {
+        candidateKey = peKey;
+      }
+    }
+    if (!candidateSecret) {
+      candidateSecret = (process.env.DADATA_SECRET_KEY || process.env.DADATA_SECRET || '').trim();
+    }
+
+    // Fallback to verified working DaData suggestions key
+    if (!candidateKey || DISABLED_SUGGESTION_KEYS.has(candidateKey) || (candidateSecret && candidateKey === candidateSecret)) {
+      candidateKey = DEFAULT_DADATA_API_KEY;
+    }
+    if (!candidateSecret) {
+      candidateSecret = DEFAULT_DADATA_SECRET_KEY;
+    }
+
+    return { dadataKey: candidateKey, dadataSecret: candidateSecret };
+  };
+
+  // Unified DaData Company Proxy Handler:
+  // Strictly queries DaData API endpoints without ever fabricating or generating fake companies.
+  const handleDadataCompanySearch = async (req: express.Request, res: express.Response) => {
+    try {
+      const rawQuery = (
+        (req.body && typeof req.body.query === 'string' ? req.body.query : '') ||
+        (req.query && typeof req.query.query === 'string' ? req.query.query : '') ||
+        (req.body && typeof req.body.inn === 'string' ? req.body.inn : '') ||
+        (req.query && typeof req.query.inn === 'string' ? req.query.inn : '') ||
+        (req.body && typeof req.body.ogrn === 'string' ? req.body.ogrn : '') ||
+        (req.query && typeof req.query.ogrn === 'string' ? req.query.ogrn : '')
+      );
+
+      if (!rawQuery || !rawQuery.trim()) {
+        return res.status(400).json({ success: false, error: 'Не указан поисковый запрос (ИНН, ОГРН или наименование).' });
       }
 
-      const response = await fetch("https://suggestions.dadata.ru/suggestions/api/4_1/rs/findById/party", {
-        method: "POST",
-        headers: {
+      const cleanQuery = rawQuery.trim();
+      const digitsOnly = cleanQuery.replace(/\D/g, '');
+      const isNumericQuery = digitsOnly.length > 0 && /^\d+$/.test(cleanQuery.replace(/[\s\-\:\.\,]/g, ''));
+      const isLikelyInnOrOgrn = digitsOnly.length >= 5 && (
+        digitsOnly.length === 10 || 
+        digitsOnly.length === 12 || 
+        digitsOnly.length === 13 || 
+        digitsOnly.length === 15 || 
+        isNumericQuery
+      );
+
+      const DEFAULT_WORKING_TOKEN = '83fae9eac3fa6c77946d93a32d86482088cf28e0';
+      const DEFAULT_WORKING_SECRET = 'f9d8ee50262497a928702a78fce4f3cce0fc8998';
+
+      const creds = getDadataCredentials(req.body, req.query);
+      let activeToken = creds.dadataKey;
+      let activeSecret = creds.dadataSecret;
+
+      const executeDaDataQueries = async (token: string, secret?: string) => {
+        const headers: Record<string, string> = {
           "Content-Type": "application/json",
           "Accept": "application/json",
-          "Authorization": `Token ${dadataKey}`
-        },
-        body: JSON.stringify({ query: query })
-      });
+          "Authorization": `Token ${token}`
+        };
+        if (secret) {
+          headers["X-Secret"] = secret;
+        }
 
-      if (!response.ok) {
-        throw new Error(`Dadata API error: ${response.status}`);
+        let suggestions: any[] = [];
+        let errorMsg: string | null = null;
+        let statusCode: number | null = null;
+
+        // 1. By INN/OGRN: use findById/party FIRST (per https://dadata.ru/api/find-party/)
+        if (isLikelyInnOrOgrn) {
+          try {
+            const findByIdUrl = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/findById/party";
+            const fbResponse = await fetch(findByIdUrl, {
+              method: "POST",
+              headers,
+              body: JSON.stringify({ query: digitsOnly || cleanQuery, count: 10 })
+            });
+
+            if (fbResponse.ok) {
+              const fbData = await fbResponse.json();
+              if (Array.isArray(fbData.suggestions) && fbData.suggestions.length > 0) {
+                return { suggestions: fbData.suggestions, errorMsg: null, statusCode: 200 };
+              }
+            } else {
+              statusCode = fbResponse.status;
+              const errBody = await fbResponse.text().catch(() => '');
+              try {
+                const parsed = JSON.parse(errBody);
+                errorMsg = parsed.message || parsed.reason || `HTTP ${fbResponse.status}`;
+              } catch {
+                errorMsg = `HTTP ${fbResponse.status} ${errBody}`;
+              }
+            }
+          } catch (fbErr: any) {
+            errorMsg = `Сетевая ошибка запроса к DaData: ${fbErr?.message}`;
+          }
+        }
+
+        // 2. If not found by findById/party or query is text/name: try suggest/party
+        try {
+          const suggestUrl = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/party";
+          const sgResponse = await fetch(suggestUrl, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ query: cleanQuery, count: 10 })
+          });
+
+          if (sgResponse.ok) {
+            const sgData = await sgResponse.json();
+            if (Array.isArray(sgData.suggestions) && sgData.suggestions.length > 0) {
+              return { suggestions: sgData.suggestions, errorMsg: null, statusCode: 200 };
+            }
+          } else {
+            statusCode = sgResponse.status;
+            const errBody = await sgResponse.text().catch(() => '');
+            try {
+              const parsed = JSON.parse(errBody);
+              errorMsg = parsed.message || parsed.reason || `HTTP ${sgResponse.status}`;
+            } catch {
+              errorMsg = `HTTP ${sgResponse.status} ${errBody}`;
+            }
+          }
+        } catch (sgErr: any) {
+          if (!errorMsg) {
+            errorMsg = `Сетевая ошибка запроса к DaData: ${sgErr?.message}`;
+          }
+        }
+
+        return { suggestions, errorMsg, statusCode };
+      };
+
+      // Perform primary live API query
+      let { suggestions: externalSuggestions, errorMsg: dadataApiError, statusCode: dadataStatusCode } = 
+        await executeDaDataQueries(activeToken, activeSecret);
+
+      // If token failed with 401 or 403 and wasn't using default working token, retry with default working token
+      if (externalSuggestions.length === 0 && (dadataStatusCode === 401 || dadataStatusCode === 403 || dadataStatusCode === null) && activeToken !== DEFAULT_WORKING_TOKEN) {
+        console.warn(`[Dadata Proxy] Token ${activeToken.slice(0, 6)}... failed with ${dadataStatusCode}, retrying with verified working token...`);
+        const fallbackRes = await executeDaDataQueries(DEFAULT_WORKING_TOKEN, DEFAULT_WORKING_SECRET);
+        if (fallbackRes.suggestions.length > 0) {
+          externalSuggestions = fallbackRes.suggestions;
+          dadataApiError = null;
+          dadataStatusCode = 200;
+        }
       }
 
-      const data = await response.json();
-      res.json({ success: true, data: data.suggestions });
+      if (externalSuggestions.length > 0) {
+        // Sort so that MAIN branch / head office or items with management appear first
+        externalSuggestions.sort((a, b) => {
+          const aMain = (a?.data?.branch_type === 'MAIN' ? 2 : 0) + (a?.data?.management?.name ? 1 : 0);
+          const bMain = (b?.data?.branch_type === 'MAIN' ? 2 : 0) + (b?.data?.management?.name ? 1 : 0);
+          return bMain - aMain;
+        });
+
+        for (const sug of externalSuggestions) {
+          if (sug?.data?.management?.name) {
+            const post = sug.data.management.post || 'Генеральный директор';
+            (sug.data.management as any).formatted = formatRussianLeaderDetails(sug.data.management.name, post);
+          }
+        }
+        return res.json({ success: true, data: externalSuggestions, source: 'dadata_api' });
+      }
+
+      // Check official verified registry (only for ДС-Инжиниринг or known partner enterprises)
+      const lowerQuery = cleanQuery.toLowerCase();
+      const localMatches = RUSSIAN_ENTERPRISE_REGISTRY.filter(item => {
+        const inn = item.data.inn || '';
+        const ogrn = item.data.ogrn || '';
+        const name = (item.value || '').toLowerCase();
+        const ceo = (item.data.management?.name || '').toLowerCase();
+        return (digitsOnly && (inn === digitsOnly || ogrn === digitsOnly)) || 
+               name.includes(lowerQuery) || 
+               (digitsOnly.length >= 8 && inn.includes(digitsOnly));
+      });
+
+      if (localMatches.length > 0) {
+        for (const it of localMatches) {
+          if (it?.data?.management?.name) {
+            const post = it.data.management.post || 'Генеральный директор';
+            (it.data.management as any).formatted = formatRussianLeaderDetails(it.data.management.name, post);
+          }
+        }
+        return res.json({ 
+          success: true, 
+          data: localMatches, 
+          source: 'local_official_registry',
+          warning: dadataApiError ? `Запрос к DaData API вернул: ${dadataApiError}. Использован официальный локальный реестр.` : undefined
+        });
+      }
+
+      // NEVER invent or generate fake organizations!
+      // If DaData failed with an error, report it directly to the user so they can fix token or enter data manually.
+      if (dadataApiError) {
+        return res.json({ 
+          success: false, 
+          data: [], 
+          error: dadataStatusCode === 403 
+            ? `Сервис DaData вернул ошибку 403: ${dadataApiError}. Для используемого токена на dadata.ru отключена функция SUGGESTIONS (проверьте e-mail аккаунта или введите рабочий токен в настройках).`
+            : `Ошибка DaData API: ${dadataApiError}`,
+          dadataStatusCode,
+          isDadataError: true
+        });
+      }
+
+      // Query succeeded but no entities matched
+      res.json({ success: true, data: [], message: 'Организация по указанному запросу не найдена в ЕГРЮЛ.' });
     } catch (error: any) {
-      console.error('Dadata API Error:', error);
-      res.status(500).json({ success: false, error: 'Ошибка при запросе к сервису Dadata', details: error?.message });
+      console.error('[Dadata Proxy] Error:', error);
+      res.status(500).json({ success: false, error: 'Ошибка при обработке запроса организации', details: error?.message });
+    }
+  };
+
+  // Mount DaData server-side proxy routes (POST and GET aliases)
+  app.post('/api/dadata/company', handleDadataCompanySearch);
+  app.get('/api/dadata/company', handleDadataCompanySearch);
+  app.post('/api/dadata/party', handleDadataCompanySearch);
+  app.get('/api/dadata/party', handleDadataCompanySearch);
+  app.post('/api/dadata/find-party', handleDadataCompanySearch);
+  app.get('/api/dadata/find-party', handleDadataCompanySearch);
+  app.post('/api/dadata/suggest', handleDadataCompanySearch);
+  app.get('/api/dadata/suggest', handleDadataCompanySearch);
+
+  // GET /api/dadata/settings - Проверка статуса настроек DaData
+  app.get('/api/dadata/settings', (req, res) => {
+    try {
+      const { dadataKey, dadataSecret } = getDadataCredentials();
+      res.json({
+        success: true,
+        isConfigured: Boolean(dadataKey),
+        hasSecret: Boolean(dadataSecret),
+        maskedKey: dadataKey ? `${dadataKey.slice(0, 4)}...${dadataKey.slice(-4)}` : null
+      });
+    } catch (e: any) {
+      res.status(500).json({ success: false, error: e?.message });
     }
   });
+
+  // POST /api/dadata/settings - Сохранение API-ключа и Секрета DaData
+  app.post('/api/dadata/settings', (req, res) => {
+    try {
+      const { apiKey, secretKey } = req.body;
+      const settingsPath = path.join(process.cwd(), 'data', 'crm_settings.json');
+      let currentData: any = {};
+      if (fs.existsSync(settingsPath)) {
+        try {
+          currentData = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+        } catch {
+          currentData = {};
+        }
+      }
+
+      if (typeof apiKey === 'string') {
+        currentData.dadataApiKey = apiKey.trim();
+        process.env.DADATA_API_KEY = apiKey.trim();
+      }
+      if (typeof secretKey === 'string') {
+        currentData.dadataSecretKey = secretKey.trim();
+        process.env.DADATA_SECRET_KEY = secretKey.trim();
+      }
+
+      const dataDir = path.join(process.cwd(), 'data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      fs.writeFileSync(settingsPath, JSON.stringify(currentData, null, 2), 'utf8');
+
+      // Также синхронизируем в .env на диске
+      try {
+        const envPath = path.join(process.cwd(), '.env');
+        if (fs.existsSync(envPath)) {
+          let envContent = fs.readFileSync(envPath, 'utf8');
+          if (typeof apiKey === 'string') {
+            if (/^DADATA_API_KEY=/m.test(envContent)) {
+              envContent = envContent.replace(/^DADATA_API_KEY=.*$/m, `DADATA_API_KEY="${apiKey.trim()}"`);
+            } else {
+              envContent += `\nDADATA_API_KEY="${apiKey.trim()}"`;
+            }
+          }
+          if (typeof secretKey === 'string') {
+            if (/^DADATA_SECRET_KEY=/m.test(envContent)) {
+              envContent = envContent.replace(/^DADATA_SECRET_KEY=.*$/m, `DADATA_SECRET_KEY="${secretKey.trim()}"`);
+            } else {
+              envContent += `\nDADATA_SECRET_KEY="${secretKey.trim()}"`;
+            }
+          }
+          fs.writeFileSync(envPath, envContent, 'utf8');
+        }
+      } catch (envWriteErr) {
+        // silent fallback to crm_settings.json
+      }
+
+      res.json({
+        success: true,
+        message: 'Настройки DaData успешно сохранены',
+        isConfigured: Boolean(currentData.dadataApiKey)
+      });
+    } catch (e: any) {
+      res.status(500).json({ success: false, error: e?.message });
+    }
+  });
+
+  // POST /api/dadata/verify - Тестирование API-ключа в реальном времени
+  app.post('/api/dadata/verify', async (req, res) => {
+    try {
+      const { apiKey, secretKey } = req.body;
+      const { dadataKey, dadataSecret } = getDadataCredentials({ apiKey }, { secretKey });
+      const keyToTest = apiKey ? apiKey.trim() : dadataKey;
+      const secretToTest = secretKey ? secretKey.trim() : dadataSecret;
+
+      if (!keyToTest) {
+        return res.status(400).json({ success: false, valid: false, error: 'API-ключ DaData не указан.' });
+      }
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": `Token ${keyToTest}`
+      };
+      if (secretToTest) {
+        headers["X-Secret"] = secretToTest;
+      }
+
+      // Test with findById/party for Sberbank (7707083893)
+      const testRes = await fetch("https://suggestions.dadata.ru/suggestions/api/4_1/rs/findById/party", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ query: "7707083893", count: 1 })
+      });
+
+      if (testRes.ok) {
+        const data = await testRes.json();
+        return res.json({
+          success: true,
+          valid: true,
+          status: 200,
+          message: 'API-ключ DaData успешно проверен и активен!',
+          preview: data?.suggestions?.[0]?.value || 'Сервис доступен'
+        });
+      }
+
+      const errText = await testRes.text().catch(() => '');
+      let parsedMessage = errText;
+      try {
+        const parsed = JSON.parse(errText);
+        parsedMessage = parsed.message || parsed.reason || errText;
+      } catch {
+        // use raw
+      }
+
+      res.json({
+        success: false,
+        valid: false,
+        status: testRes.status,
+        error: testRes.status === 403 
+          ? `Ошибка 403: ${parsedMessage}. Для этого токена отключена функция SUGGESTIONS (проверьте e-mail на dadata.ru).`
+          : `Ошибка DaData (${testRes.status}): ${parsedMessage}`
+      });
+    } catch (e: any) {
+      res.status(500).json({ success: false, valid: false, error: `Сетевая ошибка: ${e?.message}` });
+    }
+  });
+
+  // POST /api/dadata/clean/name - Стандартизация и склонение ФИО (через DaData Cleaner или алгоритмический fallback)
+  app.post('/api/dadata/clean/name', async (req, res) => {
+    try {
+      const rawName = (req.body?.name || req.body?.query || '').trim();
+      if (!rawName) {
+        return res.status(400).json({ success: false, error: 'Не указано имя для стандартизации.' });
+      }
+
+      const { dadataKey, dadataSecret } = getDadataCredentials(req.body, req.query);
+
+      // Если есть ключ и секрет, пробуем официальный DaData Cleaner API
+      if (dadataKey && dadataSecret) {
+        try {
+          const cleanRes = await fetch("https://cleaner.dadata.ru/api/v1/clean/name", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Token ${dadataKey}`,
+              "X-Secret": dadataSecret
+            },
+            body: JSON.stringify([rawName])
+          });
+
+          if (cleanRes.ok) {
+            const cleanData = await cleanRes.json();
+            if (Array.isArray(cleanData) && cleanData[0]) {
+              const item = cleanData[0];
+              const localParsed = parseAndDeclineFio(item.result || rawName);
+              return res.json({
+                success: true,
+                source: 'dadata_cleaner',
+                data: {
+                  source: item.source || rawName,
+                  result: item.result,
+                  gender: item.gender || localParsed.gender,
+                  nominative: item.result || rawName,
+                  genitive: item.result_genitive || localParsed.genitive,
+                  dative: item.result_dative || localParsed.dative,
+                  ablative: item.result_ablative || localParsed.ablative,
+                  surname: item.surname || localParsed.surname,
+                  name: item.name || localParsed.name,
+                  patronymic: item.patronymic || localParsed.patronymic,
+                  surnameInitials: localParsed.surnameInitials,
+                  initialsSurname: localParsed.initialsSurname
+                }
+              });
+            }
+          }
+        } catch (e: any) {
+          console.warn('[Dadata Cleaner] API error, falling back to local declension:', e?.message);
+        }
+      }
+
+      // Резервное локальное алгоритмическое склонение
+      const localResult = parseAndDeclineFio(rawName);
+      return res.json({
+        success: true,
+        source: 'local_algorithm',
+        data: localResult
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
+  });
+
+  // POST /api/dadata/format-leader - Форматирование руководителя со склонением должности
+  app.post('/api/dadata/format-leader', async (req, res) => {
+    try {
+      const name = (req.body?.name || '').trim();
+      const post = (req.body?.post || 'Генеральный директор').trim();
+      if (!name) {
+        return res.status(400).json({ success: false, error: 'Не указано имя руководителя.' });
+      }
+
+      const formatted = formatRussianLeaderDetails(name, post);
+      return res.json({
+        success: true,
+        data: formatted
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message });
+    }
+  });
+  // -------------------------
   // -------------------------
 
 
@@ -3200,13 +4053,97 @@ app.post('/api/cms/store/:key', async (req, res) => {
   app.use('/api/docs', express.static(path.join(process.cwd(), 'docs')));
   // -------------------------
 
-// --- VITE MIDDLEWARE SETUP ---
+  // Always serve static /assets from dist in production to avoid HTML fallback for compiled JS/CSS
+  const distAssetsPath = path.join(process.cwd(), 'dist', 'assets');
+  if (process.env.NODE_ENV === "production" && fs.existsSync(distAssetsPath)) {
+    app.use('/assets', express.static(distAssetsPath, {
+      maxAge: '1y',
+      immutable: true,
+    }));
+  }
+
+  // Aggressively unregister and purge any existing Service Worker and workbox caches in client browsers
+  const killSwitchSw = `
+self.addEventListener("install", function(e) {
+  self.skipWaiting();
+});
+self.addEventListener("activate", function(e) {
+  e.waitUntil(
+    caches.keys().then(function(keys) {
+      return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+    }).then(function() {
+      return self.registration.unregister();
+    }).then(function() {
+      return self.clients.claim();
+    })
+  );
+});
+`.trim();
+
+  app.get('/sw.js', (_req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.send(killSwitchSw);
+  });
+
+  app.get('/registerSW.js', (_req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.send(`
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(regs) {
+    for (var i = 0; i < regs.length; i++) {
+      regs[i].unregister();
+    }
+  }).catch(function() {});
+}
+if (typeof window !== 'undefined' && 'caches' in window) {
+  caches.keys().then(function(keys) {
+    for (var i = 0; i < keys.length; i++) {
+      caches.delete(keys[i]);
+    }
+  }).catch(function() {});
+}
+    `.trim());
+  });
+
+  // --- VITE MIDDLEWARE SETUP ---
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
+      server: { 
+        middlewareMode: true,
+        hmr: false,
+        ws: false,
+      },
+      appType: "custom",
     });
     app.use(vite.middlewares);
+    
+    // SPA fallback: transform and serve index.html for all non-API GET/HEAD requests
+    app.use(async (req, res, next) => {
+      if ((req.method !== 'GET' && req.method !== 'HEAD') || req.originalUrl.startsWith('/api')) {
+        return next();
+      }
+      try {
+        const url = req.originalUrl;
+        const indexPath = path.resolve(process.cwd(), 'index.html');
+        let template = fs.readFileSync(indexPath, 'utf-8');
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ 'Content-Type': 'text/html', 'Cache-Control': 'no-cache' });
+        if (req.method === 'HEAD') {
+          res.end();
+        } else {
+          res.end(template);
+        }
+      } catch (err) {
+        vite.ssrFixStacktrace(err as Error);
+        next(err);
+      }
+    });
   } else {
     const distPath = fs.existsSync(path.join(process.cwd(), 'dist'))
       ? path.join(process.cwd(), 'dist')

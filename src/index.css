@@ -57,8 +57,7 @@
     scroll-behavior: smooth;
     scroll-padding-top: 84px;
     overflow-x: clip;
-    overflow-y: scroll;
-    scrollbar-gutter: stable;
+    overflow-y: auto;
   }
   @media (max-width: 768px) {
     html {
@@ -873,11 +872,140 @@ html.dark ::-webkit-scrollbar-thumb:hover {
     font-size: 11pt !important;
   }
 
-  * {
+  *:not(.product-spec-print-sheet *):not(.product-spec-print-sheet):not(.a4-page-render *):not(.a4-page-render) {
     color: black !important;
     background-color: transparent !important;
     box-shadow: none !important;
     text-shadow: none !important;
+  }
+
+  /* ============================================================== */
+  /*  PRODUCT SPECIFICATIONS PRINT OVERLAY & A4 PAGINATION ENGINE   */
+  /* ============================================================== */
+  body:has(.product-spec-print-overlay),
+  body.product-spec-overlay-active {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body:has(.product-spec-print-overlay) .print-overlay-toolbar,
+  body.product-spec-overlay-active .print-overlay-toolbar,
+  body:has(.product-spec-print-overlay) header:not(.product-spec-print-sheet header),
+  body:has(.product-spec-print-overlay) footer:not(.product-spec-print-sheet footer),
+  body:has(.product-spec-print-overlay) nav,
+  body:has(.product-spec-print-overlay) aside,
+  body:has(.product-spec-print-overlay) #main-content > *:not(:has(.product-spec-print-overlay)),
+  body:has(.product-spec-print-overlay) [role="dialog"] > *:not(.product-spec-print-overlay) {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body:has(.product-spec-print-overlay) .product-spec-print-overlay,
+  body.product-spec-overlay-active .product-spec-print-overlay {
+    position: static !important;
+    inset: auto !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+    box-shadow: none !important;
+    border: none !important;
+    z-index: auto !important;
+  }
+
+  body:has(.product-spec-print-overlay) .product-spec-print-sheet,
+  body.product-spec-overlay-active .product-spec-print-sheet {
+    position: static !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+    font-size: 10pt !important;
+    line-height: 1.35 !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* Table pagination and structure rules for technical data tables */
+  .product-spec-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  .product-spec-table thead {
+    display: table-header-group !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .product-spec-table thead tr th {
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .product-spec-table thead tr th:nth-child(2) {
+    background-color: #172554 !important;
+    color: #eff6ff !important;
+  }
+
+  .product-spec-table tbody {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  .product-spec-table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  .product-spec-table th,
+  .product-spec-table td {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 5pt 7pt !important;
+    font-size: 9.5pt !important;
+  }
+
+  .product-spec-table tr:nth-child(even) {
+    background-color: #f8fafc !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-heading-keep {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   /* Optimize page layout constraints */
@@ -1023,4 +1151,222 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 .custom-scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.05);
+}
+
+/* ========================================================================= */
+/*  A4 PAPER SHEET HARD IMMUNITY FROM DARK MODE OVERRIDES                    */
+/* ========================================================================= */
+.a4-page-render,
+.a4-page-render *,
+html.dark .a4-page-render,
+html.dark .a4-page-render *,
+html.dark .a4-page-render div,
+html.dark .a4-page-render p,
+html.dark .a4-page-render span,
+html.dark .a4-page-render td,
+html.dark .a4-page-render th,
+html.dark .a4-page-render h1,
+html.dark .a4-page-render h2,
+html.dark .a4-page-render h3,
+html.dark .a4-page-render h4,
+html.dark .a4-page-render h5,
+html.dark .a4-page-render h6,
+html.dark .a4-page-render li,
+html.dark .a4-page-render strong,
+html.dark .a4-page-render b,
+html.dark .a4-page-render em,
+html.dark .a4-page-render i,
+html.dark .a4-page-render input,
+html.dark .a4-page-render textarea,
+html.dark .a4-page-render select {
+  color-scheme: light !important;
+}
+
+.a4-page-render {
+  box-sizing: border-box !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+html.dark .a4-page-render {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+html.dark .a4-page-render div,
+html.dark .a4-page-render p,
+html.dark .a4-page-render span,
+html.dark .a4-page-render td,
+html.dark .a4-page-render th,
+html.dark .a4-page-render h1,
+html.dark .a4-page-render h2,
+html.dark .a4-page-render h3,
+html.dark .a4-page-render h4,
+html.dark .a4-page-render h5,
+html.dark .a4-page-render h6,
+html.dark .a4-page-render li,
+html.dark .a4-page-render strong,
+html.dark .a4-page-render b,
+html.dark .a4-page-render em {
+  color: #000000 !important;
+}
+
+html.dark .a4-page-render .bg-slate-50,
+html.dark .a4-page-render .bg-slate-50\/50,
+html.dark .a4-page-render .bg-slate-50\/30,
+html.dark .a4-page-render .bg-slate-50\/20,
+html.dark .a4-page-render .bg-slate-100 {
+  background-color: #f1f5f9 !important;
+}
+
+html.dark .a4-page-render .bg-slate-200 {
+  background-color: #e2e8f0 !important;
+}
+
+html.dark .a4-page-render .bg-white {
+  background-color: #ffffff !important;
+}
+
+html.dark .a4-page-render .border-slate-200,
+html.dark .a4-page-render .border-slate-300,
+html.dark .a4-page-render .border-black\/20,
+html.dark .a4-page-render .border-black\/30 {
+  border-color: #cbd5e1 !important;
+}
+
+html.dark .a4-page-render .border-black {
+  border-color: #000000 !important;
+}
+
+/* ========================================================================= */
+/*  A4 PHYSICAL PRINT & PDF EXPORT ENGINE                                    */
+/* ========================================================================= */
+@media print {
+  @page {
+    size: 210mm 297mm;
+    margin: 0;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box !important;
+  }
+
+  html, body {
+    width: 210mm !important;
+    min-width: 210mm !important;
+    max-width: 210mm !important;
+    height: auto !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide all non-essential UI elements: header, navigation, editor panels, sidebars, toast popups, buttons */
+  header,
+  footer,
+  nav,
+  aside,
+  button,
+  input,
+  select,
+  textarea,
+  .print\:hidden,
+  .no-print,
+  #mobile-bottom-nav-actions,
+  .toast-container,
+  [role="dialog"] > div > div:not(:has(.a4-page-render)),
+  [role="dialog"] > div > header,
+  [role="dialog"] > div > footer,
+  [role="dialog"] > div:first-child:not(:has(.a4-page-render)) {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Unset overflow clip and fixed height on container wrappers */
+  #root,
+  #root > div,
+  main,
+  section,
+  div:has(> .a4-page-render),
+  div:has(> * > .a4-page-render),
+  div:has(> * > * > .a4-page-render),
+  div:has(> * > * > * > .a4-page-render),
+  .print-container-reset {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    position: static !important;
+    transform: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+  }
+
+  .a4-page-render .absolute {
+    position: absolute !important;
+  }
+
+  .a4-page-render {
+    width: 210mm !important;
+    min-width: 210mm !important;
+    max-width: 210mm !important;
+    min-height: 297mm !important;
+    height: auto !important;
+    padding: 12mm 15mm 12mm 15mm !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .a4-page-render:last-of-type,
+  .a4-page-render:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* Comparative Specifications Table Print Optimization */
+  .compare-table-print {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+  }
+
+  .compare-category-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 8pt !important;
+  }
+
+  .compare-table-print th,
+  .compare-table-print td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 4pt 6pt !important;
+    font-size: 8pt !important;
+    color: #0f172a !important;
+  }
 }

@@ -27,7 +27,10 @@ import { KeyRound, LifeBuoy,
   Layers,
   Maximize2,
   Minimize2,
-  Copy
+  Copy,
+  CheckSquare,
+  Square,
+  Sparkles
 } from 'lucide-react';
 import { ProjectContract, AttachedDocument, CrmCompany, CrmContact, CurrencyCode, getCurrencySymbol } from '../../types';
 import { CrmDeal } from '../../data/mockCrmData';
@@ -35,7 +38,10 @@ import { useApp } from '../../context/AppContext';
 import { apiService } from '../../services/apiService';
 import { CompanyModal } from './CompanyModal';
 import { ContactModal } from './ContactModal';
-import { getStaffMemberInfo } from '../../utils/staffDirectory';
+import { CrmBatchActionBar } from './CrmBatchActionBar';
+import { ContractQuickSlideOver } from './ContractQuickSlideOver';
+import { GenerateContractModal } from './GenerateContractModal';
+import { getStaffMemberInfo, STAFF_DIRECTORY } from '../../utils/staffDirectory';
 import { exportTableToPdf } from '../../utils/exportTablePdf';
 
 interface ContractsRegistryProps {
@@ -130,6 +136,9 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
     curatorPhone: '+7 (937) 984-61-51',
     amount: 'По договору',
     currency: 'RUB',
+    vatRate: 22,
+    vatMode: 'standard',
+    vatIncluded: true,
     scope: '',
     documents: [],
     dealId: '',
@@ -157,6 +166,188 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
     });
   }, [currentContracts, searchQuery, statusFilter]);
 
+  // Batch Operations State
+  const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(new Set());
+
+  // Quick Slide-over Drawer State
+  const [slideOverContract, setSlideOverContract] = useState<ProjectContract | null>(null);
+  const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
+
+  // Official Contract Generator Modal State
+  const [generatorContract, setGeneratorContract] = useState<ProjectContract | null>(null);
+  const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
+
+  // Batch Selection helpers
+  const allFilteredSelected = filtered.length > 0 && filtered.every(c => selectedContractIds.has(c.id));
+  const someFilteredSelected = filtered.some(c => selectedContractIds.has(c.id));
+
+  const handleToggleSelectAll = () => {
+    if (allFilteredSelected) {
+      setSelectedContractIds(new Set());
+    } else {
+      const newSet = new Set(selectedContractIds);
+      filtered.forEach(c => newSet.add(c.id));
+      setSelectedContractIds(newSet);
+    }
+  };
+
+  const handleToggleSelectOne = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedContractIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleClearSelection = () => {
+    setSelectedContractIds(new Set());
+  };
+
+  // Selected contracts & sum
+  const selectedContracts = useMemo(() => {
+    return currentContracts.filter(c => selectedContractIds.has(c.id));
+  }, [currentContracts, selectedContractIds]);
+
+  const selectedTotalSum = useMemo(() => {
+    return selectedContracts.reduce((sum, c) => {
+      const parsed = c.amount ? parseFloat(c.amount.replace(/[^0-9.]/g, '')) || 0 : 0;
+      return sum + parsed;
+    }, 0);
+  }, [selectedContracts]);
+
+  // Bulk Reassign Curator
+  const handleBatchReassignCurator = (curatorName: string) => {
+    if (selectedContractIds.size === 0) return;
+    const staff = Object.values(STAFF_DIRECTORY).find(s => s.shortName === curatorName || s.fullName === curatorName);
+    const updated = currentContracts.map(c => {
+      if (selectedContractIds.has(c.id)) {
+        return {
+          ...c,
+          curator: curatorName,
+          curatorPhone: staff?.phone || c.curatorPhone
+        };
+      }
+      return c;
+    });
+    if (propSetContracts) propSetContracts(updated);
+    else setContracts(updated);
+    showToast(`Куратор «${curatorName}» назначен для ${selectedContractIds.size} договоров`);
+    setSelectedContractIds(new Set());
+  };
+
+  // Bulk Change Status
+  const handleBatchChangeStatus = (newStatus: string) => {
+    if (selectedContractIds.size === 0) return;
+    let colorVal: ProjectContract['statusColor'] = 'blue';
+    if (newStatus === 'Действует') colorVal = 'emerald';
+    else if (newStatus === 'Выполнен (На гарантии)') colorVal = 'blue';
+    else if (newStatus === 'Сдан в эксплуатацию') colorVal = 'gray';
+    else if (newStatus === 'В процессе подписания' || newStatus === 'На согласовании') colorVal = 'amber';
+    else if (newStatus === 'Проект') colorVal = 'purple';
+    else if (newStatus === 'Приостановлен') colorVal = 'red';
+
+    const updated = currentContracts.map(c => {
+      if (selectedContractIds.has(c.id)) {
+        return {
+          ...c,
+          status: newStatus,
+          statusColor: colorVal
+        };
+      }
+      return c;
+    });
+    if (propSetContracts) propSetContracts(updated);
+    else setContracts(updated);
+    showToast(`Статус «${newStatus}» установлен для ${selectedContractIds.size} договоров`);
+    setSelectedContractIds(new Set());
+  };
+
+  // Bulk Delete
+  const handleBatchDelete = () => {
+    if (!isAdmin) return;
+    const count = selectedContractIds.size;
+    const updated = currentContracts.filter(c => !selectedContractIds.has(c.id));
+    if (propSetContracts) propSetContracts(updated);
+    else setContracts(updated);
+    showToast(`Удалено ${count} договоров`);
+    setSelectedContractIds(new Set());
+  };
+
+  // Batch Export Excel
+  const handleBatchExportExcel = async () => {
+    try {
+      const contractsToExport = selectedContractIds.size > 0 ? selectedContracts : filtered;
+      const XLSX = await import('xlsx');
+      const exportRows = contractsToExport.map((c, idx) => ({
+        '№ п/п': idx + 1,
+        'Номер договора': c.number,
+        'Дата заключения': c.date,
+        'Контрагент / Заказчик': c.company,
+        'Предмет договора / Проект': c.title,
+        'Сумма договора': c.amount || 'По договору',
+        'Текущий статус': c.status,
+        'Ответственный куратор': c.curator,
+        'Телефон куратора': c.curatorPhone || '',
+        'Срок гарантии / поддержки': c.supportUntil || '—',
+        'Связанная сделка CRM': c.dealId ? `${c.dealId} — ${c.dealTitle || ''}` : 'Без привязки',
+        'Прикрепленных документов': c.documents?.length || 0,
+        'Объем работ и описание': c.scope || ''
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(exportRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Выгрузка Договоров');
+      const fileName = `Договоры_Выборка_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      showToast(`Экспортировано ${contractsToExport.length} договоров в Excel`);
+    } catch (err) {
+      console.error(err);
+      showToast('Ошибка при экспорте выбранных договоров в Excel');
+    }
+  };
+
+  // Batch Export PDF
+  const handleBatchExportPdf = async () => {
+    try {
+      const contractsToExport = selectedContractIds.size > 0 ? selectedContracts : filtered;
+      await exportTableToPdf({
+        title: `Выгрузка договоров (${contractsToExport.length} шт.)`,
+        subtitle: 'ООО «ДС-Инжиниринг» • Коммерческий департамент & Юридическая служба',
+        department: 'Отдел контрактов и управления проектами',
+        filterInfo: `Выборка из ${contractsToExport.length} договоров на сумму ${selectedTotalSum.toLocaleString('ru-RU')} ₽`,
+        summaryBadges: [
+          { label: 'Выбрано договоров', value: contractsToExport.length, color: 'blue' },
+          { label: 'Действующих', value: contractsToExport.filter(c => c.status === 'Действует' || c.status === 'Исполняется').length, color: 'green' }
+        ],
+        headers: ['№', 'Номер договора', 'Дата', 'Контрагент / Заказчик', 'Предмет договора / Проект', 'Сумма', 'Статус', 'Куратор'],
+        rows: contractsToExport.map((c, idx) => [
+          String(idx + 1),
+          String(c.number || '—'),
+          String(c.date || '—'),
+          String(c.company || '—'),
+          { text: c.title, subtext: c.scope ? c.scope.slice(0, 80) + '...' : undefined },
+          String(c.amount ? `${c.amount} ${getCurrencySymbol(c.currency || 'RUB')}` : 'По договору'),
+          {
+            text: c.status || 'Проект',
+            badge: true,
+            color: c.status === 'Действует' ? 'emerald' : c.status === 'Исполняется' ? 'blue' : 'slate'
+          },
+          String(c.curator || 'Скобелев А.С.')
+        ]),
+        columnAlignments: ['center', 'center', 'center', 'left', 'left', 'right', 'center', 'left'],
+        columnWidths: ['4%', '13%', '9%', '20%', '24%', '11%', '9%', '10%'],
+        orientation: 'landscape',
+        filename: `Dogovory_Vyborka_${new Date().toISOString().slice(0, 10)}.pdf`
+      });
+      showToast('PDF-отчет по выбранным договорам успешно сформирован');
+    } catch (err) {
+      console.error(err);
+      showToast('Ошибка при формировании PDF для выбранных договоров');
+    }
+  };
+
   // Open Create Modal
   const handleOpenCreate = () => {
     setEditingContractId(null);
@@ -172,6 +363,9 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
       curatorPhone: '+7 (937) 984-61-51',
       amount: 'По договору',
       currency: 'RUB',
+      vatRate: 22,
+      vatMode: 'standard',
+      vatIncluded: true,
       scope: '',
       documents: [],
       dealId: '',
@@ -186,6 +380,9 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
     setFormData({
       ...contract,
       currency: contract.currency || 'RUB',
+      vatRate: contract.vatRate !== undefined ? contract.vatRate : 22,
+      vatMode: contract.vatMode || (contract.vatRate === 0 ? 'export_zero' : 'standard'),
+      vatIncluded: contract.vatIncluded !== undefined ? contract.vatIncluded : true,
       documents: contract.documents ? [...contract.documents] : []
     });
     setIsModalOpen(true);
@@ -205,6 +402,8 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
     const matchedDeal = deals.find(d => d.id === dealId);
     if (matchedDeal) {
       const dealCur = (matchedDeal as any).currency || 'RUB';
+      const dealVatRate = matchedDeal.vatRate !== undefined ? matchedDeal.vatRate : 22;
+      const dealVatMode = matchedDeal.vatMode || (dealVatRate === 0 ? 'export_zero' : 'standard');
       setFormData(prev => ({
         ...prev,
         dealId: matchedDeal.id,
@@ -212,6 +411,9 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
         company: prev.company || matchedDeal.companyName,
         title: prev.title || matchedDeal.serviceType,
         currency: prev.currency || dealCur,
+        vatRate: dealVatRate,
+        vatMode: dealVatMode,
+        vatIncluded: true,
         amount: prev.amount && prev.amount !== 'По договору' ? prev.amount : (matchedDeal.estimatedPrice ? `${matchedDeal.estimatedPrice.toLocaleString('ru-RU')} ${getCurrencySymbol(dealCur)}` : 'По договору'),
         curator: prev.curator || matchedDeal.responsibleManager || 'Скобелев Александр Сергеевич'
       }));
@@ -269,6 +471,8 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
     else if (statusVal === 'Проект') colorVal = 'purple';
     else if (statusVal === 'Приостановлен') colorVal = 'red';
 
+    const effectiveVatRate = formData.vatMode === 'no_vat' ? 0 : formData.vatMode === 'export_zero' ? 0 : (formData.vatRate !== undefined ? formData.vatRate : 22);
+
     if (editingContractId) {
       // Update
       const updated: ProjectContract = {
@@ -284,6 +488,9 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
         curatorPhone: formData.curatorPhone || '+7 (937) 984-61-51',
         amount: formData.amount || 'По договору',
         currency: formData.currency || 'RUB',
+        vatRate: effectiveVatRate,
+        vatMode: formData.vatMode || 'standard',
+        vatIncluded: formData.vatIncluded !== undefined ? formData.vatIncluded : true,
         scope: formData.scope || '',
         documents: formData.documents || [],
         dealId: formData.dealId || undefined,
@@ -311,6 +518,9 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
         curatorPhone: formData.curatorPhone || '+7 (937) 984-61-51',
         amount: formData.amount || 'По договору',
         currency: formData.currency || 'RUB',
+        vatRate: effectiveVatRate,
+        vatMode: formData.vatMode || 'standard',
+        vatIncluded: formData.vatIncluded !== undefined ? formData.vatIncluded : true,
         scope: formData.scope || '',
         documents: formData.documents || [],
         dealId: formData.dealId || undefined,
@@ -580,23 +790,36 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 bg-white border border-gray-300 text-slate-500 hover:bg-gray-50 font-bold rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Импорт договоров из Excel"
-            >
-              <Upload className="w-4 h-4" />
-              <span className="hidden sm:inline">Импорт</span>
-            </button>
-            <button 
-              onClick={handleOpenCreate}
-              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors shadow-xs cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Новый договор</span>
-            </button>
-          </div>
+          {canEdit && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <button 
+                onClick={() => {
+                  setGeneratorContract(null);
+                  setIsGeneratorOpen(true);
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold rounded-lg text-xs transition-colors shadow-2xs cursor-pointer"
+                title="Сформировать юридический договор A4 с печатью и расчетом НДС"
+              >
+                <Sparkles className="w-4 h-4 text-indigo-600" />
+                <span>Сформировать договор A4</span>
+              </button>
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="px-4 py-2 bg-white border border-gray-300 text-slate-500 hover:bg-gray-50 font-bold rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Импорт договоров из Excel"
+              >
+                <Upload className="w-4 h-4" />
+                <span className="hidden sm:inline">Импорт</span>
+              </button>
+              <button 
+                onClick={handleOpenCreate}
+                className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors shadow-xs cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Новый договор</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -707,6 +930,24 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
             <table className="w-full data-dense-table text-left text-xs whitespace-nowrap border-collapse min-w-[1000px]">
               <thead className="bg-slate-50/90 border-b border-gray-200 text-[11px] uppercase font-bold text-gray-500 tracking-wider">
                 <tr>
+                  <th className="px-3 py-3 w-10 text-center">
+                    <button
+                      type="button"
+                      onClick={handleToggleSelectAll}
+                      className="p-1 text-slate-500 hover:text-blue-600 rounded transition-colors"
+                      title={allFilteredSelected ? "Снять выбор со всех" : "Выбрать все договоры"}
+                    >
+                      {allFilteredSelected ? (
+                        <CheckSquare className="w-4 h-4 text-blue-600" />
+                      ) : someFilteredSelected ? (
+                        <div className="w-4 h-4 border-2 border-blue-600 rounded-xs bg-blue-50 flex items-center justify-center">
+                          <div className="w-2 h-0.5 bg-blue-600" />
+                        </div>
+                      ) : (
+                        <Square className="w-4 h-4 text-slate-400" />
+                      )}
+                    </button>
+                  </th>
                   <th className="px-4 py-3">Номер договора</th>
                   <th className="px-4 py-3">Дата</th>
                   <th className="px-4 py-3">Контрагент / Заказчик</th>
@@ -721,16 +962,33 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
               <tbody className="divide-y divide-gray-100">
                 {filtered.length > 0 ? filtered.map((c) => {
                   const statusBadge = STATUS_BADGES[c.status] || { label: c.status, color: 'bg-gray-100 text-slate-500 border-gray-200' };
+                  const isSelected = selectedContractIds.has(c.id);
 
                   return (
                     <tr 
                       key={c.id} 
                       onClick={() => {
-                        setViewingContract(c);
-                        setIsViewModalOpen(true);
+                        setSlideOverContract(c);
+                        setIsSlideOverOpen(true);
                       }}
-                      className="hover:bg-blue-50/60 transition-colors group cursor-pointer"
+                      className={`hover:bg-blue-50/60 transition-colors group cursor-pointer ${isSelected ? 'bg-blue-50/40' : ''}`}
                     >
+                      {/* Selection Checkbox */}
+                      <td className="px-3 py-3.5 text-center" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleSelectOne(c.id, e)}
+                          className="p-1 text-slate-400 hover:text-blue-600 rounded transition-colors"
+                          title="Выбрать для групповой операции"
+                        >
+                          {isSelected ? (
+                            <CheckSquare className="w-4 h-4 text-blue-600" />
+                          ) : (
+                            <Square className="w-4 h-4 text-slate-300" />
+                          )}
+                        </button>
+                      </td>
+
                       {/* Contract Number */}
                       <td className="px-4 py-3.5">
                         <div className="font-bold text-gray-900 flex items-center gap-1.5 group-hover:text-blue-600 transition-colors">
@@ -811,13 +1069,24 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
                         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => {
-                              setViewingContract(c);
-                              setIsViewModalOpen(true);
+                              setSlideOverContract(c);
+                              setIsSlideOverOpen(true);
                             }}
                             className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                            title="Просмотреть карточку договора и файлы"
+                            title="Быстрый просмотр и статус договора"
                           >
                             <Eye className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setGeneratorContract(c);
+                              setIsGeneratorOpen(true);
+                            }}
+                            className="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                            title="Сформировать официальный договор A4 с печатью"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
                           </button>
 
                           {canEdit && (
@@ -887,22 +1156,40 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               {filtered.map(c => {
                 const statusBadge = STATUS_BADGES[c.status] || { label: c.status, color: 'bg-gray-100 text-slate-500 border-gray-200' };
+                const isSelected = selectedContractIds.has(c.id);
+
                 return (
                   <div
                     key={c.id}
                     onClick={() => {
-                      setViewingContract(c);
-                      setIsViewModalOpen(true);
+                      setSlideOverContract(c);
+                      setIsSlideOverOpen(true);
                     }}
-                    className="bg-white rounded-lg p-5 border border-gray-200 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group space-y-4"
+                    className={`bg-white rounded-lg p-5 border shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group space-y-4 ${
+                      isSelected ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/20' : 'border-gray-200'
+                    }`}
                   >
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="text-[10px] font-mono text-gray-400 font-semibold">{c.date}</div>
-                          <div className="font-bold text-sm text-gray-900 group-hover:text-blue-600 transition-colors flex items-center gap-1.5 mt-0.5">
-                            <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
-                            <span>{c.number}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => handleToggleSelectOne(c.id, e)}
+                            className="p-1 text-slate-400 hover:text-blue-600 rounded transition-colors"
+                            title="Выбрать договор"
+                          >
+                            {isSelected ? (
+                              <CheckSquare className="w-4 h-4 text-blue-600" />
+                            ) : (
+                              <Square className="w-4 h-4 text-slate-300" />
+                            )}
+                          </button>
+                          <div>
+                            <div className="text-[10px] font-mono text-gray-400 font-semibold">{c.date}</div>
+                            <div className="font-bold text-sm text-gray-900 group-hover:text-blue-600 transition-colors flex items-center gap-1.5 mt-0.5">
+                              <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
+                              <span>{c.number}</span>
+                            </div>
                           </div>
                         </div>
                         <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border ${statusBadge.color}`}>
@@ -933,16 +1220,27 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
                           {c.amount || 'По договору'}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => {
-                            setViewingContract(c);
-                            setIsViewModalOpen(true);
+                            setSlideOverContract(c);
+                            setIsSlideOverOpen(true);
                           }}
-                          className="px-4 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                          className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                          title="Быстрый просмотр"
                         >
                           <Eye className="w-3.5 h-3.5" />
-                          <span>Открыть</span>
+                          <span>Просмотр</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setGeneratorContract(c);
+                            setIsGeneratorOpen(true);
+                          }}
+                          className="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                          title="Генератор договора A4"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
                         </button>
                         {canEdit && (
                           <button
@@ -983,16 +1281,32 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
         <div className="bg-white border border-gray-200 rounded-lg shadow-xs divide-y divide-gray-100 overflow-hidden">
           {filtered.length > 0 ? filtered.map(c => {
             const statusBadge = STATUS_BADGES[c.status] || { label: c.status, color: 'bg-gray-100 text-slate-500 border-gray-200' };
+            const isSelected = selectedContractIds.has(c.id);
+
             return (
               <div
                 key={c.id}
                 onClick={() => {
-                  setViewingContract(c);
-                  setIsViewModalOpen(true);
+                  setSlideOverContract(c);
+                  setIsSlideOverOpen(true);
                 }}
-                className="p-4 hover:bg-blue-50/60 transition-colors cursor-pointer flex items-center justify-between gap-4 group"
+                className={`p-4 hover:bg-blue-50/60 transition-colors cursor-pointer flex items-center justify-between gap-4 group ${
+                  isSelected ? 'bg-blue-50/40' : ''
+                }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
+                  <button
+                    type="button"
+                    onClick={(e) => handleToggleSelectOne(c.id, e)}
+                    className="p-1 text-slate-400 hover:text-blue-600 rounded transition-colors"
+                    title="Выбрать договор"
+                  >
+                    {isSelected ? (
+                      <CheckSquare className="w-4 h-4 text-blue-600" />
+                    ) : (
+                      <Square className="w-4 h-4 text-slate-300" />
+                    )}
+                  </button>
                   <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
@@ -1009,19 +1323,30 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 shrink-0" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
                   <div className="text-right">
                     <div className="font-bold text-xs text-gray-900">{c.amount || 'По договору'}</div>
                     <div className="text-[10px] text-gray-400">{c.curator}</div>
                   </div>
                   <button
                     onClick={() => {
-                      setViewingContract(c);
-                      setIsViewModalOpen(true);
+                      setSlideOverContract(c);
+                      setIsSlideOverOpen(true);
                     }}
                     className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                    title="Быстрый просмотр"
                   >
                     <Eye className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setGeneratorContract(c);
+                      setIsGeneratorOpen(true);
+                    }}
+                    className="p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                    title="Генератор договора A4"
+                  >
+                    <Sparkles className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -1038,8 +1363,8 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
 
       {/* Modal: Create / Edit Contract */}
       {isModalOpen && (
-        <div className={`fixed inset-0 z-[200] flex items-center justify-center bg-black/75 sm: backdrop-blur-xs overflow-hidden ${isFullscreen ? 'p-0' : 'p-2 sm:p-4'}`}>
-          <div className={`${isFullscreen ? 'fixed inset-0 z-[201] w-screen h-screen max-w-none max-h-none rounded-none' : 'relative max-w-3xl w-full h-full max-h-[94vh] sm:max-h-[90vh] rounded-lg sm:rounded-lg'} bg-white shadow-sm border border-gray-100 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200`}>
+        <div className={`fixed inset-0 z-[400] flex items-center justify-center bg-black/75 sm: backdrop-blur-xs overflow-hidden ${isFullscreen ? 'p-0' : 'p-2 sm:p-4'}`}>
+          <div className={`${isFullscreen ? 'fixed inset-0 z-[401] w-screen h-screen max-w-none max-h-none rounded-none' : 'relative max-w-3xl w-full h-full max-h-[94vh] sm:max-h-[90vh] rounded-lg sm:rounded-lg'} bg-white shadow-xl border border-gray-200 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200`}>
             {/* Modal Header */}
             <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-slate-50 shrink-0">
               <div className="flex items-center gap-3">
@@ -1080,7 +1405,7 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
             <div className="p-6 flex-1 overflow-y-auto space-y-4">
               <form id="contract-form" onSubmit={handleSaveContract} className="space-y-4">
                 {/* Deal Binding Selector */}
-                <div className="p-4 rounded-lg bg-blue-50/70 border border-blue-200/80 space-y-2">
+                <div className="p-3.5 rounded-lg bg-blue-50/70 border border-blue-200/80 space-y-1.5">
                   <label className="block text-xs font-bold text-blue-950 flex items-center gap-2">
                     <Link2 className="w-4 h-4 text-blue-600" />
                     Привязать к сделке CRM (опционально)
@@ -1088,21 +1413,21 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
                   <select
                     value={formData.dealId || ''}
                     onChange={(e) => handleDealSelect(e.target.value)}
-                    className="w-full px-4 py-2 bg-white border border-blue-200 rounded-lg text-xs font-semibold text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-3.5 py-2 bg-white border border-blue-200 rounded-lg text-xs font-semibold text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none"
                   >
                     <option value="">-- Без привязки к сделке (независимый контракт) --</option>
-                    {deals.map(deal => (
-                      <option key={deal.id} value={deal.id}>
+                    {deals.map((deal, dIdx) => (
+                      <option key={`${deal.id}-${dIdx}`} value={deal.id}>
                         [{deal.id}] {deal.companyName} — {deal.serviceType}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                {/* Primary Data: Number, Date, Status */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Primary Data: Number, Date, Status (Row 1 - perfectly balanced 3 columns) */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
                       Номер договора <span className="text-red-500">*</span>
                     </label>
                     <input 
@@ -1110,12 +1435,12 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
                       type="text" 
                       value={formData.number || ''} 
                       onChange={e => setFormData({ ...formData, number: e.target.value })} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-gray-900" 
+                      className="w-full h-10 px-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-gray-900" 
                       placeholder="ДОГ-2026/..." 
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
                       Дата заключения <span className="text-red-500">*</span>
                     </label>
                     <input 
@@ -1123,17 +1448,17 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
                       type="text" 
                       value={formData.date || new Date().toLocaleDateString('ru-RU')} 
                       onChange={e => setFormData({ ...formData, date: e.target.value })} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-gray-900" 
+                      className="w-full h-10 px-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-gray-900" 
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
                       Статус договора <span className="text-red-500">*</span>
                     </label>
                     <select 
                       value={formData.status || 'Исполняется'} 
-                      onChange={e => setFormData({ ...formData, status: e.target.value })} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-gray-900"
+                      onChange={e => setFormData({ ...formData, status: e.target.value as any })} 
+                      className="w-full h-10 px-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-gray-900 cursor-pointer"
                     >
                       <option value="Исполняется">Исполняется</option>
                       <option value="Действует">Действует</option>
@@ -1150,93 +1475,263 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
                   </div>
                 </div>
 
-                {/* Company & Title */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1 flex items-center justify-between">
-                      <span>Контрагент / Заказчик <span className="text-red-500">*</span></span>
+                {/* Company & Currency (Row 2 - aligned 2 + 1 columns) */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
+                  <div className="sm:col-span-2">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold text-slate-700">
+                        Контрагент / Заказчик <span className="text-red-500">*</span>
+                      </label>
                       <button 
                         type="button" 
                         onClick={() => setIsCompModalOpen(true)}
-                        className="text-[10px] text-blue-600 font-bold hover:underline flex items-center gap-0.5"
+                        className="text-[11px] text-blue-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <Plus className="w-3 h-3" />
-                        Новый
+                        Добавить нового
                       </button>
-                    </label>
+                    </div>
                     <select 
                       required 
                       value={crmCompanies.some(c => c.name === formData.company) ? formData.company : ''} 
                       onChange={e => setFormData({ ...formData, company: e.target.value })} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-blue-900" 
+                      className="w-full h-10 px-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-blue-900 cursor-pointer" 
                     >
-                      <option value="" disabled>{formData.company && !crmCompanies.some(c => c.name === formData.company) ? formData.company : 'Выберите из базы...'}</option>
+                      <option value="" disabled>{formData.company && !crmCompanies.some(c => c.name === formData.company) ? formData.company : 'Выберите организацию из реестра...'}</option>
                       {crmCompanies.map(c => (
                         <option key={c.id} value={c.name}>{c.name}</option>
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1 flex items-center justify-between">
-                      <span>Сумма договора (с НДС 22%)</span>
-                      <span className="text-[10px] text-gray-500 font-normal">Валюта:</span>
+                  <div className="sm:col-span-1">
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Валюта договора
                     </label>
-                    <div className="flex gap-2">
-                      <input 
-                        type="text" 
-                        value={formData.amount || ''} 
-                        onChange={e => setFormData({ ...formData, amount: e.target.value })} 
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-emerald-800" 
-                        placeholder="Например, 4 850 000 или «По договору»" 
-                      />
-                      <select
-                        value={formData.currency || 'RUB'}
-                        onChange={e => setFormData({ ...formData, currency: e.target.value as CurrencyCode })}
-                        className="px-2.5 py-2 border border-gray-300 rounded-lg bg-gray-50 font-bold text-xs text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none shrink-0"
-                        title="Выбор валюты договора"
-                      >
-                        <option value="RUB">₽ RUB (Рубли)</option>
-                        <option value="USD">$ USD (Доллар США)</option>
-                        <option value="EUR">€ EUR (Евро)</option>
-                        <option value="CNY">¥ CNY (Юани)</option>
-                      </select>
-                    </div>
-
-                    {/* 3-point VAT breakdown preview if numeric */}
-                    {(() => {
-                      const num = parseInt((formData.amount || '').replace(/\D/g, ''), 10);
-                      if (!num || isNaN(num) || num <= 0) return null;
-                      const sym = getCurrencySymbol(formData.currency || 'RUB');
-                      const withoutVat = Math.round(num / 1.22);
-                      const vat = Math.round(withoutVat * 0.22);
-                      return (
-                        <div className="mt-2 p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] space-y-1">
-                          <div className="flex justify-between text-slate-500">
-                            <span>ИТОГО без НДС:</span>
-                            <span className="font-mono font-bold text-gray-800">
-                              {withoutVat.toLocaleString('ru-RU')} {sym}
-                            </span>
-                          </div>
-                          <div className="flex justify-between text-slate-500">
-                            <span>В том числе НДС 22%:</span>
-                            <span className="font-mono font-bold text-blue-600">
-                              {vat.toLocaleString('ru-RU')} {sym}
-                            </span>
-                          </div>
-                          <div className="flex justify-between font-bold text-gray-900 border-t border-slate-200 pt-1">
-                            <span>ИТОГО с учетом НДС 22%:</span>
-                            <span className="font-mono font-black text-emerald-800">
-                              {num.toLocaleString('ru-RU')} {sym}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    <select
+                      value={formData.currency || 'RUB'}
+                      onChange={e => setFormData({ ...formData, currency: e.target.value as CurrencyCode })}
+                      className="w-full h-10 px-3.5 border border-gray-300 rounded-lg bg-gray-50 font-bold text-xs text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                      title="Выбор валюты договора"
+                    >
+                      <option value="RUB">₽ RUB (Российский рубль)</option>
+                      <option value="USD">$ USD (Доллар США)</option>
+                      <option value="EUR">€ EUR (Евро)</option>
+                      <option value="CNY">¥ CNY (Китайский юань)</option>
+                    </select>
                   </div>
                 </div>
 
+                {/* Tax & VAT Mode Configuration Card */}
+                <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+                        %
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                          Ставка НДС и налоговый режим договора
+                        </span>
+                        <p className="text-[10px] text-slate-500">
+                          Поддержка базовой ставки (22% с 2026 г.), экспорта в ЕАЭС/СНГ (0%), УСН или произвольной ставки
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                      {formData.vatMode === 'no_vat' ? 'Без НДС (УСН)' : formData.vatMode === 'export_zero' ? 'Экспорт (0% НДС)' : `НДС ${formData.vatMode === 'custom' ? (formData.vatRate ?? 22) : (formData.vatRate ?? 22)}%`}
+                    </span>
+                  </div>
+
+                  {/* VAT Presets */}
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-6 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, vatMode: 'standard', vatRate: 22 })}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                          formData.vatMode === 'standard' && formData.vatRate === 22
+                            ? 'bg-blue-600 border-blue-600 text-white shadow-2xs'
+                            : 'bg-white border-gray-200 text-slate-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        22% (РФ 2026)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, vatMode: 'custom', vatRate: 20 })}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                          formData.vatMode === 'custom' && formData.vatRate === 20
+                            ? 'bg-blue-600 border-blue-600 text-white shadow-2xs'
+                            : 'bg-white border-gray-200 text-slate-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        20%
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, vatMode: 'custom', vatRate: 10 })}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                          formData.vatMode === 'custom' && formData.vatRate === 10
+                            ? 'bg-blue-600 border-blue-600 text-white shadow-2xs'
+                            : 'bg-white border-gray-200 text-slate-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        10%
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, vatMode: 'export_zero', vatRate: 0 })}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                          formData.vatMode === 'export_zero' || formData.vatRate === 0
+                            ? 'bg-emerald-600 border-emerald-600 text-white shadow-2xs'
+                            : 'bg-white border-gray-200 text-slate-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        0% (Экспорт)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, vatMode: 'no_vat', vatRate: 0 })}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                          formData.vatMode === 'no_vat'
+                            ? 'bg-slate-800 border-slate-800 text-white shadow-2xs'
+                            : 'bg-white border-gray-200 text-slate-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        Без НДС
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, vatMode: 'custom' })}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                          formData.vatMode === 'custom' && formData.vatRate !== 20 && formData.vatRate !== 10
+                            ? 'bg-blue-600 border-blue-600 text-white shadow-2xs'
+                            : 'bg-white border-gray-200 text-slate-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        Своя ставка
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                      {formData.vatMode === 'custom' && (
+                        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-blue-200">
+                          <span className="text-xs text-slate-700 font-bold">Произвольная ставка НДС:</span>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value={formData.vatRate ?? 22}
+                            onChange={(e) => setFormData({ ...formData, vatRate: parseFloat(e.target.value) || 0 })}
+                            className="w-20 px-2 py-1 bg-slate-50 border border-gray-300 rounded text-xs font-bold text-blue-900 outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <span className="text-xs font-bold text-slate-700">%</span>
+                        </div>
+                      )}
+
+                      {/* VAT Included Toggle */}
+                      {formData.vatMode !== 'no_vat' && formData.vatMode !== 'export_zero' && (
+                        <div className="flex items-center gap-3 text-xs">
+                          <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                            <input
+                              type="radio"
+                              name="vatIncluded"
+                              checked={formData.vatIncluded !== false}
+                              onChange={() => setFormData({ ...formData, vatIncluded: true })}
+                              className="w-3.5 h-3.5 text-blue-600"
+                            />
+                            <span className="font-semibold text-slate-700">Сумма включает НДС</span>
+                          </label>
+                          <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                            <input
+                              type="radio"
+                              name="vatIncluded"
+                              checked={formData.vatIncluded === false}
+                              onChange={() => setFormData({ ...formData, vatIncluded: false })}
+                              className="w-3.5 h-3.5 text-blue-600"
+                            />
+                            <span className="font-semibold text-slate-700">НДС начисляется сверху</span>
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Amount & Real-time Calculation */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Сумма договора
+                  </label>
+                  <input 
+                    type="text" 
+                    value={formData.amount || ''} 
+                    onChange={e => setFormData({ ...formData, amount: e.target.value })} 
+                    className="w-full h-10 px-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-emerald-800" 
+                    placeholder="Например, 4 850 000 или «По договору»" 
+                  />
+
+                  {/* Dynamic VAT Breakdown Card */}
+                  {(() => {
+                    const num = parseInt((formData.amount || '').replace(/\D/g, ''), 10);
+                    if (!num || isNaN(num) || num <= 0) return null;
+                    const sym = getCurrencySymbol(formData.currency || 'RUB');
+                    const currentVatRate = formData.vatMode === 'no_vat' ? 0 : formData.vatMode === 'export_zero' ? 0 : (formData.vatRate !== undefined ? formData.vatRate : 22);
+                    const isIncluded = formData.vatIncluded !== false;
+
+                    let subtotal = 0;
+                    let vatSum = 0;
+                    let totalFinal = 0;
+
+                    if (currentVatRate === 0 || formData.vatMode === 'no_vat' || formData.vatMode === 'export_zero') {
+                      subtotal = num;
+                      vatSum = 0;
+                      totalFinal = num;
+                    } else if (isIncluded) {
+                      subtotal = Math.round(num / (1 + currentVatRate / 100));
+                      vatSum = num - subtotal;
+                      totalFinal = num;
+                    } else {
+                      subtotal = num;
+                      vatSum = Math.round(num * (currentVatRate / 100));
+                      totalFinal = num + vatSum;
+                    }
+
+                    return (
+                      <div className="mt-2.5 p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+                        <div className="flex justify-between text-slate-600">
+                          <span>Сумма без НДС:</span>
+                          <span className="font-mono font-bold text-gray-800">
+                            {subtotal.toLocaleString('ru-RU')} {sym}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-slate-600">
+                          <span>
+                            {formData.vatMode === 'export_zero' 
+                              ? 'НДС 0% (Экспорт / ст. 164 НК РФ):' 
+                              : formData.vatMode === 'no_vat' 
+                              ? 'НДС (не облагается / УСН):' 
+                              : `В том числе НДС ${currentVatRate}%:`}
+                          </span>
+                          <span className="font-mono font-bold text-blue-600">
+                            {vatSum > 0 ? `${vatSum.toLocaleString('ru-RU')} ${sym}` : `0 ${sym}`}
+                          </span>
+                        </div>
+                        <div className="flex justify-between font-bold text-gray-900 border-t border-slate-200 pt-1.5">
+                          <span>ИТОГО к оплате с учетом НДС:</span>
+                          <span className="font-mono font-black text-emerald-800 text-sm">
+                            {totalFinal.toLocaleString('ru-RU')} {sym}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Project Title */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     Предмет договора / Наименование проекта <span className="text-red-500">*</span>
                   </label>
                   <input 
@@ -1244,15 +1739,15 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
                     type="text" 
                     value={formData.title || ''} 
                     onChange={e => setFormData({ ...formData, title: e.target.value })} 
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-gray-900" 
+                    className="w-full h-10 px-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-gray-900" 
                     placeholder="Внедрение TopSolid 7 + 2 лицензии TopSolid'CAM 7 + PDM" 
                   />
                 </div>
 
-                {/* Curator & Phone */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Curator & Phone & Warranty (Row 4 - perfectly balanced 3 columns) */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
                       Ответственный куратор (ДС‑Инжиниринг)
                     </label>
                     <select
@@ -1266,7 +1761,7 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
                           curatorPhone: staff.phone || formData.curatorPhone 
                         });
                       }} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-medium text-gray-900"
+                      className="w-full h-10 px-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-medium text-gray-900 cursor-pointer"
                     >
                       <option value="" disabled>Выберите куратора...</option>
                       {authUsers
@@ -1282,26 +1777,26 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
                       Телефон куратора
                     </label>
                     <input 
                       type="text" 
                       value={formData.curatorPhone || ''} 
                       onChange={e => setFormData({ ...formData, curatorPhone: e.target.value })} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs text-gray-900" 
+                      className="w-full h-10 px-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs text-gray-900" 
                       placeholder="+7 (937) 984-61-51" 
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
                       Срок гарантии / техподдержки
                     </label>
                     <input 
                       type="text" 
                       value={formData.supportUntil || ''} 
                       onChange={e => setFormData({ ...formData, supportUntil: e.target.value })} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs text-gray-900" 
+                      className="w-full h-10 px-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs text-gray-900" 
                       placeholder="Например, 15.01.2027" 
                     />
                   </div>
@@ -1432,8 +1927,8 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
 
       {/* Modal: View Contract Details */}
       {isViewModalOpen && viewingContract && (
-        <div className={`fixed inset-0 z-[200] flex items-center justify-center bg-black/75 sm: backdrop-blur-xs overflow-hidden ${isFullscreen ? 'p-0' : 'p-2 sm:p-4'}`}>
-          <div className={`${isFullscreen ? 'fixed inset-0 z-[201] w-screen h-screen max-w-none max-h-none rounded-none' : 'relative max-w-2xl w-full h-full max-h-[94vh] sm:max-h-[90vh] rounded-lg sm:rounded-lg'} bg-white shadow-sm border border-gray-100 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200`}>
+        <div className={`fixed inset-0 z-[400] flex items-center justify-center bg-black/75 sm: backdrop-blur-xs overflow-hidden ${isFullscreen ? 'p-0' : 'p-2 sm:p-4'}`}>
+          <div className={`${isFullscreen ? 'fixed inset-0 z-[401] w-screen h-screen max-w-none max-h-none rounded-none' : 'relative max-w-2xl w-full h-full max-h-[94vh] sm:max-h-[90vh] rounded-lg sm:rounded-lg'} bg-white shadow-xl border border-gray-200 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200`}>
             <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-blue-700 text-white shrink-0">
               <div className="flex items-center gap-3">
                 <ShieldCheck className="w-6 h-6" />
@@ -1477,9 +1972,28 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
                   {(() => {
                     const num = parseInt((viewingContract.amount || '').replace(/\D/g, ''), 10);
                     const sym = getCurrencySymbol(viewingContract.currency || 'RUB');
+                    const vRate = viewingContract.vatMode === 'no_vat' ? 0 : viewingContract.vatMode === 'export_zero' ? 0 : (viewingContract.vatRate !== undefined ? viewingContract.vatRate : 22);
+                    const isInc = viewingContract.vatIncluded !== false;
+
                     if (num && !isNaN(num) && num > 0) {
-                      const withoutVat = Math.round(num / 1.22);
-                      const vat = Math.round(withoutVat * 0.22);
+                      let withoutVat = num;
+                      let vat = 0;
+                      let totalWithVat = num;
+
+                      if (vRate === 0 || viewingContract.vatMode === 'no_vat' || viewingContract.vatMode === 'export_zero') {
+                        withoutVat = num;
+                        vat = 0;
+                        totalWithVat = num;
+                      } else if (isInc) {
+                        withoutVat = Math.round(num / (1 + vRate / 100));
+                        vat = num - withoutVat;
+                        totalWithVat = num;
+                      } else {
+                        withoutVat = num;
+                        vat = Math.round(num * (vRate / 100));
+                        totalWithVat = num + vat;
+                      }
+
                       return (
                         <div className="p-3 bg-white rounded-lg border border-gray-200/80 space-y-1.5 mt-2">
                           <div className="flex items-center justify-between text-slate-500">
@@ -1487,12 +2001,24 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
                             <span className="font-mono font-bold text-gray-800">{withoutVat.toLocaleString('ru-RU')} {sym}</span>
                           </div>
                           <div className="flex items-center justify-between text-slate-500">
-                            <span>В том числе НДС 22%:</span>
-                            <span className="font-mono font-bold text-blue-600">{vat.toLocaleString('ru-RU')} {sym}</span>
+                            <span>
+                              {viewingContract.vatMode === 'export_zero' 
+                                ? 'НДС 0% (Экспорт / ст. 164 НК РФ):' 
+                                : viewingContract.vatMode === 'no_vat' 
+                                ? 'НДС (не облагается / УСН):' 
+                                : `В том числе НДС ${vRate}%:`}
+                            </span>
+                            <span className="font-mono font-bold text-blue-600">{vat > 0 ? `${vat.toLocaleString('ru-RU')} ${sym}` : `0 ${sym}`}</span>
                           </div>
                           <div className="flex items-center justify-between pt-1 border-t border-gray-200 font-black text-gray-900">
-                            <span className="uppercase text-[11px] tracking-wide">ИТОГО с учетом НДС 22%:</span>
-                            <span className="text-sm font-black text-emerald-800 font-mono">{num.toLocaleString('ru-RU')} {sym}</span>
+                            <span className="uppercase text-[11px] tracking-wide">
+                              {viewingContract.vatMode === 'no_vat' 
+                                ? 'ИТОГО (без НДС):' 
+                                : viewingContract.vatMode === 'export_zero' 
+                                ? 'ИТОГО с учетом НДС 0% (Экспорт):' 
+                                : `ИТОГО с учетом НДС ${vRate}%:`}
+                            </span>
+                            <span className="text-sm font-black text-emerald-800 font-mono">{totalWithVat.toLocaleString('ru-RU')} {sym}</span>
                           </div>
                         </div>
                       );
@@ -1652,7 +2178,7 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
 
       {/* Confirmation Modal: Delete */}
       {deleteConfirmId && (
-        <div className={`fixed inset-0 z-[250] flex items-center justify-center bg-black/75 backdrop-blur-xs overflow-hidden ${isFullscreen ? 'p-0' : 'p-2 sm:p-4'}`}>
+        <div className={`fixed inset-0 z-[800] flex items-center justify-center bg-black/75 backdrop-blur-xs overflow-hidden ${isFullscreen ? 'p-0' : 'p-2 sm:p-4'}`}>
           <div className="bg-white rounded-lg sm:rounded-lg w-full max-w-md p-6 shadow-sm space-y-4 animate-in fade-in zoom-in-95 duration-200">
             <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 mx-auto">
               <AlertCircle className="w-6 h-6" />
@@ -1727,6 +2253,82 @@ export const ContractsRegistry: React.FC<ContractsRegistryProps> = ({
           initialCompanyId={crmCompanies.find(c => c.name === formData.company)?.id}
         />
       )}
+
+      {/* Sticky Batch Action Bar */}
+      <CrmBatchActionBar
+        selectedCount={selectedContractIds.size}
+        totalCount={currentContracts.length}
+        totalSum={selectedTotalSum}
+        currency="₽"
+        itemLabel="договоров"
+        onClearSelection={handleClearSelection}
+        onExportExcel={handleBatchExportExcel}
+        onExportPdf={handleBatchExportPdf}
+        onReassignManager={handleBatchReassignCurator}
+        onBulkChangeStatus={handleBatchChangeStatus}
+        statusOptions={[
+          { value: 'Исполняется', label: 'Исполняется' },
+          { value: 'Действует', label: 'Действует' },
+          { value: 'Выполнен (На гарантии)', label: 'Выполнен (На гарантии)' },
+          { value: 'Сдан в эксплуатацию', label: 'Сдан в эксплуатацию' },
+          { value: 'Подписан', label: 'Подписан' },
+          { value: 'В процессе подписания', label: 'В процессе подписания' },
+          { value: 'На согласовании', label: 'На согласовании' },
+          { value: 'Проект', label: 'Проект' },
+          { value: 'Приостановлен', label: 'Приостановлен' }
+        ]}
+        onDeleteSelected={handleBatchDelete}
+        isAdmin={isAdmin}
+      />
+
+      {/* Contract Quick Slide-Over Drawer */}
+      <ContractQuickSlideOver
+        contract={slideOverContract}
+        isOpen={isSlideOverOpen}
+        onClose={() => setIsSlideOverOpen(false)}
+        onUpdateContract={(updated) => {
+          if (propSetContracts) {
+            propSetContracts(prev => prev.map(c => c.id === updated.id ? updated : c));
+          } else {
+            updateContract(updated.id, updated);
+          }
+          setSlideOverContract(updated);
+        }}
+        onOpenFullEditor={(c) => {
+          setIsSlideOverOpen(false);
+          handleOpenEdit(c);
+        }}
+        onOpenGenerator={(c) => {
+          setIsSlideOverOpen(false);
+          setGeneratorContract(c);
+          setIsGeneratorOpen(true);
+        }}
+        onCloneContract={(c) => {
+          handleCloneContract(c);
+          setIsSlideOverOpen(false);
+        }}
+      />
+
+      {/* Official Contract Generator Modal */}
+      <GenerateContractModal
+        isOpen={isGeneratorOpen}
+        onClose={() => setIsGeneratorOpen(false)}
+        contract={generatorContract}
+        onSaveContract={(savedContract) => {
+          if (propSetContracts) {
+            propSetContracts(prev => {
+              const exists = prev.some(c => c.id === savedContract.id);
+              if (exists) return prev.map(c => c.id === savedContract.id ? savedContract : c);
+              return [savedContract, ...prev];
+            });
+          } else {
+            const exists = contracts.some(c => c.id === savedContract.id);
+            if (exists) updateContract(savedContract.id, savedContract);
+            else addContract(savedContract);
+          }
+          setIsGeneratorOpen(false);
+        }}
+      />
     </div>
   );
 };

@@ -1,14 +1,29 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Calculator as CalcIcon, Clock, Check, Send, Sparkles, HelpCircle, ArrowRight } from 'lucide-react';
+import { Calculator as CalcIcon, Clock, Check, Send, SlidersHorizontal, HelpCircle, ArrowRight, Gauge, TrendingUp } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useConfiguratorSettings } from '../../hooks/useConfiguratorSettings';
 
 interface CalculatorProps {
   defaultService?: 'scanning' | 'reverse' | 'inspection' | 'postprocessor' | 'tooling' | 'cmm_service';
 }
 
 export const Calculator: React.FC<CalculatorProps> = ({ defaultService = 'scanning' }) => {
-  const { openContactModal } = useApp();
+  const { openContactModal, crmSettings, openConfiguratorModal, openRoiCalculatorModal } = useApp();
+  const { settings: globalConfigSettings } = useConfiguratorSettings();
+  const svcSettings = globalConfigSettings.services;
+
   const [serviceType, setServiceType] = useState<'scanning' | 'reverse' | 'inspection' | 'postprocessor' | 'tooling' | 'cmm_service'>(defaultService);
+
+  // VAT Tax Mode State
+  const [vatMode, setVatMode] = useState<'standard' | 'export_zero' | 'no_vat' | 'custom'>('standard');
+  const [customVatRate, setCustomVatRate] = useState<number>(svcSettings.defaultVatRatePercent || 22);
+
+  // Sync VAT default when settings load
+  useEffect(() => {
+    if (svcSettings?.defaultVatRatePercent) {
+      setCustomVatRate(svcSettings.defaultVatRatePercent);
+    }
+  }, [svcSettings?.defaultVatRatePercent]);
 
   // Sync serviceType when defaultService prop changes
   useEffect(() => {
@@ -25,11 +40,11 @@ export const Calculator: React.FC<CalculatorProps> = ({ defaultService = 'scanni
 
   // Reverse Engineering State
   const [reverseType, setReverseType] = useState<'prismatic' | 'cast' | 'freeform' | 'complex_impeller'>('cast');
-  const [reverseApproach, setReverseApproach] = useState<'parametric_tree' | 'nurbs_surface' | 'hybrid'>('parametric_tree');
+  const [reverseApproach, setReverseApproach] = useState<'solid_brep' | 'hybrid' | 'nurbs_surface' | 'parametric_tree'>('solid_brep');
   const [reverseScanSource, setReverseScanSource] = useState<'has_mesh' | 'need_lab_scan' | 'need_onsite_scan'>('has_mesh');
   const [reverseNeedDeviationAudit, setReverseNeedDeviationAudit] = useState(true);
   const [reverseNeedDrawings, setReverseNeedDrawings] = useState(true);
-  const [reverseCadFormat, setReverseCadFormat] = useState<'native_topsolid' | 'native_solidworks' | 'native_nx' | 'native_kompas' | 'step_parasolid'>('native_topsolid');
+  const [reverseCadFormat, setReverseCadFormat] = useState<'native_topsolid' | 'native_solidworks' | 'native_nx' | 'native_kompas' | 'step_parasolid'>('step_parasolid');
 
   // Inspection State
   const [inspectionObject, setInspectionObject] = useState<'part' | 'tooling' | 'assembly'>('part');
@@ -56,20 +71,34 @@ export const Calculator: React.FC<CalculatorProps> = ({ defaultService = 'scanni
   const [cmmNeedTraining, setCmmNeedTraining] = useState(false);
 
   // Calculation Logic
-  const { estimatedPrice, estimatedDays, summaryText, isOnsiteMinApplied } = useMemo(() => {
+  const { 
+    estimatedPrice, 
+    estimatedDays, 
+    summaryText, 
+    isOnsiteMinApplied, 
+    subtotalWithoutVat, 
+    effectiveVatRate, 
+    vatAmount 
+  } = useMemo(() => {
     let price = 0;
     let days = 1;
     let desc = '';
     let minOnsiteApplied = false;
 
     if (serviceType === 'scanning') {
-      const sizePrices = { small: 5000, medium: 9000, large: 18000, huge: 35000 };
+      const sizePrices = { 
+        small: svcSettings.scanBaseSmallRub || 5000, 
+        medium: svcSettings.scanBaseMediumRub || 9000, 
+        large: svcSettings.scanBaseLargeRub || 18000, 
+        huge: svcSettings.scanBaseHugeRub || 35000 
+      };
       const complexityMult = { simple: 1.0, medium: 1.25, complex: 1.6 };
       price = sizePrices[scanSize] * complexityMult[scanComplexity];
       if (scanLocation === 'onsite') {
-        price += 12000;
-        if (price < 25000) {
-          price = 25000;
+        price += svcSettings.onsiteExtraFeeRub || 12000;
+        const minOnsite = svcSettings.onsiteMinTotalRub || 25000;
+        if (price < minOnsite) {
+          price = minOnsite;
           minOnsiteApplied = true;
         }
       }
@@ -80,15 +109,21 @@ export const Calculator: React.FC<CalculatorProps> = ({ defaultService = 'scanni
 
       desc = `3D-сканирование (${scanSize === 'small' ? 'до 100 мм' : scanSize === 'medium' ? 'до 500 мм' : scanSize === 'large' ? 'до 2000 мм' : 'крупногабарит >2м'}, сложность: ${scanComplexity}, ${scanLocation === 'lab' ? 'в офисе / техцентре (Самара/Тольятти)' : 'выезд на объект'})`;
     } else if (serviceType === 'reverse') {
-      const typePrices = { prismatic: 16000, cast: 30000, freeform: 52000, complex_impeller: 78000 };
-      const approachMult = { parametric_tree: 1.25, nurbs_surface: 1.0, hybrid: 1.15 };
+      const typePrices = { 
+        prismatic: svcSettings.reverseBasePrismaticRub || 16000, 
+        cast: svcSettings.reverseBaseCastRub || 30000, 
+        freeform: svcSettings.reverseBaseFreeformRub || 52000, 
+        complex_impeller: Math.round((svcSettings.reverseBaseFreeformRub || 52000) * 1.5) 
+      };
+      const approachMult = { solid_brep: 1.0, hybrid: 1.15, nurbs_surface: 1.0, parametric_tree: 1.35 };
       price = typePrices[reverseType] * approachMult[reverseApproach];
 
-      if (reverseScanSource === 'need_lab_scan') price += 9000;
+      if (reverseScanSource === 'need_lab_scan') price += (svcSettings.scanBaseMediumRub || 9000);
       if (reverseScanSource === 'need_onsite_scan') {
-        price += 21000;
-        if (price < 25000) {
-          price = 25000;
+        price += (svcSettings.scanBaseLargeRub || 18000) + (svcSettings.onsiteExtraFeeRub || 12000);
+        const minOnsite = svcSettings.onsiteMinTotalRub || 25000;
+        if (price < minOnsite) {
+          price = minOnsite;
           minOnsiteApplied = true;
         }
       }
@@ -96,22 +131,23 @@ export const Calculator: React.FC<CalculatorProps> = ({ defaultService = 'scanni
       if (reverseNeedDrawings) price += 14000;
 
       days = reverseType === 'complex_impeller' ? 8 : reverseType === 'freeform' ? 6 : reverseType === 'cast' ? 4 : 2;
-      if (reverseApproach === 'parametric_tree') days += 1;
+      if (reverseApproach === 'parametric_tree') days += 2;
       if (reverseNeedDrawings) days += 2;
       if (reverseScanSource !== 'has_mesh') days += 1;
 
       const cadFormatNames: Record<string, string> = {
-        native_topsolid: 'TopSolid 7 (Native Feature Tree)',
-        native_solidworks: 'SolidWorks (LiveTransfer)',
-        native_nx: 'Siemens NX (LiveTransfer)',
-        native_kompas: 'КОМПАС-3D (Параметрическая модель)',
-        step_parasolid: 'STEP AP242 / Parasolid X_T',
+        native_topsolid: 'TopSolid 7 Design',
+        native_solidworks: 'SolidWorks (по спец. ТЗ)',
+        native_nx: 'Siemens NX (по спец. ТЗ)',
+        native_kompas: 'КОМПАС-3D (по спец. ТЗ)',
+        step_parasolid: 'STEP AP242 / Parasolid .x_t (Стандарт)',
       };
 
       const approachNames: Record<string, string> = {
-        parametric_tree: 'Параметрическое твердотельное моделирование с деревом (Geomagic Design X)',
-        nurbs_surface: 'Точная подгонка NURBS-поверхностей (Autosurface)',
-        hybrid: 'Гибридное моделирование (Solid + NURBS)',
+        solid_brep: 'Твердотельное B-Rep моделирование (STEP / Parasolid — стандарт для ЧПУ)',
+        hybrid: 'Гибридное моделирование (Solid базы + точные NURBS поверхности)',
+        nurbs_surface: 'Поверхностная подгонка NURBS (Autosurface для свободных форм)',
+        parametric_tree: 'С деревом построения (по отдельному ТЗ под САПР заказчика)',
       };
 
       desc = `Реверс-инжиниринг: ${reverseType === 'prismatic' ? 'призматическая деталь' : reverseType === 'cast' ? 'литая корпусная' : reverseType === 'freeform' ? 'свободная NURBS форма' : 'крыльчатка / лопаточный аппарат'}, метод: ${approachNames[reverseApproach]}, CAD: ${cadFormatNames[reverseCadFormat]}, ${reverseScanSource === 'has_mesh' ? 'исходный скан предоставлен' : reverseScanSource === 'need_lab_scan' ? 'включая 3D-сканирование в офисе компании' : 'включая выездное 3D-сканирование'}${reverseNeedDeviationAudit ? ', аудит отклонений CAD/Mesh' : ''}${reverseNeedDrawings ? ', чертежи по ЕСКД' : ''}`;
@@ -164,8 +200,17 @@ export const Calculator: React.FC<CalculatorProps> = ({ defaultService = 'scanni
       desc = `${typeLabel} (${cmmBrand === 'global' ? 'Zeiss/DEA/Hexagon/Mitutoyo' : cmmBrand === 'domestic' ? 'Отечественная КИМ' : 'Другой производитель'})`;
     }
 
+    const subtotalWithoutVat = Math.round(price / 500) * 500;
+    const defaultRate = crmSettings?.defaultVatRate ?? 22;
+    const effectiveVatRate = vatMode === 'export_zero' ? 0 : vatMode === 'no_vat' ? 0 : vatMode === 'custom' ? customVatRate : defaultRate;
+    const vatAmount = (vatMode === 'no_vat' || vatMode === 'export_zero') ? 0 : Math.round(subtotalWithoutVat * (effectiveVatRate / 100));
+    const totalWithVat = subtotalWithoutVat + vatAmount;
+
     return {
-      estimatedPrice: Math.round(price / 500) * 500,
+      subtotalWithoutVat,
+      effectiveVatRate,
+      vatAmount,
+      estimatedPrice: totalWithVat,
       estimatedDays: days,
       summaryText: desc,
       isOnsiteMinApplied: minOnsiteApplied,
@@ -196,13 +241,24 @@ export const Calculator: React.FC<CalculatorProps> = ({ defaultService = 'scanni
     cmmWorkType,
     cmmBrand,
     cmmNeedTraining,
+    vatMode,
+    customVatRate,
+    crmSettings?.defaultVatRate,
   ]);
 
   const handleOrderWithEstimate = () => {
+    const vatNote = vatMode === 'export_zero'
+      ? 'НДС 0% (Экспорт / Соседние страны / ЕАЭС)'
+      : vatMode === 'no_vat'
+      ? 'Без НДС (УСН)'
+      : `в т.ч. НДС ${effectiveVatRate}%`;
+
+    const serviceSummaryWithVat = `${summaryText} — ориентировочно ${estimatedPrice.toLocaleString('ru-RU')} ₽ (${vatNote}), ${estimatedDays} дн.`;
+
     if (serviceType === 'postprocessor') {
       openContactModal({
         title: 'Заказ разработки постпроцессора для станка с ЧПУ',
-        defaultService: `${summaryText} — ориентировочно ${estimatedPrice.toLocaleString('ru-RU')} ₽, ${estimatedDays} дн.`,
+        defaultService: serviceSummaryWithVat,
         formType: 'postprocessor',
         camSystem: camSystem,
         isLicensedCam: isLicensedCam,
@@ -210,7 +266,7 @@ export const Calculator: React.FC<CalculatorProps> = ({ defaultService = 'scanni
     } else {
       openContactModal({
         title: 'Заказ услуги по предварительному расчету',
-        defaultService: `${summaryText} — ориентировочно ${estimatedPrice.toLocaleString('ru-RU')} ₽, ${estimatedDays} дн.`,
+        defaultService: serviceSummaryWithVat,
         formType: 'service',
       });
     }
@@ -237,51 +293,93 @@ export const Calculator: React.FC<CalculatorProps> = ({ defaultService = 'scanni
         <div className="flex flex-wrap gap-1.5 bg-blue-900/60 p-1 rounded-xl">
           <button
             onClick={() => setServiceType('scanning')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
               serviceType === 'scanning' ? 'bg-[#F59E0B] text-white font-semibold' : 'text-blue-200 hover:text-white'
             }`}
           >
             3D-сканирование
           </button>
           <button
-            onClick={() => setServiceType('reverse')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              serviceType === 'reverse' ? 'bg-[#F59E0B] text-white font-semibold' : 'text-blue-200 hover:text-white'
-            }`}
-          >
-            Обратный инжиниринг
-          </button>
-          <button
             onClick={() => setServiceType('inspection')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
               serviceType === 'inspection' ? 'bg-[#F59E0B] text-white font-semibold' : 'text-blue-200 hover:text-white'
             }`}
           >
-            Контроль деталей
+            Контроль геометрии (GD&T)
+          </button>
+          <button
+            onClick={() => setServiceType('reverse')}
+            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+              serviceType === 'reverse' ? 'bg-[#F59E0B] text-white font-semibold' : 'text-blue-200 hover:text-white'
+            }`}
+          >
+            Обратный инжиниринг (КД)
+          </button>
+          <button
+            onClick={() => setServiceType('postprocessor')}
+            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+              serviceType === 'postprocessor' ? 'bg-[#F59E0B] text-white font-semibold' : 'text-blue-200 hover:text-white'
+            }`}
+          >
+            Постпроцессоры и УП ЧПУ
           </button>
           <button
             onClick={() => setServiceType('tooling')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
               serviceType === 'tooling' ? 'bg-[#F59E0B] text-white font-semibold' : 'text-blue-200 hover:text-white'
             }`}
           >
             Проектирование оснастки
           </button>
           <button
-            onClick={() => setServiceType('postprocessor')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              serviceType === 'postprocessor' ? 'bg-[#F59E0B] text-white font-semibold' : 'text-blue-200 hover:text-white'
-            }`}
-          >
-            Постпроцессоры ЧПУ
-          </button>
-          <button
             onClick={() => setServiceType('cmm_service')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
               serviceType === 'cmm_service' ? 'bg-[#F59E0B] text-white font-semibold' : 'text-blue-200 hover:text-white'
             }`}
           >
-            Сервис и ТО КИМ
+            ТО, модернизация КИМ
+          </button>
+        </div>
+      </div>
+
+      {/* Metrology Configurator Quick Launch Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-blue-900/60">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-600/30 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
+            <Gauge className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded border border-blue-400/30">
+                Инженерный конфигуратор СИ
+              </span>
+              <span className="text-xs text-blue-200">Подбор под габариты и допуски</span>
+            </div>
+            <div className="text-sm font-bold text-white mt-0.5">
+              Метрологический конфигуратор оборудования СИ
+            </div>
+            <div className="text-xs text-slate-300">
+              Мгновенный расчет и рекомендация оптимального СИ: КИМ PMT, сканеры Shining 3D / ScanLine или лазерный трекер Leica.
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={openConfiguratorModal}
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-95"
+          >
+            <SlidersHorizontal className="w-4 h-4 text-blue-200" />
+            <span>Конфигуратор СИ</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={openRoiCalculatorModal}
+            className="px-4 py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-xl text-xs font-bold border border-amber-400/40 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+          >
+            <TrendingUp className="w-4 h-4 text-amber-400" />
+            <span>Расчет ROI (Beta)</span>
           </button>
         </div>
       </div>
@@ -417,11 +515,12 @@ export const Calculator: React.FC<CalculatorProps> = ({ defaultService = 'scanni
                 <label className="block text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">
                   2. Метод построения и перевод полигональной сетки (Mesh-to-CAD)
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                   {[
-                    { id: 'parametric_tree', label: 'Параметрическое CAD с деревом', hint: 'Geomagic Design X: эскизы, выдавливания, дерево' },
+                    { id: 'solid_brep', label: 'Твердотельное B-Rep (Стандарт)', hint: 'Точные твердые тела STEP/Parasolid для ЧПУ' },
                     { id: 'hybrid', label: 'Гибридное моделирование', hint: 'Твердотельные базы + точные NURBS поверхности' },
-                    { id: 'nurbs_surface', label: 'Прямая подгонка NURBS', hint: 'Autosurface для сложных художественных/аэроформ' },
+                    { id: 'nurbs_surface', label: 'Подгонка NURBS (Autosurface)', hint: 'Для свободных аэродинамических/художественных форм' },
+                    { id: 'parametric_tree', label: 'С деревом (по спец. ТЗ)', hint: 'Параметризация под конкретную САПР заказчика' },
                   ].map((item) => (
                     <button
                       key={item.id}
@@ -449,7 +548,7 @@ export const Calculator: React.FC<CalculatorProps> = ({ defaultService = 'scanni
                   {[
                     { id: 'has_mesh', label: 'Уже есть 3D-скан (STL / OBJ)', hint: 'Готовая полигональная сетка от заказчика' },
                     { id: 'need_lab_scan', label: 'Сканирование в офисе компании', hint: 'ScanLine / Shining 3D синий лазер (Самара)' },
-                    { id: 'need_onsite_scan', label: 'Выездное 3D-сканирование', hint: 'Доставка сканера и инженера на завод' },
+                    { id: 'need_onsite_scan', label: 'Выездные замеры (КИМ Hexagon / сканер)', hint: 'Мобильная КИМ Hexagon / сканер с выездом' },
                   ].map((item) => (
                     <button
                       key={item.id}
@@ -827,7 +926,7 @@ export const Calculator: React.FC<CalculatorProps> = ({ defaultService = 'scanni
                     onChange={(e) => setCmmBrand(e.target.value as any)}
                     className="w-full text-xs p-2.5 rounded-xl border border-gray-300 bg-white"
                   >
-                    <option value="global">Импортная КИМ (Zeiss, Hexagon, DEA, Mitutoyo, Coord3, PMT)</option>
+                    <option value="global">Импортная КИМ (Zeiss, Hexagon, DEA, Mitutoyo, LK, Wenzel, PMT)</option>
                     <option value="domestic">Отечественная КИМ (КИМ-1000, Лапик, Вектор и др.)</option>
                     <option value="other">Другой производитель / портальная система</option>
                   </select>
@@ -854,23 +953,137 @@ export const Calculator: React.FC<CalculatorProps> = ({ defaultService = 'scanni
         {/* Calculation Result Summary Card (1 col, sticky on desktop) */}
         <div className="lg:sticky lg:top-24 h-fit bg-gradient-to-br from-gray-50 to-blue-50/40 rounded-xl p-6 border border-blue-100 flex flex-col justify-between shadow-xs">
           <div>
-            <div className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">
-              Ориентировочный расчет
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">
+                Ориентировочный расчет
+              </div>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                vatMode === 'export_zero'
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                  : vatMode === 'no_vat'
+                  ? 'bg-slate-200 text-slate-700'
+                  : 'bg-blue-100 text-blue-800 border border-blue-200'
+              }`}>
+                {vatMode === 'export_zero' ? 'Экспорт (НДС 0%)' : vatMode === 'no_vat' ? 'Без НДС' : `НДС ${effectiveVatRate}%`}
+              </span>
             </div>
+
             <div className="text-3xl font-black text-gray-900 mt-2 font-mono">
               ~ {estimatedPrice.toLocaleString('ru-RU')} ₽
             </div>
+
+            {/* Price breakdown */}
+            <div className="mt-2 p-2.5 bg-white/80 rounded-lg border border-slate-200/80 space-y-1 text-xs text-slate-600">
+              <div className="flex justify-between items-center text-[11px]">
+                <span className="text-slate-500">Без НДС:</span>
+                <span className="font-semibold text-slate-800 font-mono">~ {subtotalWithoutVat.toLocaleString('ru-RU')} ₽</span>
+              </div>
+              <div className="flex justify-between items-center text-[11px]">
+                <span className="text-slate-500">
+                  {vatMode === 'export_zero' ? 'НДС (Экспорт / ЕАЭС 0%):' : vatMode === 'no_vat' ? 'НДС (Не облагается):' : `НДС (${effectiveVatRate}%):`}
+                </span>
+                <span className="font-semibold text-blue-600 font-mono">
+                  {vatAmount > 0 ? `+ ~ ${vatAmount.toLocaleString('ru-RU')} ₽` : '0 ₽'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs font-bold text-slate-900 pt-1 border-t border-slate-100">
+                <span>Итого к оплате:</span>
+                <span className="text-blue-900 font-mono">~ {estimatedPrice.toLocaleString('ru-RU')} ₽</span>
+              </div>
+            </div>
+
+            {/* VAT selector toggle */}
+            <div className="mt-3 pt-3 border-t border-blue-100/80">
+              <label className="block text-[11px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
+                Налоговый режим / Ставка НДС:
+              </label>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setVatMode('standard')}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all text-left border cursor-pointer ${
+                    vatMode === 'standard'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                      : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="text-[11px] leading-tight">22% (Стандарт РФ)</div>
+                  <div className={`text-[9px] ${vatMode === 'standard' ? 'text-blue-100' : 'text-slate-400'}`}>Основная ставка</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setVatMode('export_zero')}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all text-left border cursor-pointer ${
+                    vatMode === 'export_zero'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                      : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="text-[11px] leading-tight">0% (Экспорт / ЕАЭС)</div>
+                  <div className={`text-[9px] ${vatMode === 'export_zero' ? 'text-emerald-100' : 'text-slate-400'}`}>Соседние страны</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setVatMode('no_vat')}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all text-left border cursor-pointer ${
+                    vatMode === 'no_vat'
+                      ? 'bg-slate-800 text-white border-slate-800 shadow-xs'
+                      : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="text-[11px] leading-tight">Без НДС (УСН)</div>
+                  <div className={`text-[9px] ${vatMode === 'no_vat' ? 'text-slate-200' : 'text-slate-400'}`}>Спецрежим</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setVatMode('custom')}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all text-left border cursor-pointer ${
+                    vatMode === 'custom'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                      : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="text-[11px] leading-tight">Своя ставка %</div>
+                  <div className={`text-[9px] ${vatMode === 'custom' ? 'text-blue-100' : 'text-slate-400'}`}>Ручной ввод</div>
+                </button>
+              </div>
+
+              {vatMode === 'custom' && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-xs text-slate-600 font-medium">Ставка НДС:</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={customVatRate}
+                    onChange={(e) => setCustomVatRate(Number(e.target.value))}
+                    className="w-16 h-7 px-2 text-xs font-bold bg-white border border-slate-300 rounded-md outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <span className="text-xs font-bold text-slate-700">%</span>
+                </div>
+              )}
+
+              {vatMode === 'export_zero' && (
+                <div className="mt-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-[10px] text-emerald-900 leading-snug">
+                  🌍 <strong>Ставка 0% для соседей:</strong> Применяется при поставке оборудования и инжиниринге для клиентов из Беларуси, Казахстана, Армении, Кыргызстана и Узбекистана (ст. 164 НК РФ).
+                </div>
+              )}
+            </div>
+
             {isOnsiteMinApplied && (
-              <div className="mt-1.5 p-2 bg-amber-50 border border-amber-200 rounded-lg text-[10px] text-amber-800 leading-snug">
+              <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-[10px] text-amber-800 leading-snug">
                 ⚠️ <strong>Минимальный тариф выезда:</strong> Включен базовый выезд инженера с лазерным оборудованием (от 25 000 ₽).
               </div>
             )}
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1.5 font-medium">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-2 font-medium">
               <Clock className="w-4 h-4 text-[#F59E0B]" />
               <span>Срок выполнения: ~ {estimatedDays}–{estimatedDays + 1} раб. дней</span>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-200/80 space-y-2 text-xs text-slate-500">
+            <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-2 text-xs text-slate-500">
               <div className="font-semibold text-gray-900">Что входит в стоимость:</div>
               <p className="text-[11px] text-slate-500 leading-relaxed bg-white p-2.5 rounded-lg border border-gray-200">
                 {summaryText}

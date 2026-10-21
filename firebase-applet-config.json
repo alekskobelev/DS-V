@@ -3,6 +3,7 @@
   "appId": "1:445639762511:web:9ad1b20913303e49cd803a",
   "apiKey": "AIzaSyBK63OOdAkM0abuyWfDbi-XnEN2TqnpuP4",
   "authDomain": "my-project-1552542708424.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-cadcam-28ed687f-9aaa-4de1-8a11-352c0ba7f7bd",
   "storageBucket": "my-project-1552542708424.firebasestorage.app",
   "messagingSenderId": "445639762511",
   "measurementId": "",

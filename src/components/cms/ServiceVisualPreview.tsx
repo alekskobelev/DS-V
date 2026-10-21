@@ -10,15 +10,20 @@ import {
   ShieldCheck, 
   Sparkles,
   ChevronRight,
-  Award
+  Award,
+  Phone,
+  Mail,
+  MapPin,
+  UserCheck
 } from 'lucide-react';
-import { ServiceItem } from '../../types';
+import { ServiceItem, ServiceContact } from '../../types';
 
 interface ServicePreviewData extends Partial<ServiceItem> {
   category?: string;
   price?: string;
   unit?: string;
   benefits?: string[];
+  equipmentList?: string[];
 }
 
 interface ServiceVisualPreviewProps {
@@ -41,7 +46,12 @@ export const ServiceVisualPreview: React.FC<ServiceVisualPreviewProps> = ({
   const fullDesc = service.fullDesc || shortDesc;
   const image = service.image || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80';
   const deliverables = Array.isArray(service.deliverables) ? service.deliverables : [];
-  const benefits = Array.isArray(service.benefits) ? service.benefits : (service.equipmentUsed || []);
+  const benefits = Array.isArray(service.benefits) ? service.benefits : [];
+  const equipmentUsed = Array.isArray(service.equipmentUsed) ? service.equipmentUsed : [];
+  const contacts = Array.isArray(service.contacts) ? service.contacts : [];
+  const responsiblePerson = service.responsiblePerson || '';
+  const slaResponseTime = service.slaResponseTime || '';
+  const workLocationNote = service.workLocationNote || '';
 
   return (
     <div className="w-full bg-slate-900/5 rounded-xl border border-slate-200 overflow-hidden flex flex-col shadow-sm">
@@ -256,6 +266,81 @@ export const ServiceVisualPreview: React.FC<ServiceVisualPreviewProps> = ({
                   </div>
                 )}
               </div>
+
+              {/* Equipment Used Section */}
+              {equipmentUsed.length > 0 && (
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2.5 flex items-center gap-2">
+                    <Wrench className="w-3.5 h-3.5 text-amber-500" />
+                    Применяемое оборудование и программные комплексы
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {equipmentUsed.map((eq, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 text-slate-800 text-xs font-medium rounded-lg shadow-2xs"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                        {eq}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Responsible Contacts & SLA */}
+              {(contacts.length > 0 || responsiblePerson || slaResponseTime || workLocationNote) && (
+                <div className="bg-gradient-to-br from-blue-50/60 to-slate-50 p-4 rounded-xl border border-blue-100 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-100 pb-2">
+                    <h4 className="text-xs font-bold text-blue-950 uppercase tracking-wider flex items-center gap-2">
+                      <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+                      Ответственные инженеры и контакты по услуге
+                    </h4>
+                    {slaResponseTime && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-100/70 px-2 py-0.5 rounded-md">
+                        <Clock className="w-3 h-3 text-blue-600" />
+                        {slaResponseTime}
+                      </span>
+                    )}
+                  </div>
+
+                  {workLocationNote && (
+                    <div className="flex items-start gap-1.5 text-xs text-slate-600">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                      <span>{workLocationNote}</span>
+                    </div>
+                  )}
+
+                  {contacts.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                      {contacts.map((c, i) => (
+                        <div key={i} className="bg-white p-3 rounded-lg border border-slate-200 space-y-1">
+                          <div className="font-bold text-xs text-slate-900">{c.name}</div>
+                          <div className="text-[11px] text-slate-500">{c.role}</div>
+                          <div className="flex items-center gap-3 pt-1 text-[11px]">
+                            {c.phone && (
+                              <span className="flex items-center gap-1 text-blue-600 font-semibold">
+                                <Phone className="w-3 h-3" />
+                                {c.phone}
+                              </span>
+                            )}
+                            {c.email && (
+                              <span className="flex items-center gap-1 text-slate-500">
+                                <Mail className="w-3 h-3" />
+                                {c.email}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : responsiblePerson ? (
+                    <div className="text-xs text-slate-700 font-medium bg-white p-2.5 rounded-lg border border-slate-200">
+                      Ведущий специалист: <strong>{responsiblePerson}</strong>
+                    </div>
+                  ) : null}
+                </div>
+              )}
 
               {/* Action Bar */}
               <div className="p-4 bg-slate-900 rounded-xl text-white flex flex-wrap items-center justify-between gap-3">

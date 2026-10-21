@@ -18,9 +18,11 @@ import {
   ChevronRight,
   ShieldCheck,
   Zap,
-  HardDrive
+  HardDrive,
+  RotateCcw
 } from 'lucide-react';
 import { apiService } from '../../services/apiService';
+import { useApp } from '../../context/AppContext';
 
 interface RealtimeLogEntry {
   id: string;
@@ -37,8 +39,10 @@ interface RealtimeLogEntry {
 }
 
 export function CrmRealtimeLogsView() {
+  const { resetCrmDatabase, isAdmin, showToast } = useApp();
   const [logs, setLogs] = useState<RealtimeLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isResetting, setIsResetting] = useState<boolean>(false);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
@@ -98,49 +102,49 @@ export function CrmRealtimeLogsView() {
     switch (category) {
       case 'CRM_REQUEST':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-            <PhoneCall className="w-3 h-3 text-blue-600" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900">
+            <PhoneCall className="w-3 h-3 text-blue-600 dark:text-blue-400" />
             Заявка / Звонок
           </span>
         );
       case 'ENGINEER_CHAT':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <MessageSquare className="w-3 h-3 text-emerald-600" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900">
+            <MessageSquare className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
             Онлайн-инженер
           </span>
         );
       case 'MANAGER_REPLY':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-            <Zap className="w-3 h-3 text-purple-600" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-900">
+            <Zap className="w-3 h-3 text-purple-600 dark:text-purple-400" />
             Ответ инженера
           </span>
         );
       case 'DB_PERSISTENCE':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-            <Database className="w-3 h-3 text-amber-600" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900">
+            <Database className="w-3 h-3 text-amber-600 dark:text-amber-400" />
             База данных (PostgreSQL)
           </span>
         );
       case 'NOTIFICATION':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200">
-            <Bell className="w-3 h-3 text-cyan-600" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200 dark:bg-cyan-950/50 dark:text-cyan-300 dark:border-cyan-900">
+            <Bell className="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
             Уведомление
           </span>
         );
       case 'ERROR':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
-            <XCircle className="w-3 h-3 text-red-600" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-900">
+            <XCircle className="w-3 h-3 text-red-600 dark:text-red-400" />
             Сбой
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-slate-500">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
             {category}
           </span>
         );
@@ -242,6 +246,27 @@ export function CrmRealtimeLogsView() {
             <Trash2 className="w-3.5 h-3.5" />
             <span>Очистить</span>
           </button>
+
+          {isAdmin && (
+            <button
+              type="button"
+              disabled={isResetting}
+              onClick={async () => {
+                if (!confirm('ВНИМАНИЕ: Сбросить базу данных CRM к заводским эталонам?\n\nДействие восстановит эталонные демонстрационные сделки, договоры, ТКП и парк оборудования.')) return;
+                if (!confirm('Подтвердите повторно: все несохраненные локальные изменения сделок будут заменены эталонами.')) return;
+                setIsResetting(true);
+                await resetCrmDatabase();
+                setIsResetting(false);
+                showToast('База данных CRM успешно восстановлена к эталонам');
+                fetchLogs();
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 rounded-lg text-xs font-bold border border-amber-300 transition-colors cursor-pointer disabled:opacity-50"
+              title="Сброс и восстановление заводских эталонов CRM (только для администраторов)"
+            >
+              <RotateCcw className={`w-3.5 h-3.5 text-amber-600 ${isResetting ? 'animate-spin' : ''}`} />
+              <span>{isResetting ? 'Восстановление...' : 'Сброс к эталонам'}</span>
+            </button>
+          )}
         </div>
       </div>
 

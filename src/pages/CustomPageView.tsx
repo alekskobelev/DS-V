@@ -726,3 +726,6 @@ export const CustomPageView: React.FC<CustomPageViewProps> = ({ page }) => {
     </div>
   );
 };
+
+export default CustomPageView;
+

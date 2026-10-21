@@ -3,14 +3,17 @@ export type PageId =
   | 'software'
   | 'hardware'
   | 'services'
+  | 'calculator'
   | 'about'
   | 'knowledge'
+  | 'glossary'
   | 'news'
   | 'contacts'
   | 'account'
   | 'cms'
   | 'crm'
   | 'sitemap'
+  | 'compare'
   | 'notfound'
   | `custom-${string}`;
 
@@ -21,12 +24,14 @@ export const SYSTEM_PAGE_IDS = new Set<string>([
   'services',
   'about',
   'knowledge',
+  'glossary',
   'news',
   'contacts',
   'account',
   'cms',
   'crm',
   'sitemap',
+  'compare',
   'notfound'
 ]);
 
@@ -88,6 +93,8 @@ export interface CustomPage {
   createdAt: string;
   updatedAt: string;
   blocks: CustomPageBlock[];
+  content?: string;
+  isPublished?: boolean;
 }
 
 export interface DualModeSpecRow {
@@ -128,6 +135,8 @@ export interface Product {
   brand: string;
   shortDescription: string;
   fullDescription: string;
+  shortDesc?: string;
+  fullDesc?: string;
   image: string;
   features: string[];
   specs?: Record<string, string>;
@@ -157,6 +166,25 @@ export interface Product {
   }>;
 }
 
+export interface ServiceContact {
+  id?: string;
+  name: string;
+  role: string;
+  phone: string;
+  email: string;
+  location?: string;
+  url?: string;
+  link?: string;
+  telegramUrl?: string;
+  website?: string;
+}
+
+export interface ServiceStep {
+  stepNumber: number;
+  title: string;
+  desc: string;
+}
+
 export interface ServiceItem {
   id: string;
   title: string;
@@ -170,6 +198,14 @@ export interface ServiceItem {
   equipmentUsed: string[];
   calculatorType: 'scanning' | 'reverse' | 'inspection' | 'postprocessor' | 'tooling' | 'cmm_service';
   basePriceText: string;
+  features?: string[];
+  advantages?: string[];
+  leadTime?: string;
+  priceFrom?: string;
+  contacts?: ServiceContact[];
+  responsiblePerson?: string;
+  slaResponseTime?: string;
+  workLocationNote?: string;
   brochureUrl?: string;
   fileUrl?: string;
   metaTitle?: string;
@@ -205,8 +241,8 @@ export interface Article {
   title: string;
   category: string;
   date: string;
-  author: string;
-  readTime: string;
+  author?: string;
+  readTime?: string;
   views?: number;
   preview: string;
   content: string | string[];
@@ -226,11 +262,13 @@ export interface KnowledgeItem {
   metaKeywords?: string[];
   id: string;
   title: string;
-  category: 'ПО' | 'Оборудование' | 'Услуги' | 'Разработка постпроцессоров' | 'Общие вопросы';
+  category: 'ПО' | 'Оборудование' | 'Услуги' | 'Разработка постпроцессоров' | 'Общие вопросы' | 'Метрология и стандарты';
   summary: string;
   content: string;
   tags: string[];
-  updatedAt: string;
+  updatedAt?: string;
+  dateAdded?: string;
+  views?: number;
 }
 
 export interface Partner {
@@ -318,6 +356,9 @@ export interface ProjectContract {
   curatorPhone?: string;
   amount?: string;
   currency?: CurrencyCode;
+  vatRate?: number;
+  vatMode?: 'standard' | 'export_zero' | 'no_vat' | 'custom';
+  vatIncluded?: boolean;
   scope?: string;
   documents: AttachedDocument[];
   dealId?: string;
@@ -336,6 +377,23 @@ export interface ProposalVersion {
   mimeType?: string;
 }
 
+export interface ProjectDocument {
+  id: string;
+  name: string;
+  type: 'proposal' | 'nda' | 'contract' | 'spec' | 'certificate' | 'drawing' | string;
+  size: string;
+  date: string;
+  url?: string;
+  status?: string;
+  fileDataUrl?: string;
+  author?: string;
+  mimeType?: string;
+  dealId?: string;
+  outgoingNumber?: string;
+  amount?: number;
+  currency?: CurrencyCode;
+}
+
 export interface CommercialProposal {
   id: string;
   outgoingNumber: string;
@@ -347,15 +405,62 @@ export interface CommercialProposal {
   internalNotes: string;
   contactPerson: string;
   contactPhone: string;
+  greeting?: string;
+  title?: string;
+  status?: string;
+  items?: any[];
   dealId?: string;
   dealTitle?: string;
   dealStage?: string;
   dealFunnel?: 'services' | 'equipment' | 'support' | string;
   amount?: number;
   currency?: CurrencyCode;
+  vatRate?: number; // Ставка НДС в % (по умолчанию 22%, для экспорта/соседних стран 0%)
+  vatMode?: 'standard' | 'export_zero' | 'no_vat' | 'custom'; // Режим НДС
+  customerCountry?: string; // Страна заказчика
   versions?: ProposalVersion[];
   isAlternative?: boolean; // Флаг АКП (Альтернативное коммерческое предложение)
   akpPurpose?: 'partner_tender' | 'alternative_supply'; // Назначение АКП: 'partner_tender' (Для партнеров / тендеров — серый фон) или 'alternative_supply' (Альтернативная поставка — без серого фона)
+
+  // Hardened Reader Document Model fields (null-safe compatibility)
+  documentNumber?: string;
+  documentDate?: string;
+  validUntil?: string;
+  isNeutralTemplate?: boolean; // Обезличенный нейтральный шаблон (без упоминаний ООО «ДС-Инжиниринг» и без номеров)
+  templateMode?: 'official' | 'impersonal'; // Режим шаблона: официальный ДС-Инжиниринг или обезличенный (White-label)
+  impersonalSignerName?: string; // ФИО подписанта для обезличенного шаблона
+  customLogoUrl?: string; // Пользовательский логотип для нейтрального шаблона
+  documentImages?: { id: string; url: string; title?: string; caption?: string; widthPercent?: number; placement?: string }[]; // Иллюстрации и схемы в теле документа
+  incomingNumber?: string; // Номер входящего запроса/письма (Ответ на №)
+  incomingDate?: string; // Дата входящего запроса/письма (от ...)
+  hasIncomingRef?: boolean; // Флаг наличия ссылки на входящий номер
+  executorName?: string; // ФИО исполнителя (внизу бланка)
+  executorPosition?: string; // Должность исполнителя
+  executorPhone?: string; // Телефон исполнителя
+  executorEmail?: string; // E-mail исполнителя
+  fontFamily?: 'times' | 'arial' | 'calibri' | 'verdana' | string; // Гарнитура (по умолчанию Times New Roman)
+  tableBorderColor?: string; // Цвет границ таблиц (по умолчанию #000000)
+  tableBorderWidth?: string; // Толщина границ (1px, 2px, etc)
+  tableBorderStyle?: 'solid' | 'double' | 'dashed' | 'none'; // Стиль границ
+  tableCellPadding?: 'compact' | 'standard' | 'spacious'; // Отступы ячеек
+  signatoryName?: string;
+  signatoryRole?: string;
+  signatoryPhone?: string;
+  signatoryEmail?: string;
+  hasStamp?: boolean;
+  hasSignature?: boolean;
+  subtotalWithoutVat?: number;
+  vatAmount?: number;
+  totalWithVat?: number;
+  contractId?: string;
+  contractNumber?: string;
+  contractDate?: string;
+  fileUrl?: string;
+  fileDataUrl?: string;
+  fileSize?: string;
+  mimeType?: string;
+  sourceLeadId?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface TicketMessage {
@@ -560,10 +665,27 @@ export interface AuthAccount extends UserProfile {
   password?: string;
 }
 
+export type FaqCategoryGroup = 
+  | 'all'
+  | 'dispatch_nda'     // Выезд инженеров и NDA
+  | 'scanning_cad'     // Сканирование, форматы, сдача КД
+  | 'metrology_arshin' // КИМ, помещения и ФГИС «АРШИН»
+  | 'software_licenses'; // Лицензирование ПО и ЧПУ
+
+export interface FaqGroupDefinition {
+  id: FaqCategoryGroup;
+  label: string;
+  description: string;
+  icon?: string;
+}
+
 export interface FaqItem {
   id: string;
-  category: 'software' | 'hardware' | 'services' | 'postprocessors' | 'training';
+  category: 'software' | 'hardware' | 'services' | 'postprocessors' | 'training' | 'metrology';
   categoryLabel: string;
+  group?: 'dispatch_nda' | 'scanning_cad' | 'metrology_arshin' | 'software_licenses' | 'general';
+  groupLabel?: string;
+  tags?: string[];
   question: string;
   answer: string;
   highlight?: string;
@@ -955,11 +1077,16 @@ export interface CalendarEvent {
 
 // --- CLIENT CONTACT CENTER TYPES ---
 export interface CompanyEquipmentItem {
+  id?: string;
   name: string;
+  brand?: string;
   serial?: string;
-  type?: 'КИМ' | '3D-сканер' | 'Лазерный трекер' | 'Станок ЧПУ' | 'ПО' | string;
+  type?: 'КИМ' | '3D-сканер' | 'Лазерный трекер' | 'Станок ЧПУ' | 'ПО' | 'Прочее' | string;
+  category?: 'software' | 'scanners' | 'cmm' | 'trackers' | 'cnc' | 'other' | string;
   verificationDate?: string;
   warrantyUntil?: string;
+  location?: string;
+  notes?: string;
 }
 
 export type CompanyStatus = 'active' | 'potential' | 'key_partner' | 'in_progress' | 'archive';
@@ -1194,5 +1321,7 @@ export interface TextConstantsApiResponse {
     code: string;
   };
 }
+
+export type { ExtendedDeal } from './data/mockCrmData';
 
 

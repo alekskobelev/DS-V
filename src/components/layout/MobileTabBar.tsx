@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Box, Wrench, Phone } from 'lucide-react';
+import { Home, Box, Layers, Wrench, Phone } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 export const MobileTabBar: React.FC = () => {
@@ -8,6 +8,7 @@ export const MobileTabBar: React.FC = () => {
   const navItems = [
     { id: 'home', icon: Home, label: 'Главная' },
     { id: 'hardware', icon: Box, label: 'Оборудование' },
+    { id: 'software', icon: Layers, label: 'ПО' },
     { id: 'services', icon: Wrench, label: 'Услуги' },
     { id: 'contacts', icon: Phone, label: 'Контакты' },
   ];
@@ -22,14 +23,14 @@ export const MobileTabBar: React.FC = () => {
             <button
               key={item.id}
               onClick={() => navigateTo(item.id as any)}
-              className={`flex flex-col items-center justify-center w-full h-full min-h-[44px] space-y-1 transition-all cursor-pointer active:scale-95 ${
+              className={`flex flex-col items-center justify-center w-full h-full min-h-[44px] py-1 px-0.5 space-y-0.5 transition-all cursor-pointer active:scale-95 ${
                 isActive 
-                  ? 'text-blue-600 dark:text-blue-400' 
+                  ? 'text-blue-600 dark:text-blue-400 font-bold' 
                   : 'text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400'
               }`}
             >
-              <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${isActive ? 'fill-blue-600/10 dark:fill-blue-400/20' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-[10px] sm:text-[11px] font-semibold tracking-tight">{item.label}</span>
+              <Icon className={`w-5 h-5 sm:w-5.5 sm:h-5.5 ${isActive ? 'fill-blue-600/10 dark:fill-blue-400/20' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
+              <span className="text-[9.5px] min-[360px]:text-[10px] sm:text-[11px] font-semibold tracking-tight leading-none whitespace-nowrap truncate max-w-full">{item.label}</span>
             </button>
           );
         })}

@@ -90,7 +90,7 @@ export const AnalyticsPipelineView: React.FC<AnalyticsPipelineViewProps> = ({ de
     if (staffUsers.length === 0) {
       return [
         { id: 'usr-nekrasov', value: 'Некрасов С.Ю.', shortName: 'Некрасов С.Ю.', fullName: 'Некрасов Сергей Юрьевич', label: 'Некрасов С.Ю. (Генеральный директор)', position: 'Генеральный директор', isDirector: true },
-        { id: 'usr-skobelev', value: 'Скобелев А.С.', shortName: 'Скобелев А.С.', fullName: 'Скобелев Александр Сергеевич', label: 'Скобелев А.С. (Инженер по ПО, ЧПУ и CAD-моделированию)', position: 'Инженер по ПО, ЧПУ и CAD-моделированию', isDirector: false },
+        { id: 'usr-skobelev', value: 'Скобелев А.С.', shortName: 'Скобелев А.С.', fullName: 'Скобелев Александр Сергеевич', label: 'Скобелев А.С. (Инженер по внедрению CAD/CAM и постпроцессорам)', position: 'Инженер по внедрению CAD/CAM и постпроцессорам', isDirector: false },
         { id: 'usr-yarysh-ivan', value: 'Ярыш И.В.', shortName: 'Ярыш И.В.', fullName: 'Ярыш Иван Владимирович', label: 'Ярыш И.В. (Инженер-метролог)', position: 'Инженер-метролог', isDirector: false },
         { id: 'usr-yarysh-alex', value: 'Ярыш А.В.', shortName: 'Ярыш А.В.', fullName: 'Ярыш Александр Владимирович', label: 'Ярыш А.В. (Инженер по подбору оборудования и ПО)', position: 'Инженер по подбору оборудования и ПО', isDirector: false },
         { id: 'usr-morozov', value: 'Морозов В.Г.', shortName: 'Морозов В.Г.', fullName: 'Морозов Владимир Георгиевич', label: 'Морозов В.Г. (Руководитель КТО)', position: 'Руководитель КТО', isDirector: false },
@@ -370,7 +370,7 @@ export const AnalyticsPipelineView: React.FC<AnalyticsPipelineViewProps> = ({ de
   const engineersPerformance = useMemo(() => {
     const engMap: Record<string, { name: string; position: string; wonSum: number; wonCount: number; activeSum: number; activeCount: number; lostCount: number }> = {
       'Некрасов С.Ю.': { name: 'Некрасов С.Ю.', position: 'Генеральный директор', wonSum: 0, wonCount: 0, activeSum: 0, activeCount: 0, lostCount: 0 },
-      'Скобелев А.С.': { name: 'Скобелев А.С.', position: 'Инженер по ПО, ЧПУ и CAD-моделированию', wonSum: 0, wonCount: 0, activeSum: 0, activeCount: 0, lostCount: 0 },
+      'Скобелев А.С.': { name: 'Скобелев А.С.', position: 'Инженер по внедрению CAD/CAM и постпроцессорам', wonSum: 0, wonCount: 0, activeSum: 0, activeCount: 0, lostCount: 0 },
       'Ярыш И.В.': { name: 'Ярыш И.В.', position: 'Инженер-метролог', wonSum: 0, wonCount: 0, activeSum: 0, activeCount: 0, lostCount: 0 },
       'Ярыш А.В.': { name: 'Ярыш А.В.', position: 'Инженер по подбору оборудования и ПО', wonSum: 0, wonCount: 0, activeSum: 0, activeCount: 0, lostCount: 0 },
       'Морозов В.Г.': { name: 'Морозов В.Г.', position: 'Руководитель КТО', wonSum: 0, wonCount: 0, activeSum: 0, activeCount: 0, lostCount: 0 },

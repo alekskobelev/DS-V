@@ -23,6 +23,7 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "types": ["vitest/globals", "@testing-library/jest-dom", "vite/client", "node", "react", "react-dom"]
-  }
+    "types": ["vitest/globals", "@testing-library/jest-dom", "vite/client", "vite-plugin-pwa/client", "node", "react", "react-dom"]
+  },
+  "exclude": ["node_modules", "cypress", "cypress.config.ts"]
 }

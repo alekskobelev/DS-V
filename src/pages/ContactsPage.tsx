@@ -21,12 +21,15 @@ import {
   Truck,
   Globe2,
   Cpu,
-  Loader2
+  Loader2,
+  Car,
+  Bus
 } from 'lucide-react';
 import { COMPANY_INFO, DEPARTMENTS_CONTACTS, COMPANY_LOCATIONS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 import { useSEO } from '../hooks/useSEO';
 import { emailNotificationService } from '../services/emailNotificationService';
+import { YandexInteractiveMap } from '../components/contacts/YandexInteractiveMap';
 
 export const ContactsPage: React.FC = () => {
   const { customPages, showToast, setIsPrivacyModalOpen } = useApp();
@@ -34,8 +37,8 @@ export const ContactsPage: React.FC = () => {
     
   useSEO({
     title: cmsPage?.metaTitle || cmsPage?.title || 'Контакты, адреса офисов и реквизиты | ДС‑Инжиниринг',
-    description: cmsPage?.metaDescription || cmsPage?.description || 'Официальные контакты ООО «ДС‑Инжиниринг»: Главный офис в Самаре, офис и Метрологический зал в Тольятти (Технопарк «Жигулевская долина»), прямые телефоны инженеров, банковские реквизиты.',
-    keywords: cmsPage?.metaKeywords?.join(', ') || 'контакты ДС‑Инжиниринг, Самара Свободы 198, Тольятти Жигулевская долина, метрологический зал, телефон, email, реквизиты ООО ДС‑Инжиниринг'
+    description: cmsPage?.metaDescription || cmsPage?.description || 'Официальные контакты ООО «ДС‑Инжиниринг»: Главный офис в Самаре (ул. Свободы, 198), Инжиниринговый центр и Метрологический зал в технопарке «Жигулевская долина» в Тольятти (Южное шоссе, 165), прямые телефоны инженеров, банковские реквизиты.',
+    keywords: cmsPage?.metaKeywords?.join(', ') || 'контакты ДС‑Инжиниринг, Самара Свободы 198, Тольятти Южное шоссе 165, Жигулевская долина, метрологический зал КИМ, телефон, email, реквизиты ООО ДС‑Инжиниринг'
   });
 
 
@@ -243,7 +246,7 @@ export const ContactsPage: React.FC = () => {
           </h1>
           <p className="text-xs sm:text-sm text-blue-100 leading-relaxed">
             Свяжитесь напрямую с ведущими инженерами по внедрению САПР TopSolid 7, 
-            подбору координатно-измерительных машин (Hexagon, PMT, Mitutoyo, ScanLine) или заказу 3D-контроля геометрии и реверса.
+            подбору 3D-сканеров и измерительных систем (Shining 3D, ScanLine, PMT) или заказу 3D-контроля геометрии и реверса.
           </p>
         </div>
 
@@ -252,7 +255,7 @@ export const ContactsPage: React.FC = () => {
           <div className="relative rounded-xl overflow-hidden shadow-sm border border-white/20 bg-blue-950/60 aspect-4/3 sm:aspect-16/10 lg:aspect-4/3">
             <img 
               src="https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80" 
-              alt="Офис и метрологический зал «ДС-Инжиниринг»" 
+              alt="Офис и инженерный центр «ДС-Инжиниринг»" 
               className="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-700 opacity-90"
               referrerPolicy="no-referrer"
             />
@@ -366,24 +369,25 @@ export const ContactsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Row 1: Offices & Interactive Map */}
-      <div id="contacts-map" className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-stretch">
-        {/* Left: Office Switcher Card */}
-        <div className="xl:col-span-5 flex flex-col">
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-xs h-full flex flex-col justify-between space-y-5">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <span>Офисы и Метрологический зал</span>
+      {/* Row 1: Offices & Interactive Map (Single-Screen Viewport Fit) */}
+      <div id="contacts-map" className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch lg:h-[510px]">
+        {/* Left: Office Switcher & Core Contacts Card */}
+        <div className="lg:col-span-5 flex flex-col h-full">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs h-full flex flex-col justify-between space-y-3.5">
+            {/* Header with City Switcher */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span>Офисы компании</span>
                 </h2>
-                <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-semibold">
+                <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-xs font-semibold">
                   <button
                     type="button"
                     onClick={() => setSelectedLocation('samara')}
-                    className={`px-4 py-1 rounded-lg transition-colors cursor-pointer ${
+                    className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                       selectedLocation === 'samara'
-                        ? 'bg-blue-600 text-white shadow-xs'
+                        ? 'bg-blue-600 text-white shadow-xs font-bold'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
@@ -392,9 +396,9 @@ export const ContactsPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setSelectedLocation('tolyatti')}
-                    className={`px-4 py-1 rounded-lg transition-colors cursor-pointer ${
+                    className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                       selectedLocation === 'tolyatti'
-                        ? 'bg-blue-600 text-white shadow-xs'
+                        ? 'bg-emerald-600 text-white shadow-xs font-bold'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
@@ -403,205 +407,141 @@ export const ContactsPage: React.FC = () => {
                 </div>
               </div>
 
+              {/* Office Details */}
               {selectedLocation === 'samara' ? (
-                <div className="space-y-3.5">
-                  <div className="flex items-start gap-3 text-xs sm:text-sm">
-                    <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60 flex items-center justify-center shrink-0">
-                      <MapPin className="w-5 h-5" />
+                <div className="space-y-2.5">
+                  <div className="flex items-start gap-2.5 text-xs">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60 flex items-center justify-center shrink-0">
+                      <MapPin className="w-4 h-4" />
                     </div>
-                    <div className="flex-1">
-                      <strong className="block text-slate-900 dark:text-white">Главный офис:</strong>
-                      <p className="text-slate-600 dark:text-slate-400 mt-0.5">{COMPANY_INFO.address}</p>
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(COMPANY_INFO.address, 'samara-address')}
-                        className="mt-1 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 font-medium cursor-pointer"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>{copiedField === 'samara-address' ? 'Скопировано!' : 'Скопировать адрес'}</span>
-                      </button>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <strong className="text-slate-900 dark:text-white">Главный офис в Самаре:</strong>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(COMPANY_INFO.address, 'samara-address')}
+                          className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-medium cursor-pointer shrink-0"
+                        >
+                          <Copy className="w-3 h-3" />
+                          <span>{copiedField === 'samara-address' ? 'Скопировано' : 'Копировать'}</span>
+                        </button>
+                      </div>
+                      <p className="text-slate-600 dark:text-slate-400 mt-0.5 leading-snug">{COMPANY_INFO.address}</p>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">Режим: Пн-Пт 09:00 — 17:00 (МСК+1)</span>
                     </div>
                   </div>
 
-                  <div className="bg-blue-50/80 dark:bg-blue-950/40 rounded-xl p-3.5 text-xs text-blue-950 dark:text-blue-200 space-y-1.5 border border-blue-200/60 dark:border-blue-800/60">
-                    <div className="font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
-                      <Cpu className="w-4 h-4 text-blue-700 dark:text-blue-400" />
-                      <span>Оснащение и компетенции в Самаре:</span>
+                  <div className="bg-blue-50/80 dark:bg-blue-950/40 rounded-lg p-2.5 text-[11px] text-blue-950 dark:text-blue-200 border border-blue-200/60 dark:border-blue-800/60 leading-relaxed">
+                    <div className="font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1 mb-1">
+                      <Cpu className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                      <span>Компетенции и оснащение в Самаре:</span>
                     </div>
-                    <p className="text-blue-800 dark:text-blue-300 text-[11px] leading-relaxed">
-                      • <strong>Оборудование:</strong> лазерный сканер ScanLine EasyScan Omni / Shining3D FreeScan OMNI.<br />
-                      • <strong>Инженерные услуги:</strong> консультационные услуги, оперативная техническая поддержка, реверс-инжиниринг, учебный класс TopSolid 7.
-                    </p>
+                    • Лазерный 3D-сканер ScanLine EasyScan Omni / Shining3D FreeScan OMNI.<br />
+                    • Внедрение САПР TopSolid 7, разработка постпроцессоров, учебный класс.
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3.5">
-                  <div className="flex items-start gap-3 text-xs sm:text-sm">
-                    <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60 flex items-center justify-center shrink-0">
-                      <MapPin className="w-5 h-5" />
+                <div className="space-y-2.5">
+                  <div className="flex items-start gap-2.5 text-xs">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60 flex items-center justify-center shrink-0">
+                      <MapPin className="w-4 h-4" />
                     </div>
-                    <div className="flex-1">
-                      <strong className="block text-slate-900 dark:text-white">Офис и Метрологический зал в Тольятти:</strong>
-                      <p className="text-slate-600 dark:text-slate-400 mt-0.5">{COMPANY_INFO.tolyattiBranch.address}</p>
-                      <div className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                        • {COMPANY_INFO.tolyattiBranch.locationName}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <strong className="text-slate-900 dark:text-white">Лаборатория КИМ в Тольятти:</strong>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(COMPANY_INFO.tolyattiBranch.address, 'tolyatti-address')}
+                          className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-medium cursor-pointer shrink-0"
+                        >
+                          <Copy className="w-3 h-3" />
+                          <span>{copiedField === 'tolyatti-address' ? 'Скопировано' : 'Копировать'}</span>
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(COMPANY_INFO.tolyattiBranch.address, 'tolyatti-address')}
-                        className="mt-1.5 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 font-medium cursor-pointer"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>{copiedField === 'tolyatti-address' ? 'Скопировано!' : 'Скопировать адрес'}</span>
-                      </button>
+                      <p className="text-slate-600 dark:text-slate-400 mt-0.5 leading-snug">{COMPANY_INFO.tolyattiBranch.address}</p>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">Режим: Пн-Пт 09:00 — 17:00 (по согласованию)</span>
                     </div>
                   </div>
 
-                  <div className="bg-emerald-50/80 dark:bg-emerald-950/40 rounded-xl p-3.5 text-xs text-emerald-950 dark:text-emerald-200 space-y-1.5 border border-emerald-200/60 dark:border-emerald-800/60">
-                    <div className="font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
-                      <Cpu className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
-                      <span>Оснащение в Технопарке «Жигулевская долина»:</span>
+                  <div className="bg-emerald-50/80 dark:bg-emerald-950/40 rounded-lg p-2.5 text-[11px] text-emerald-950 dark:text-emerald-200 border border-emerald-200/60 dark:border-emerald-800/60 leading-relaxed">
+                    <div className="font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1 mb-1">
+                      <Cpu className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Компетенции представительства в Тольятти:</span>
                     </div>
-                    <p className="text-emerald-800 dark:text-emerald-300 text-[11px] leading-relaxed">
-                      • <strong>В корпусе 3.2:</strong> демонстрационно-метрологический зал — стационарная КИМ Mitutoyo CRYSTA-Apex S.<br />
-                      • <strong>В корпусе 2.3:</strong> офис взаимодействия с заказчиками — мобильная КИМ Hexagon ARM 8520 + RS6, лазерный трекер Leica Absolute Tracker AT403.
-                    </p>
+                    • Координатно-измерительные машины (КИМ) и мобильные оптические системы.<br />
+                    • Прецизионный 3D-контроль геометрии (GD&T), метрологическая экспертиза.
                   </div>
                 </div>
               )}
             </div>
 
-            {/* General Contacts */}
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
-              {/* Phone */}
-              <div className="flex items-start gap-3 text-xs sm:text-sm">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60 flex items-center justify-center shrink-0">
-                  <Phone className="w-4 h-4" />
+            {/* Direct Communication Contacts */}
+            <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+              {/* Phone - Strictly 'Телефон:' */}
+              <div className="flex items-center gap-2.5 text-xs">
+                <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60 flex items-center justify-center shrink-0">
+                  <Phone className="w-3.5 h-3.5" />
                 </div>
-                <div className="flex-1">
-                  <strong className="block text-slate-900 dark:text-white text-xs">Многоканальный телефон:</strong>
+                <div className="flex-1 flex items-baseline justify-between gap-2">
+                  <span className="text-slate-600 dark:text-slate-400 text-xs">Телефон:</span>
                   <a
                     href={`tel:${COMPANY_INFO.phoneClean}`}
-                    className="text-base font-bold text-blue-600 dark:text-blue-400 hover:underline block font-mono"
+                    className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline font-mono"
                   >
                     {COMPANY_INFO.phone}
                   </a>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Пн-Пт: 09:00 – 17:00 (МСК+1 / Самара)</span>
                 </div>
               </div>
 
               {/* Email */}
-              <div className="flex items-start gap-3 text-xs sm:text-sm">
-                <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60 flex items-center justify-center shrink-0">
-                  <Mail className="w-4 h-4" />
+              <div className="flex items-center gap-2.5 text-xs">
+                <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60 flex items-center justify-center shrink-0">
+                  <Mail className="w-3.5 h-3.5" />
                 </div>
-                <div className="flex-1">
-                  <strong className="block text-slate-900 dark:text-white text-xs">Электронная почта:</strong>
+                <div className="flex-1 flex items-baseline justify-between gap-2">
+                  <span className="text-slate-600 dark:text-slate-400 text-xs">Электронная почта:</span>
                   <a
                     href={`mailto:${COMPANY_INFO.email}`}
-                    className="text-slate-900 dark:text-slate-200 font-semibold hover:text-blue-600 dark:hover:text-blue-400 block text-xs"
+                    className="text-xs font-semibold text-slate-900 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 font-mono"
                   >
                     {COMPANY_INFO.email}
                   </a>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Для ТЗ, 3D-моделей и запросов КП</span>
                 </div>
               </div>
 
-              {/* VK Group */}
-              <div className="flex items-start gap-3 text-xs sm:text-sm pt-1 border-t border-slate-100 dark:border-slate-800">
-                <div className="w-8 h-8 rounded-lg bg-[#0077FF] text-white font-black text-[11px] flex items-center justify-center shrink-0 shadow-2xs">
-                  VK
-                </div>
-                <div className="flex-1">
-                  <strong className="block text-slate-900 dark:text-white text-xs">Официальная группа ВКонтакте:</strong>
-                  <a
-                    href={COMPANY_INFO.vkUrl || 'https://vk.ru/ds_engineering'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#0077FF] font-bold hover:underline flex items-center gap-1 text-xs mt-0.5"
-                  >
-                    <span>{COMPANY_INFO.vkName || 'vk.ru/ds_engineering'}</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Новости САПР TopSolid 7, 3D-сканирования и инженерные обзоры</span>
-                </div>
+              {/* Transport & Parking compact note */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1">
+                  <Car className="w-3 h-3 text-emerald-500" />
+                  Бесплатная парковка
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <Bus className="w-3 h-3 text-blue-500" />
+                  Остановка 2 мин
+                </span>
+                <span>•</span>
+                <a
+                  href={COMPANY_INFO.vkUrl || 'https://vk.ru/ds_engineering'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#0077FF] hover:underline font-medium flex items-center gap-0.5"
+                >
+                  <span>VK</span>
+                  <ExternalLink className="w-2.5 h-2.5" />
+                </a>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right: Interactive Visual Map Banner (Equal Height) */}
-        <div className="xl:col-span-7 flex flex-col">
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs h-full flex flex-col">
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-semibold min-w-0">
-                <Navigation className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                <span className="truncate">
-                  {selectedLocation === 'samara'
-                    ? 'Самара, ул. Свободы, д. 198 (Главный офис)'
-                    : 'Тольятти, Южное шоссе, 165 (Жигулевская долина, корп. 2.3 и 3.2)'}
-                </span>
-              </div>
-              <a
-                href={
-                  selectedLocation === 'samara'
-                    ? 'https://yandex.ru/maps/?text=Самара+ул+Свободы+198'
-                    : 'https://yandex.ru/maps/?text=Тольятти+Южное+шоссе+165'
-                }
-                target="_blank"
-                rel="noreferrer"
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center gap-1 shrink-0 ml-2"
-              >
-                <span>Яндекс.Карты</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
-
-            {/* Visual Schematic Map Canvas */}
-            <div className="relative flex-1 min-h-[300px] sm:min-h-[340px] bg-slate-900 overflow-hidden group flex flex-col justify-between p-4">
-              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px]"></div>
-              
-              <svg className="absolute inset-0 w-full h-full opacity-30 pointer-events-none" preserveAspectRatio="none">
-                <line x1="0" y1="120" x2="800" y2="160" stroke="#60a5fa" strokeWidth="8" />
-                <line x1="200" y1="0" x2="260" y2="500" stroke="#93c5fd" strokeWidth="12" />
-                <line x1="0" y1="240" x2="800" y2="280" stroke="#3b82f6" strokeWidth="6" />
-                <line x1="500" y1="0" x2="540" y2="500" stroke="#60a5fa" strokeWidth="10" />
-              </svg>
-
-              <div className="relative z-10 flex items-center justify-between">
-                <div className="bg-slate-900/85 backdrop-blur-xs text-white text-[11px] px-4 py-1.5 rounded-lg border border-slate-700">
-                  {selectedLocation === 'samara'
-                    ? 'Координаты: 53.2198° N, 50.2642° E'
-                    : 'Координаты: 53.5412° N, 49.2986° E'}
-                </div>
-                <div className="bg-blue-600/90 text-white text-[11px] font-medium px-2.5 py-1 rounded-md">
-                  {selectedLocation === 'samara' ? 'Центральный офис' : 'Офис + Метрологический зал'}
-                </div>
-              </div>
-
-              {/* Pin Marker */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                <div className="bg-[#EF4444] text-white p-3.5 rounded-full shadow-sm ring-4 ring-red-400/40 animate-pulse">
-                  <Building2 className="w-6 h-6" />
-                </div>
-                <div className="bg-white text-gray-900 px-4.5 py-1.5 rounded-xl shadow-sm border border-gray-200 text-xs font-bold mt-2 whitespace-nowrap">
-                  {selectedLocation === 'samara'
-                    ? 'ООО «ДС‑Инжиниринг»: Главный офис'
-                    : 'ООО «ДС‑Инжиниринг»: Жигулевская долина (корп. 2.3 и 3.2)'}
-                </div>
-              </div>
-
-              {/* Bottom Details Bar on Map */}
-              <div className="relative z-10 bg-slate-900/80 backdrop-blur-xs text-slate-300 text-[11px] p-2.5 rounded-xl border border-slate-700/80 flex flex-wrap items-center justify-between gap-2">
-                <span>
-                  {selectedLocation === 'samara'
-                    ? '🚗 парковки с улицы Елизарова или Марии Авейде'
-                    : '🚗 Въезд на территорию Технопарка через КПП-1 / КПП-2 (по предварительной заявке)'}
-                </span>
-                <span className="text-amber-400 font-medium">Пн-Пт: 09:00 — 17:00</span>
-              </div>
-            </div>
-          </div>
+        {/* Right: Interactive Yandex Maps (Equal Height, Full-Bleed Viewport) */}
+        <div className="lg:col-span-7 flex flex-col h-full min-h-[380px]">
+          <YandexInteractiveMap 
+            selectedLocation={selectedLocation} 
+            onLocationChange={setSelectedLocation} 
+            className="h-full"
+          />
         </div>
       </div>
 
@@ -671,7 +611,7 @@ export const ContactsPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-slate-500 dark:text-slate-400 font-sans">Налогообложение:</span>
-                  <span className="text-emerald-700 dark:text-emerald-400 font-sans font-bold">ОСНО (НДС 22%)</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-sans font-bold">ОСНО (НДС 20%)</span>
                 </div>
                 <div className="flex justify-between py-1">
                   <span className="text-slate-500 dark:text-slate-400 font-sans">ЭДО (документооборот):</span>
@@ -702,7 +642,7 @@ export const ContactsPage: React.FC = () => {
                 <span>Написать инженеру или запросить коммерческое предложение</span>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
-                Опишите задачу (деталь, станок с ЧПУ или КИМ) — мы подготовим техническое решение в течение 15 минут
+                Опишите задачу (деталь, станок или требования к контролю) — инженеры компании подготовят технико-коммерческий расчет
               </p>
 
               {submitted ? (
@@ -724,7 +664,7 @@ export const ContactsPage: React.FC = () => {
                       <span>Инженерная группа оповещена по электронной почте</span>
                     </div>
                     <p className="text-[11px] text-emerald-700 dark:text-emerald-400 leading-relaxed">
-                      Уведомление с вашим ТЗ автоматически направлено дежурным специалистам «ДС‑Инжиниринг». Инженер подготовит расчет и свяжется с вами в течение 10–15 минут.
+                      Уведомление с вашим ТЗ направлено профильным специалистам «ДС‑Инжиниринг». Инженер ознакомится с исходными данными и свяжется с вами для уточнения деталей и формирования расчета.
                     </p>
                   </div>
                   <button
@@ -1052,7 +992,7 @@ export const ContactsPage: React.FC = () => {
                       ) : (
                         <>
                           <Send className="w-4 h-4 shrink-0" />
-                          <span>Отправить запрос главному инженеру</span>
+                          <span>Отправить технический запрос</span>
                         </>
                       )}
                     </button>
@@ -1060,7 +1000,7 @@ export const ContactsPage: React.FC = () => {
                     <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-blue-500 dark:text-blue-400" />
-                        <span>Ответ инженера в течение 10–15 минут</span>
+                        <span>Квалифицированный ответ инженера</span>
                       </span>
                       <span className="flex items-center gap-1">
                         <ShieldCheck className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
@@ -1077,3 +1017,6 @@ export const ContactsPage: React.FC = () => {
     </div>
   );
 };
+
+export default ContactsPage;
+

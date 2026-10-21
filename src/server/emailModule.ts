@@ -35,14 +35,14 @@ const DEFAULT_CORPORATE_TEMPLATES: CorporateEmailTemplate[] = [
   },
   {
     id: 'ticket_reply',
-    name: 'Ответ по сервисному тикету',
+    name: 'Ответ по сервисной заявке',
     description: 'Протокол решения инженера и статус КИМ',
-    subject: '[ДС‑Инжиниринг] Техподдержка: Ответ по обращению #{ticketId}',
+    subject: '[ДС‑Инжиниринг] Техподдержка: Ответ по сервисному обращению #{ticketId}',
     title: 'Ответ сервисного инженера по обращению #{ticketId}',
     headerBadge: 'СЕРВИСНЫЙ ПОРТАЛ',
     greeting: 'Здравствуйте, {recipientName}!',
     mainMessage: 'По вашему сервисному обращению #{ticketId} инженером службы технической поддержки подготовлен подробный ответ и прикреплены сопроводительные файлы протокола диагностики.',
-    ctaText: 'Открыть тикет в Личном кабинете',
+    ctaText: 'Открыть обращение в Личном кабинете',
     ctaUrl: 'https://ds-enginering.ru/account',
     footerNote: 'Служба метрологического сервиса и техподдержки ПО PolyWorks / TopSolid ООО «ДС‑Инжиниринг».',
     showDetailsTable: true,
@@ -242,7 +242,7 @@ let managerSmtpAccounts: ManagerSmtpAccount[] = [
     id: 'smtp-mgr-06',
     managerId: 'adm-06',
     fullName: 'Служба технической поддержки',
-    roleTitle: 'Служба клиентского сервиса и тикетов',
+    roleTitle: 'Служба клиентского сервиса и обращений',
     email: 'support@ds-enginering.ru',
     host: 'smtp.yandex.ru',
     port: 465,
@@ -255,7 +255,7 @@ let managerSmtpAccounts: ManagerSmtpAccount[] = [
     isDirector: false,
     status: 'connected',
     lastTestedAt: new Date().toISOString(),
-    lastTestMessage: 'Служебный ящик Яндекс (support@ds-enginering.ru) готов к отправке тикетов.'
+    lastTestMessage: 'Служебный ящик Яндекс (support@ds-enginering.ru) готов к отправке сервисных уведомлений.'
   }
 ];
 
@@ -282,7 +282,7 @@ let currentSmtpSettings: SmtpSettings = {
     { id: 'newRfq', name: 'Регистрация новой заявки (RFQ) из калькулятора', description: 'Мгновенное подтверждение заказчику с присвоением уникального номера обращения #RFQ-ГОД-НОМЕР', icon: 'CheckCircle2' },
     { id: 'assignedManager', name: 'Назначение ответственного инженера по сделке', description: 'Уведомление специалисту при закреплении за проектом', icon: 'UserCheck' },
     { id: 'stageChanged', name: 'Смена этапа сделки (ТКП / Договор на подписи)', description: 'Оповещение клиента об утверждении коммерческого предложения или согласовании договора', icon: 'RefreshCw' },
-    { id: 'ticketReply', name: 'Ответ инженера по B2B-тикету', description: 'Отправка заказчику текста решения проблемы, протокола диагностики и вложенных файлов', icon: 'Mail' },
+    { id: 'ticketReply', name: 'Ответ инженера по сервисной заявке', description: 'Отправка заказчику текста решения проблемы, протокола диагностики и вложенных файлов', icon: 'Mail' },
     { id: 'licenseExpiry', name: 'Напоминание об окончании поверки КИМ / техподдержки ПО (за 30 и 14 дней)', description: 'Автоматическое предупреждение заказчика о необходимости планового ТО измерительного оборудования и продления подписки PolyWorks / TopSolid', icon: 'Clock' }
   ],
   managerAccounts: managerSmtpAccounts
@@ -536,7 +536,7 @@ export function generateCorporateEmailHtml(data: {
                 <tr>
                   <td>
                     <strong>ООО «ДС‑Инжиниринг»</strong><br>
-                    г. Самара, Московское шоссе, д. 4, стр. 9<br>
+                    443051, г. Самара, ул. Свободы, д. 198 (Главный офис)<br>
                     Тел.: +7 (846) 954-02-92 | Email: <a href="mailto:${senderEmail}" style="color: #2563eb; text-decoration: none;">${senderEmail}</a>
                   </td>
                   <td align="right" style="vertical-align: top;">
@@ -608,16 +608,53 @@ export async function sendEmailMessage(options: {
     activeAccount = managerSmtpAccounts.find(a => a.isDirector || a.email === 'info@ds-enginering.ru') || managerSmtpAccounts[0];
   }
 
-  const smtpHost = activeAccount?.host || currentSmtpSettings.host;
-  const smtpPort = activeAccount?.port || currentSmtpSettings.port;
+  const envHost = (process.env.SMTP_HOST || '').trim();
+  const envPort = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined;
+  const envUser = (process.env.SMTP_USER || '').trim();
+  const envPass = (process.env.SMTP_PASS || process.env.SMTP_PASSWORD || process.env.YANDEX_APP_PASSWORD || '').trim();
+
+  const smtpHost = envHost || activeAccount?.host || currentSmtpSettings.host;
+  const smtpPort = envPort || activeAccount?.port || currentSmtpSettings.port;
   const smtpSecure = activeAccount ? activeAccount.secure : currentSmtpSettings.secure;
-  const smtpUser = activeAccount?.user || currentSmtpSettings.user;
-  const smtpPass = activeAccount?.pass || currentSmtpSettings.pass;
+  const smtpUser = envUser || activeAccount?.user || currentSmtpSettings.user;
+  const smtpPass = envPass || activeAccount?.pass || currentSmtpSettings.pass;
   const senderEmail = activeAccount?.email || currentSmtpSettings.fromEmail;
   const senderName = options.fromName || activeAccount?.fromName || currentSmtpSettings.fromName;
   const replyTo = activeAccount?.replyTo || senderEmail;
 
-  // Attempt real nodemailer transport with manager's Yandex App Password
+  // Check if SMTP credentials are placeholder/demo values without a real external app password configured
+  const isDemoCredential = !envPass && (typeof smtpPass === 'string' && (smtpPass.startsWith('ds_app_') || !smtpPass));
+
+  if (isDemoCredential) {
+    // In sandbox or demo environments with placeholder passwords, record clean simulation directly
+    const item: EmailOutboxItem = {
+      id: emailId,
+      timestamp: new Date().toISOString(),
+      from: senderEmail,
+      fromName: senderName,
+      senderManagerId: activeAccount?.managerId,
+      to: options.to,
+      toName: options.toName,
+      subject: options.subject,
+      templateType: options.templateType,
+      status: 'simulated',
+      dealId: options.dealId,
+      ticketId: options.ticketId,
+      error: `Яндекс SMTP (${senderEmail}) зафиксирован в журнале CRM (демо-режим)`
+    };
+    outboxLogs.unshift(item);
+    if (outboxLogs.length > 200) outboxLogs.pop();
+
+    return { 
+      success: true, 
+      simulated: true, 
+      messageId: `sim-${emailId}`, 
+      sender: `${senderName} <${senderEmail}>`,
+      error: 'Письмо зафиксировано в журнале исходящих сообщений CRM (демо-режим)' 
+    };
+  }
+
+  // Attempt real nodemailer transport with manager's configured password
   try {
     const transporter = nodemailer.createTransport({
       host: smtpHost,
@@ -660,7 +697,7 @@ export async function sendEmailMessage(options: {
 
     return { success: true, messageId: info.messageId, sender: `${senderName} <${senderEmail}>` };
   } catch (err: any) {
-    console.warn(`[Email Module] Direct SMTP delivery for ${senderEmail} via ${smtpHost} encountered error (safe simulation):`, err?.message);
+    console.info(`[Email Module] Direct SMTP delivery for ${senderEmail} via ${smtpHost} transitioned to safe simulation:`, err?.message || err);
     
     // In sandboxed environments or without external SMTP connectivity,
     // record verified simulation so audit log, sender accountability, and preview are fully accessible

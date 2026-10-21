@@ -191,7 +191,7 @@ ${recentRequests.slice(0, 5).map(r => `- ${r.companyName} (${r.topic}): ${r.esti
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[600] flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white border border-slate-200 w-full max-w-4xl max-h-[90vh] rounded-lg shadow-sm flex flex-col overflow-hidden text-slate-900">
         
         {/* Header */}

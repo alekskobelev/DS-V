@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sun, Moon } from 'lucide-react';
-import { useApp } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 
 interface ThemeToggleProps {
   variant?: 'icon' | 'compact' | 'switch' | 'row';
@@ -9,8 +9,7 @@ interface ThemeToggleProps {
 }
 
 export const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = 'icon', className = '', showLabel = false }) => {
-  const { theme, toggleTheme } = useApp();
-  const isDark = theme === 'dark';
+  const { theme, toggleTheme, isDark } = useTheme();
 
   if (variant === 'row') {
     return (

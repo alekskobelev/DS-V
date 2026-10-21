@@ -26,9 +26,9 @@ import {
   Bell,
   Wrench,
   LayoutDashboard,
-  ShieldAlert
+  ShieldAlert,
+  ExternalLink
 } from 'lucide-react';
-import { TasksSidebarWidget } from '../crm/TasksSidebarWidget';
 
 export interface NavSubItem {
   id: string;
@@ -40,7 +40,7 @@ export interface NavSubItem {
 }
 
 export interface NavSection {
-  id: 'sales' | 'docs' | 'knowledge' | 'admin';
+  id: 'docs' | 'knowledge' | 'admin';
   title: string;
   shortTitle?: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -50,9 +50,9 @@ export interface NavSection {
 }
 
 interface AccountSidebarTreeProps {
-  activeModule: 'sales' | 'docs' | 'knowledge' | 'admin';
+  activeModule: 'docs' | 'knowledge' | 'admin';
   activeSubTab: string;
-  onSelectSubTab: (moduleId: 'sales' | 'docs' | 'knowledge' | 'admin', subTabId: string) => void;
+  onSelectSubTab: (moduleId: 'docs' | 'knowledge' | 'admin', subTabId: string) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   hasCrmAccess: boolean;
@@ -71,6 +71,7 @@ interface AccountSidebarTreeProps {
   proposalsCount: number;
   fleetCount?: number;
   onItemClickMobile?: () => void;
+  onNavigateToCrm?: (tab?: string) => void;
 }
 
 export const AccountSidebarTree: React.FC<AccountSidebarTreeProps> = ({
@@ -88,14 +89,12 @@ export const AccountSidebarTree: React.FC<AccountSidebarTreeProps> = ({
   ticketsCount,
   licensesCount,
   rfqsCount,
-  dealsCount,
-  proposalsCount,
   fleetCount,
-  onItemClickMobile
+  onItemClickMobile,
+  onNavigateToCrm
 }) => {
   // Manage open/close state for each accordion section
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    sales: true,
     docs: true,
     knowledge: true,
     admin: true
@@ -114,56 +113,9 @@ export const AccountSidebarTree: React.FC<AccountSidebarTreeProps> = ({
   // Build navigation structure dynamically based on user role & counts
   const sections: NavSection[] = [
     {
-      id: 'sales',
-      title: 'Продажи (CRM)',
-      shortTitle: 'CRM',
-      icon: TrendingUp,
-      iconColor: 'text-blue-600',
-      visible: hasCrmAccess,
-      items: [
-        {
-          id: 'dashboard',
-          label: 'Дашборд CRM (30 лет)',
-          icon: LayoutDashboard,
-          badge: '30 лет',
-          badgeColor: 'bg-amber-100 text-amber-900 border border-amber-300 font-bold'
-        },
-        {
-          id: 'funnels',
-          label: 'Сделки и воронка',
-          icon: PieChart,
-          badge: dealsCount > 0 ? dealsCount : undefined,
-          badgeColor: 'bg-blue-100 text-blue-800'
-        },
-        {
-          id: 'contact-center',
-          label: 'База клиентов и ЛПР',
-          icon: Building2,
-          tooltip: 'Контакт-центр, предприятия и контактные лица'
-        },
-        {
-          id: 'proposals',
-          label: 'Реестр ТКП',
-          icon: FileText,
-          badge: proposalsCount > 0 ? proposalsCount : undefined,
-          badgeColor: 'bg-blue-100 text-blue-800'
-        },
-        {
-          id: 'tasks',
-          label: 'Календарь и задачи',
-          icon: Calendar
-        },
-        {
-          id: 'analytics',
-          label: 'Аналитика и KPI',
-          icon: TrendingUp
-        }
-      ]
-    },
-    {
       id: 'docs',
-      title: hasCrmAccess ? 'Документы и Сервис' : 'Личный кабинет B2B',
-      shortTitle: hasCrmAccess ? 'Документы' : 'Кабинет',
+      title: hasCrmAccess ? 'Служебные реестры и Сервис' : 'Личный кабинет заказчика',
+      shortTitle: hasCrmAccess ? 'Реестры' : 'Кабинет',
       icon: Folder,
       iconColor: 'text-emerald-600',
       visible: true,
@@ -193,29 +145,11 @@ export const AccountSidebarTree: React.FC<AccountSidebarTreeProps> = ({
         },
         {
           id: 'tickets',
-          label: 'Техподдержка',
+          label: 'Заявки в техподдержку',
           icon: MessageSquare,
           badge: ticketsCount > 0 ? ticketsCount : undefined,
           badgeColor: 'bg-amber-100 text-amber-800'
         },
-        ...(hasCrmAccess ? [
-          {
-            id: 'fleet',
-            label: 'Парк оборудования',
-            icon: Wrench,
-            badge: fleetCount !== undefined && fleetCount > 0 ? fleetCount : undefined,
-            badgeColor: 'bg-indigo-100 text-indigo-800',
-            tooltip: 'Реестр КИМ, 3D-сканеров, лазерных трекеров и контроль поверки'
-          },
-          {
-            id: 'arshin-schedule',
-            label: 'График ФГИС «АРШИН»',
-            icon: ShieldAlert,
-            badge: '!',
-            badgeColor: 'bg-rose-500 text-white font-black px-1.5 py-0.5 rounded shadow-xs animate-pulse',
-            tooltip: 'График поверок ФГИС «АРШИН», мониторинг межповерочных интервалов'
-          }
-        ] : []),
         ...(hasCrmAccess || canViewMetrologyReports ? [
           {
             id: 'metrology-reports',
@@ -243,51 +177,54 @@ export const AccountSidebarTree: React.FC<AccountSidebarTreeProps> = ({
     },
     {
       id: 'knowledge',
-      title: 'Обучающий центр',
-      shortTitle: 'Обучение',
-      icon: GraduationCap,
-      iconColor: 'text-purple-600',
-      visible: hasCrmAccess || isAdmin,
+      title: hasCrmAccess ? 'Служебные регламенты и инструкции' : 'Помощь и поддержка',
+      shortTitle: hasCrmAccess ? 'Регламенты' : 'Справка',
+      icon: BookOpen,
+      iconColor: 'text-blue-600',
+      visible: true,
       items: [
-        {
-          id: 'guide',
-          label: 'Регламенты и инструкции',
-          icon: BookOpen
-        },
-        {
-          id: 'faq',
-          label: 'База знаний и FAQ',
-          icon: HelpCircle
-        }
+        ...(!hasCrmAccess ? [
+          {
+            id: 'guide',
+            label: 'Руководство пользователя',
+            icon: BookOpen
+          },
+          {
+            id: 'faq',
+            label: 'Вопросы и ответы (FAQ)',
+            icon: HelpCircle
+          }
+        ] : [
+          {
+            id: 'staff-guide',
+            label: 'Инструкции для специалистов',
+            icon: BookOpen
+          }
+        ])
       ]
     },
     {
       id: 'admin',
-      title: 'Администрирование',
+      title: 'Администрирование системы',
       shortTitle: 'Админ',
       icon: SettingsIcon,
-      iconColor: 'text-slate-500',
-      visible: canManageUsers,
+      iconColor: 'text-amber-500',
+      visible: canManageUsers || isAdmin,
       items: [
         {
           id: 'users',
-          label: 'Пользователи и права',
+          label: 'Пользователи и права (RBAC)',
           icon: Users
         },
         {
-          id: 'bot-settings',
-          label: 'Ответы Онлайн-инженера',
-          icon: MessageSquare
-        },
-        {
           id: 'email',
-          label: 'Настройки почты',
+          label: 'Настройки почты (SMTP)',
           icon: Mail
         },
         {
-          id: 'notifications',
-          label: 'Оповещения и каналы связи',
-          icon: Bell
+          id: 'logs',
+          label: 'Журнал безопасности и логи',
+          icon: ShieldAlert
         }
       ]
     }
@@ -295,7 +232,7 @@ export const AccountSidebarTree: React.FC<AccountSidebarTreeProps> = ({
 
   const visibleSections = sections.filter(s => s.visible);
 
-  const handleItemSelect = (secId: 'sales' | 'docs' | 'knowledge' | 'admin', itemId: string) => {
+  const handleItemSelect = (secId: 'docs' | 'knowledge' | 'admin', itemId: string) => {
     onSelectSubTab(secId, itemId);
     if (onItemClickMobile) {
       onItemClickMobile();
@@ -316,6 +253,18 @@ export const AccountSidebarTree: React.FC<AccountSidebarTreeProps> = ({
         >
           <PanelLeftOpen className="w-5 h-5" />
         </button>
+
+        {hasCrmAccess && onNavigateToCrm && (
+          <button
+            type="button"
+            onClick={() => onNavigateToCrm('funnels')}
+            className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white flex items-center justify-center shadow-md transition-transform hover:scale-105 cursor-pointer relative"
+            title="Открыть единую рабочую CRM-систему"
+          >
+            <Briefcase className="w-5 h-5 text-amber-300" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-white ring-1 ring-amber-500 animate-pulse" />
+          </button>
+        )}
 
         <div className="w-8 h-px bg-slate-200 dark:bg-slate-700" />
 
@@ -404,13 +353,9 @@ export const AccountSidebarTree: React.FC<AccountSidebarTreeProps> = ({
         {hasCrmAccess && (
           <div className="mt-auto pt-4 border-t border-slate-200 dark:border-slate-700 w-full flex justify-center">
             <button
-              onClick={() => handleItemSelect('sales', 'tasks')}
-              className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-                activeModule === 'sales' && activeSubTab === 'tasks'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-300'
-              }`}
-              title="Открыть задачи и календарь"
+              onClick={() => onNavigateToCrm ? onNavigateToCrm('tasks') : handleItemSelect('docs', 'contracts')}
+              className="w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-300"
+              title="Открыть задачи и календарь в CRM"
             >
               <CheckSquare className="w-5 h-5" />
             </button>
@@ -441,6 +386,29 @@ export const AccountSidebarTree: React.FC<AccountSidebarTreeProps> = ({
             <PanelLeftClose className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Quick CRM Hub Launcher for Employees */}
+        {hasCrmAccess && onNavigateToCrm && (
+          <button
+            type="button"
+            onClick={() => onNavigateToCrm('funnels')}
+            className="w-full p-3 rounded-xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 hover:from-blue-800 hover:to-indigo-700 text-white text-left shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col gap-1.5 border border-blue-500/50"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-2 py-0.5 rounded-full text-blue-100">
+                Корпоративная CRM
+              </span>
+              <ExternalLink className="w-3.5 h-3.5 text-blue-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </div>
+            <div className="text-xs font-black leading-tight flex items-center gap-1.5 text-white">
+              <Briefcase className="w-4 h-4 text-amber-300 shrink-0" />
+              <span>Единая среда CRM</span>
+            </div>
+            <div className="text-[10px] text-blue-100/90 leading-tight">
+              Воронка сделок, контрагенты, ТКП, задачи и поверки ФГИС «АРШИН»
+            </div>
+          </button>
+        )}
 
         {/* Tree Accordions */}
         <div className="space-y-3">
@@ -525,13 +493,6 @@ export const AccountSidebarTree: React.FC<AccountSidebarTreeProps> = ({
           })}
         </div>
       </div>
-
-      {/* Embedded Tasks Sidebar Widget */}
-      {hasCrmAccess && (
-        <div className="w-full">
-          <TasksSidebarWidget onOpenFullModule={() => handleItemSelect('sales', 'tasks')} />
-        </div>
-      )}
     </aside>
   );
 };

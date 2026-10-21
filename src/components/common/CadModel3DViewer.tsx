@@ -49,6 +49,8 @@ interface CadModel3DViewerProps {
   showTitle?: boolean;
   onModelSelect?: (modelId: string) => void;
   compactHeight?: boolean;
+  minimalOverlay?: boolean;
+  defaultCollapsedPanels?: boolean;
 }
 
 export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
@@ -58,7 +60,9 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
   className = '',
   showTitle = true,
   onModelSelect,
-  compactHeight = false
+  compactHeight = false,
+  minimalOverlay = false,
+  defaultCollapsedPanels = false
 }) => {
   const { models3D: contextModels, currentUser, showToast } = useApp();
   const canManage3D = canUserManage3DModels(currentUser);
@@ -84,18 +88,56 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
   const [clipAxis, setClipAxis] = useState<'y' | 'x' | 'z'>('y');
   const [clipOffset, setClipOffset] = useState<number>(0);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [isContextLost, setIsContextLost] = useState<boolean>(false);
   const [showUi, setShowUi] = useState<boolean>(typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
+  const [showMetricsPanel, setShowMetricsPanel] = useState<boolean>(!compactHeight && !minimalOverlay && !defaultCollapsedPanels);
+  const [showScalePanel, setShowScalePanel] = useState<boolean>(!compactHeight && !minimalOverlay);
   const [selectedPoint, setSelectedPoint] = useState<InspectionPoint | null>(null);
   const [renderFps, setRenderFps] = useState<number>(60);
+  const [lodMode, setLodMode] = useState<'ultra' | 'adaptive'>('ultra');
+  const [isActivelyRotating, setIsActivelyRotating] = useState<boolean>(false);
+  const interactionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInteractingRef = useRef<boolean>(false);
+
+  const notifyInteraction = useCallback((interacting: boolean) => {
+    isInteractingRef.current = interacting;
+    setIsActivelyRotating(interacting);
+
+    if (interacting) {
+      if (interactionTimeoutRef.current) {
+        clearTimeout(interactionTimeoutRef.current);
+      }
+      setLodMode('adaptive');
+      // Progressive LoD fill-rate optimization: scale down pixel ratio during active orbit
+      if (rendererRef.current && rendererRef.current.getPixelRatio() > 1.0) {
+        rendererRef.current.setPixelRatio(1.0);
+      }
+    } else {
+      if (interactionTimeoutRef.current) {
+        clearTimeout(interactionTimeoutRef.current);
+      }
+      interactionTimeoutRef.current = setTimeout(() => {
+        isInteractingRef.current = false;
+        setIsActivelyRotating(false);
+        setLodMode('ultra');
+        // Restore full native pixel ratio when rotation stops
+        if (rendererRef.current) {
+          rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        }
+      }, 160);
+    }
+  }, []);
 
   // Metrology 3D Projected Inspection Callouts & Trihedron Labels
   const [projectedCallouts, setProjectedCallouts] = useState<Array<{
     id: string;
+    index: number;
     name: string;
     shortLabel: string;
     surfaceName: string;
     deviation: number;
     status: 'nominal' | 'warning' | 'critical';
+    coords: [number, number, number];
     screenX: number;
     screenY: number;
     badgeX: number;
@@ -103,8 +145,6 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
     ctrlX: number;
     ctrlY: number;
     isVisible: boolean;
-    dotColor: string;
-    lineColor: string;
   }>>([]);
 
   const [axesLabels, setAxesLabels] = useState<{
@@ -852,7 +892,7 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
           let geom = child.geometry.clone();
           child.geometry = geom;
 
-          if (activeMode === 'colormap') {
+          if (activeMode === 'colormap' || activeMode === 'points') {
             applyMetrologyColorMap(geom, currentModel.minTolerance, currentModel.maxTolerance);
           }
 
@@ -860,7 +900,8 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
             const ptsMat = new THREE.PointsMaterial({
               color: new THREE.Color(getPointColor(activeShading)),
               size: 0.035,
-              sizeAttenuation: true
+              sizeAttenuation: true,
+              vertexColors: true
             });
             const pts = new THREE.Points(geom, ptsMat);
             newModelGroup.add(pts);
@@ -889,33 +930,20 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
     scene.add(newModelGroup);
     modelGroupRef.current = newModelGroup;
 
-    // 3. Add interactive 3D inspection markers
+    // 3. Add 3D inspection points markers
     const pointsList = currentModel.inspectionPoints || [];
-    pointsList.forEach((pt) => {
-      const markerRoot = new THREE.Group();
-      markerRoot.position.set(...pt.coords);
-
-      // Marker sphere pin
+    pointsList.forEach((pt, ptIdx) => {
       const pinColor = pt.status === 'nominal' ? 0x10b981 : (pt.status === 'warning' ? 0xf59e0b : 0xef4444);
-      const sphereGeo = new THREE.SphereGeometry(0.12, 16, 16);
-      const sphereMat = new THREE.MeshBasicMaterial({ color: pinColor });
-      const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
-      sphereMesh.userData = { inspectionPoint: pt };
-
-      // Pulsing halo ring
-      const ringGeo = new THREE.RingGeometry(0.15, 0.22, 24);
-      const ringMat = new THREE.MeshBasicMaterial({ 
-        color: pinColor, 
-        side: THREE.DoubleSide, 
-        transparent: true, 
-        opacity: 0.6 
+      const markerGeo = new THREE.SphereGeometry(0.09, 16, 16);
+      const markerMat = new THREE.MeshStandardMaterial({
+        color: pinColor,
+        roughness: 0.2,
+        metalness: 0.8
       });
-      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-      ringMesh.lookAt(new THREE.Vector3(0, 1, 0));
-
-      markerRoot.add(sphereMesh);
-      markerRoot.add(ringMesh);
-      newMarkerGroup.add(markerRoot);
+      const markerMesh = new THREE.Mesh(markerGeo, markerMat);
+      markerMesh.position.set(...pt.coords);
+      markerMesh.userData = { inspectionPoint: pt, pointIndex: ptIdx };
+      newMarkerGroup.add(markerMesh);
     });
 
     scene.add(newMarkerGroup);
@@ -990,14 +1018,16 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
     const h = canvas.clientHeight;
     if (w <= 0 || h <= 0) return;
 
-    const pts = currentModel.inspectionPoints || [];
+    const pts = (currentModel.inspectionPoints || []).slice(0, 4);
     const projCallouts: Array<{
       id: string;
+      index: number;
       name: string;
       shortLabel: string;
       surfaceName: string;
       deviation: number;
       status: 'nominal' | 'warning' | 'critical';
+      coords: [number, number, number];
       screenX: number;
       screenY: number;
       badgeX: number;
@@ -1005,18 +1035,16 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
       ctrlX: number;
       ctrlY: number;
       isVisible: boolean;
-      dotColor: string;
-      lineColor: string;
     }> = [];
 
-    pts.slice(0, 4).forEach((pt, idx) => {
+    pts.forEach((pt, idx) => {
       const v = new THREE.Vector3(...pt.coords);
       if (modelGroupRef.current) {
         v.applyMatrix4(modelGroupRef.current.matrixWorld);
       }
       v.project(cameraRef.current!);
 
-      const isVisible = v.z < 1.0;
+      const isVisible = v.z < 1.0 && v.x >= -1.1 && v.x <= 1.1 && v.y >= -1.1 && v.y <= 1.1;
       const screenX = ((v.x + 1) / 2) * w;
       const screenY = ((-v.y + 1) / 2) * h;
 
@@ -1024,34 +1052,31 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
       const isRight = screenX >= w / 2;
       const isTop = screenY <= h / 2;
 
-      const offsetX = isRight ? (90 + (idx % 2) * 35) : -(90 + (idx % 2) * 35);
-      const offsetY = isTop ? -(42 + (idx % 2) * 22) : (42 + (idx % 2) * 22);
+      const offsetX = isRight ? (110 + (idx % 2) * 35) : -(110 + (idx % 2) * 35);
+      const offsetY = isTop ? -(55 + (idx % 2) * 25) : (55 + (idx % 2) * 25);
 
-      const badgeX = THREE.MathUtils.clamp(screenX + offsetX, 210, Math.max(220, w - 190));
-      const badgeY = THREE.MathUtils.clamp(screenY + offsetY, 55, Math.max(65, h - 55));
+      const badgeX = THREE.MathUtils.clamp(screenX + offsetX, 190, Math.max(200, w - 170));
+      const badgeY = THREE.MathUtils.clamp(screenY + offsetY, 50, Math.max(60, h - 50));
 
-      const ctrlX = screenX + (badgeX - screenX) * 0.2;
-      const ctrlY = screenY + (badgeY - screenY) * 0.8;
-
-      const dotColor = pt.deviation > 0.035 ? '#ef4444' : (pt.deviation < -0.035 ? '#06b6d4' : '#10b981');
-      const lineColor = '#38bdf8';
+      const ctrlX = screenX + (badgeX - screenX) * 0.25;
+      const ctrlY = screenY + (badgeY - screenY) * 0.75;
 
       projCallouts.push({
         id: pt.id,
+        index: idx,
         name: pt.name,
         shortLabel: `P${idx + 1}`,
         surfaceName: pt.surfaceName,
         deviation: pt.deviation,
         status: pt.status,
+        coords: pt.coords,
         screenX,
         screenY,
         badgeX,
         badgeY,
         ctrlX,
         ctrlY,
-        isVisible,
-        dotColor,
-        lineColor
+        isVisible
       });
     });
 
@@ -1175,6 +1200,23 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
     renderer.localClippingEnabled = true;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     rendererRef.current = renderer;
+
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      if (animFrameIdRef.current) {
+        cancelAnimationFrame(animFrameIdRef.current);
+        animFrameIdRef.current = null;
+      }
+      setIsContextLost(true);
+    };
+
+    const handleContextRestored = () => {
+      setIsContextLost(false);
+      rebuild3DScene();
+    };
+
+    canvas.addEventListener('webglcontextlost', handleContextLost, false);
+    canvas.addEventListener('webglcontextrestored', handleContextRestored, false);
 
     // 4. Lighting Rig
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
@@ -1307,6 +1349,8 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
     return () => {
       if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
       document.removeEventListener('fullscreenchange', handleFsChange);
+      canvas.removeEventListener('webglcontextlost', handleContextLost);
+      canvas.removeEventListener('webglcontextrestored', handleContextRestored);
       resizeObserver.disconnect();
       renderer.dispose();
     };
@@ -1317,14 +1361,19 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
     rebuild3DScene();
   }, [rebuild3DScene]);
 
-  // Mouse & Touch Controls (Orbit, Pan, Zoom, Click to Inspect)
+  // Click start tracking ref for reliable raycasting
+  const clickStartPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Mouse & Touch Controls (Orbit, Pan, Zoom, Click to Inspect with Progressive LoD)
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    clickStartPosRef.current = { x: e.clientX, y: e.clientY };
     if (e.button === 2 || e.shiftKey) {
       isPanningRef.current = true;
     } else {
       isDraggingRef.current = true;
     }
     previousMousePositionRef.current = { x: e.clientX, y: e.clientY };
+    notifyInteraction(true);
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -1339,50 +1388,98 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
         0.1,
         Math.PI - 0.1
       );
-    } else if (isPanningRef.current) {
-      targetLookAtRef.current.y += deltaY * 0.008;
+      notifyInteraction(true);
+    } else if (isPanningRef.current && cameraRef.current) {
+      // Screen-space camera panning along right and up axes
+      const camera = cameraRef.current;
+      const factor = (sphericalRef.current.radius / 600) * 1.2;
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+      const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+      targetLookAtRef.current.addScaledVector(right, -deltaX * factor);
+      targetLookAtRef.current.addScaledVector(up, deltaY * factor);
+      notifyInteraction(true);
     }
   };
 
   const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (isDraggingRef.current && Math.abs(e.movementX) < 3 && Math.abs(e.movementY) < 3) {
+    const dist = Math.hypot(e.clientX - clickStartPosRef.current.x, e.clientY - clickStartPosRef.current.y);
+    if (dist < 6) {
       performRaycast(e.clientX, e.clientY);
     }
     isDraggingRef.current = false;
     isPanningRef.current = false;
+    notifyInteraction(false);
   };
 
   const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     sphericalRef.current.radius = THREE.MathUtils.clamp(
       sphericalRef.current.radius + e.deltaY * 0.006,
-      2.5,
+      2.2,
       18.0
     );
+    notifyInteraction(true);
+    notifyInteraction(false);
   };
 
-  // Touch Handlers for Mobile Devices
-  const touchStartRef = useRef<{ x: number; y: number; dist: number }>({ x: 0, y: 0, dist: 0 });
+  // Touch Handlers for Mobile Tablets (Two-Finger Zoom & Pan for On-Site Demonstrations)
+  const touchDataRef = useRef<{
+    startX: number;
+    startY: number;
+    prevX: number;
+    prevY: number;
+    prevDist: number;
+    prevCenterX: number;
+    prevCenterY: number;
+    touchStartTime: number;
+  }>({
+    startX: 0,
+    startY: 0,
+    prevX: 0,
+    prevY: 0,
+    prevDist: 0,
+    prevCenterX: 0,
+    prevCenterY: 0,
+    touchStartTime: 0
+  });
 
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
     if (e.touches.length === 1) {
       isDraggingRef.current = true;
-      touchStartRef.current.x = e.touches[0].clientX;
-      touchStartRef.current.y = e.touches[0].clientY;
+      isPanningRef.current = false;
+      const t = e.touches[0];
+      touchDataRef.current.startX = t.clientX;
+      touchDataRef.current.startY = t.clientY;
+      touchDataRef.current.prevX = t.clientX;
+      touchDataRef.current.prevY = t.clientY;
+      touchDataRef.current.touchStartTime = performance.now();
+      notifyInteraction(true);
     } else if (e.touches.length === 2) {
+      // Two-finger multi-touch gesture: simultaneous pinch-zoom AND planar panning
       isDraggingRef.current = false;
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      touchStartRef.current.dist = Math.hypot(dx, dy);
+      isPanningRef.current = true;
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      touchDataRef.current.prevDist = Math.hypot(dx, dy);
+      touchDataRef.current.prevCenterX = (t1.clientX + t2.clientX) / 2;
+      touchDataRef.current.prevCenterY = (t1.clientY + t2.clientY) / 2;
+      notifyInteraction(true);
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+
     if (e.touches.length === 1 && isDraggingRef.current) {
-      const dx = e.touches[0].clientX - touchStartRef.current.x;
-      const dy = e.touches[0].clientY - touchStartRef.current.y;
-      touchStartRef.current.x = e.touches[0].clientX;
-      touchStartRef.current.y = e.touches[0].clientY;
+      const t = e.touches[0];
+      const dx = t.clientX - touchDataRef.current.prevX;
+      const dy = t.clientY - touchDataRef.current.prevY;
+      touchDataRef.current.prevX = t.clientX;
+      touchDataRef.current.prevY = t.clientY;
 
       sphericalRef.current.theta -= dx * 0.008;
       sphericalRef.current.phi = THREE.MathUtils.clamp(
@@ -1390,23 +1487,59 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
         0.1,
         Math.PI - 0.1
       );
-    } else if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      const newDist = Math.hypot(dx, dy);
-      const deltaDist = touchStartRef.current.dist - newDist;
-      touchStartRef.current.dist = newDist;
+      notifyInteraction(true);
+    } else if (e.touches.length === 2 && cameraRef.current) {
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+
+      // 1. Pinch to Zoom
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      const currentDist = Math.hypot(dx, dy);
+      const deltaDist = touchDataRef.current.prevDist - currentDist;
+      touchDataRef.current.prevDist = currentDist;
 
       sphericalRef.current.radius = THREE.MathUtils.clamp(
-        sphericalRef.current.radius + deltaDist * 0.02,
-        2.5,
+        sphericalRef.current.radius + deltaDist * 0.025,
+        2.2,
         18.0
       );
+
+      // 2. Two-finger Pan in Camera Space (demonstration on tablets on shop floor)
+      const currentCenterX = (t1.clientX + t2.clientX) / 2;
+      const currentCenterY = (t1.clientY + t2.clientY) / 2;
+      const panDx = currentCenterX - touchDataRef.current.prevCenterX;
+      const panDy = currentCenterY - touchDataRef.current.prevCenterY;
+      touchDataRef.current.prevCenterX = currentCenterX;
+      touchDataRef.current.prevCenterY = currentCenterY;
+
+      const camera = cameraRef.current;
+      const factor = (sphericalRef.current.radius / 600) * 1.1;
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+      const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+      targetLookAtRef.current.addScaledVector(right, -panDx * factor);
+      targetLookAtRef.current.addScaledVector(up, panDy * factor);
+
+      notifyInteraction(true);
     }
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (isDraggingRef.current && e.changedTouches.length > 0) {
+      const t = e.changedTouches[0];
+      const dist = Math.hypot(
+        t.clientX - touchDataRef.current.startX,
+        t.clientY - touchDataRef.current.startY
+      );
+      const timeDiff = performance.now() - touchDataRef.current.touchStartTime;
+      // Single tap to inspect if touched without significant drag (< 8px, < 350ms)
+      if (dist < 8 && timeDiff < 350) {
+        performRaycast(t.clientX, t.clientY);
+      }
+    }
     isDraggingRef.current = false;
+    isPanningRef.current = false;
+    notifyInteraction(false);
   };
 
   // Raycasting for interactive inspection marker detection
@@ -1534,10 +1667,20 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
                   ISO 1101
                 </span>
               </div>
-              <div className="text-[9px] text-slate-400 flex items-center gap-1.5">
-                <span>FPS: {renderFps}</span>
+              <div className="text-[9px] text-slate-400 flex items-center gap-1.5 font-mono">
+                <span className={renderFps >= 55 ? 'text-emerald-400 font-bold' : 'text-amber-400'}>
+                  FPS: {renderFps}
+                </span>
                 <span>•</span>
-                <span>Точек: {currentModel.pointCount.toLocaleString('ru-RU')}</span>
+                <span className={`px-1.5 py-0.2 rounded text-[8px] font-bold ${
+                  lodMode === 'adaptive'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                }`}>
+                  LoD: {lodMode === 'adaptive' ? 'Адаптивный (60 FPS)' : 'Ultra HD'}
+                </span>
+                <span>•</span>
+                <span>{currentModel.pointCount.toLocaleString('ru-RU')} полигонов</span>
               </div>
             </div>
           </div>
@@ -1596,6 +1739,32 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
           </div>
         </div>
 
+        {/* WebGL Context Loss Recovery Banner */}
+        {isContextLost && (
+          <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-sm z-[20] flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center mb-4 text-amber-400">
+              <RefreshCw className="w-7 h-7 animate-spin" />
+            </div>
+            <h4 className="text-base font-bold text-white mb-2">
+              Восстановление 3D WebGL-контекста
+            </h4>
+            <p className="text-xs text-slate-300 max-w-md mb-4 leading-relaxed">
+              Графический контекст WebGL был временно сброшен операционной системой для экономии видеопамяти. Нажмите для повторной инициализации сцены.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setIsContextLost(false);
+                rebuild3DScene();
+              }}
+              className="min-h-[38px] px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Перезапустить 3D-просмотрщик</span>
+            </button>
+          </div>
+        )}
+
         {/* 3D WebGL Canvas */}
         <canvas
           ref={canvasRef}
@@ -1614,34 +1783,23 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
         <svg className="absolute inset-0 w-full h-full pointer-events-none z-[5]">
           {activeMode === 'colormap' && projectedCallouts.filter(c => c.isVisible).map((c) => (
             <g key={c.id}>
-              {/* Outer halo ring */}
-              <circle
-                cx={c.screenX}
-                cy={c.screenY}
-                r="9"
-                fill="none"
-                stroke={c.dotColor}
-                strokeWidth="1.2"
-                strokeDasharray="3 2"
-                opacity="0.8"
-              />
-              {/* Core point dot */}
-              <circle
-                cx={c.screenX}
-                cy={c.screenY}
-                r="4.5"
-                fill={c.dotColor}
-                stroke="#ffffff"
-                strokeWidth="1.5"
-              />
-              {/* Smooth curved leader line connecting part to callout badge */}
+              {/* Leader line from 3D surface point to badge */}
               <path
                 d={`M ${c.screenX} ${c.screenY} Q ${c.ctrlX} ${c.ctrlY} ${c.badgeX} ${c.badgeY}`}
                 fill="none"
-                stroke={c.lineColor}
-                strokeWidth="1.6"
+                stroke={selectedPoint?.id === c.id ? "#38bdf8" : "#0284c7"}
+                strokeWidth={selectedPoint?.id === c.id ? "2" : "1.2"}
                 strokeLinecap="round"
-                opacity="0.85"
+                opacity={selectedPoint?.id === c.id ? "1" : "0.75"}
+              />
+              {/* Point on surface */}
+              <circle
+                cx={c.screenX}
+                cy={c.screenY}
+                r="3.5"
+                fill={c.status === 'nominal' ? '#10b981' : c.status === 'warning' ? '#f59e0b' : '#ef4444'}
+                stroke="#ffffff"
+                strokeWidth="1.2"
               />
             </g>
           ))}
@@ -1688,13 +1846,13 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
               setSelectedPoint(pt);
             }}
             title={`${c.name} (${c.surfaceName})`}
-            className={`absolute pointer-events-auto cursor-pointer transition-all duration-150 px-2.5 py-1 rounded-md text-[11px] font-mono font-bold tracking-tight shadow-sm border flex items-center gap-1.5 z-[7] ${
+            className={`absolute pointer-events-auto cursor-pointer transition-all duration-150 px-2 py-0.5 rounded-md text-[11px] font-mono font-bold tracking-tight shadow-sm border flex items-center gap-1.5 z-[7] ${
               selectedPoint?.id === c.id
-                ? 'bg-slate-900 border-white text-white ring-2 ring-sky-400 scale-105 shadow-sky-500/20'
+                ? 'bg-slate-900 border-white text-white ring-2 ring-sky-400 scale-105 shadow-sky-500/30'
                 : 'bg-slate-950/90 hover:bg-slate-900 border-cyan-500/80 text-cyan-300 hover:border-cyan-300'
             }`}
           >
-            <span className={c.status === 'nominal' ? 'text-emerald-400' : c.status === 'warning' ? 'text-amber-400' : 'text-red-400'}>
+            <span className={c.status === 'nominal' ? 'text-emerald-400 font-extrabold' : c.status === 'warning' ? 'text-amber-400 font-extrabold' : 'text-red-400 font-extrabold'}>
               {c.shortLabel}:
             </span>
             <span>
@@ -1929,25 +2087,29 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
             <div className="bg-slate-900/95 backdrop-blur-md p-3 rounded-xl border border-cyan-500/50 shadow-sm w-full animate-in fade-in zoom-in-95 duration-200">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs ${
-                    selectedPoint.status === 'nominal' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                    selectedPoint.status === 'nominal' ? 'bg-emerald-500/20 text-emerald-400' : (selectedPoint.status === 'warning' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400')
                   }`}>
                     {selectedPoint.status === 'nominal' ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white leading-tight">{selectedPoint.name}</h4>
+                    <h4 className="text-xs font-bold text-white leading-tight flex items-center gap-1.5">
+                      <span>{selectedPoint.name}</span>
+                      <span className="text-[10px] text-cyan-400 font-mono">[{selectedPoint.id.toUpperCase()}]</span>
+                    </h4>
                     <div className="text-[10px] text-slate-400">{selectedPoint.surfaceName}</div>
                   </div>
                 </div>
                 <button
                   onClick={() => setSelectedPoint(null)}
                   className="text-slate-400 hover:text-white text-xs p-1 cursor-pointer"
+                  title="Закрыть карточку точки"
                 >
                   ✕
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-800 text-[10px]">
+              <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-800 text-[10px]">
                 <div className="bg-slate-950/60 p-1.5 rounded-lg border border-slate-800">
                   <span className="text-slate-400 text-[9px] block">Отклонение Δ:</span>
                   <span className={`font-mono font-bold text-xs ${
@@ -1959,9 +2121,15 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
                 <div className="bg-slate-950/60 p-1.5 rounded-lg border border-slate-800">
                   <span className="text-slate-400 text-[9px] block">Статус допуска:</span>
                   <span className={`font-bold ${
-                    selectedPoint.status === 'nominal' ? 'text-emerald-400' : 'text-amber-400'
+                    selectedPoint.status === 'nominal' ? 'text-emerald-400' : (selectedPoint.status === 'warning' ? 'text-amber-400' : 'text-red-400')
                   }`}>
-                    {selectedPoint.status === 'nominal' ? 'В ДОПУСКЕ (OK)' : 'ПРЕДУПРЕЖДЕНИЕ'}
+                    {selectedPoint.status === 'nominal' ? 'В ДОПУСКЕ (OK)' : (selectedPoint.status === 'warning' ? 'ПРЕДУПРЕЖДЕНИЕ' : 'ВНЕ ДОПУСКА')}
+                  </span>
+                </div>
+                <div className="bg-slate-950/60 p-1.5 rounded-lg border border-slate-800 font-mono text-[9px] flex flex-col justify-center">
+                  <span className="text-slate-400 block">Координаты XYZ:</span>
+                  <span className="text-slate-200">
+                    X:{selectedPoint.coords[0].toFixed(2)} Y:{selectedPoint.coords[1].toFixed(2)} Z:{selectedPoint.coords[2].toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -1970,188 +2138,228 @@ export const CadModel3DViewer: React.FC<CadModel3DViewerProps> = ({
         </div>
 
         {/* Interactive GD&T Navigation & Pulsar Hint Banner */}
-        <div className="absolute top-2.5 sm:top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/85 backdrop-blur-md border border-cyan-500/40 text-cyan-200 text-[10px] sm:text-xs font-semibold shadow-lg shadow-cyan-950/50">
+        <div className="absolute top-2.5 sm:top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md border border-cyan-500/30 text-cyan-300 text-[10px] sm:text-xs font-semibold shadow-lg">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
           </span>
-          <span className="truncate">Интерактивный GD&T-анализ: вращайте деталь для инспекции допуска формы</span>
+          <span className="truncate">Интерактивный GD&T-контроль: нажмите на деталь или выноску</span>
         </div>
 
         {/* Top-Right: GD&T Comparison Scale & Inspection Metrics (Mode-aware visibility) */}
         {activeMode !== 'cad' && (
-          <div className={`absolute top-2.5 right-2.5 z-20 flex items-start gap-2 pointer-events-auto transition-all duration-300 ${!showUi ? 'translate-x-[150%] opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'}`}>
-            {/* Metrology Comparison Scale (Displayed ONLY in 'colormap' / GD&T mode) */}
-            {activeMode === 'colormap' && (
-              <div className="bg-slate-900/90 backdrop-blur-md px-2 py-1.5 rounded-xl border border-slate-800/90 shadow-sm flex flex-col items-center select-none font-mono">
-                {/* Top Out-of-Tolerance Cap (Solid Red Box) */}
-                <div 
-                  className="w-4 sm:w-5 h-2.5 sm:h-3 bg-[#FF0000] border border-black/90 rounded-[1px] shadow-sm mb-0.5" 
-                  title="Припуск > +0.15 мм (Выход за верхнее поле допуска)"
-                />
-
-                {/* Main Graduated Scale with Values, Pointer Arrows, Dashed Ticks & Stepped Color Bar */}
-                <div className="relative flex items-stretch gap-1 h-36 sm:h-44 text-[9px] sm:text-[10px]">
-                  {/* Left Values and Pointers Column */}
-                  <div className="flex flex-col justify-between items-end text-right font-bold tracking-tight pr-0.5 select-none py-0.5">
-                    {/* 0,15 */}
-                    <div className="flex items-center gap-0.5 leading-none text-slate-200">
-                      <span>0,15</span>
-                      <svg className="w-1.5 h-2 text-slate-300 dark:text-slate-100 fill-current shrink-0" viewBox="0 0 6 8">
-                        <polygon points="0,0 6,4 0,8" />
-                      </svg>
-                    </div>
-
-                    {/* 0,12 */}
-                    <div className="flex items-center gap-0.5 leading-none text-slate-400 text-[8px] sm:text-[9px]">
-                      <span>0,12</span>
-                      <span className="w-1 border-t border-dashed border-slate-500/80"></span>
-                    </div>
-
-                    {/* 0,09 */}
-                    <div className="flex items-center gap-0.5 leading-none text-slate-400 text-[8px] sm:text-[9px]">
-                      <span>0,09</span>
-                      <span className="w-1 border-t border-dashed border-slate-500/80"></span>
-                    </div>
-
-                    {/* 0,06 */}
-                    <div className="flex items-center gap-0.5 leading-none text-slate-400 text-[8px] sm:text-[9px]">
-                      <span>0,06</span>
-                      <span className="w-1 border-t border-dashed border-slate-500/80"></span>
-                    </div>
-
-                    {/* 0,03 (Upper tolerance threshold in Green) */}
-                    <div className="flex items-center gap-0.5 leading-none text-[#00D000] font-black">
-                      <span>0,03</span>
-                      <svg className="w-1.5 h-2 text-[#00D000] fill-current shrink-0" viewBox="0 0 6 8">
-                        <polygon points="0,0 6,4 0,8" />
-                      </svg>
-                    </div>
-
-                    {/* 0,0 (Center nominal) */}
-                    <div className="flex items-center gap-0.5 leading-none text-slate-200 font-bold">
-                      <span>0,0</span>
-                      <svg className="w-1.5 h-2 text-slate-300 dark:text-slate-100 fill-current shrink-0" viewBox="0 0 6 8">
-                        <polygon points="0,0 6,4 0,8" />
-                      </svg>
-                    </div>
-
-                    {/* -0,03 (Lower tolerance threshold in Green) */}
-                    <div className="flex items-center gap-0.5 leading-none text-[#00D000] font-black">
-                      <span>-0,03</span>
-                      <svg className="w-1.5 h-2 text-[#00D000] fill-current shrink-0" viewBox="0 0 6 8">
-                        <polygon points="0,0 6,4 0,8" />
-                      </svg>
-                    </div>
-
-                    {/* -0,06 */}
-                    <div className="flex items-center gap-0.5 leading-none text-slate-400 text-[8px] sm:text-[9px]">
-                      <span>-0,06</span>
-                      <span className="w-1 border-t border-dashed border-slate-500/80"></span>
-                    </div>
-
-                    {/* -0,09 */}
-                    <div className="flex items-center gap-0.5 leading-none text-slate-400 text-[8px] sm:text-[9px]">
-                      <span>-0,09</span>
-                      <span className="w-1 border-t border-dashed border-slate-500/80"></span>
-                    </div>
-
-                    {/* -0,12 */}
-                    <div className="flex items-center gap-0.5 leading-none text-slate-400 text-[8px] sm:text-[9px]">
-                      <span>-0,12</span>
-                      <span className="w-1 border-t border-dashed border-slate-500/80"></span>
-                    </div>
-
-                    {/* -0,15 */}
-                    <div className="flex items-center gap-0.5 leading-none text-slate-200">
-                      <span>-0,15</span>
-                      <svg className="w-1.5 h-2 text-slate-300 dark:text-slate-100 fill-current shrink-0" viewBox="0 0 6 8">
-                        <polygon points="0,0 6,4 0,8" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Right Stepped Colored Bar Column */}
-                  <div className="relative w-4 sm:w-5 h-full rounded-[1px] overflow-hidden border border-black/90 flex flex-col shadow-inner">
-                    {/* Upper Positive Stepped Gradients (+0.15 to +0.03) */}
-                    <div className="flex-[3] flex flex-col">
-                      <div className="flex-1 bg-[#FF2200]" title="+0.15 .. +0.12 мм" />
-                      <div className="flex-1 bg-[#FF5500]" title="+0.12 .. +0.09 мм" />
-                      <div className="flex-1 bg-[#FF8800]" title="+0.09 .. +0.06 мм" />
-                      <div className="flex-1 bg-[#FFB700]" title="+0.06 .. +0.03 мм" />
-                    </div>
-
-                    {/* Tolerance In-Spec Band (+0.03 to -0.03) with Dashed Perimeter */}
-                    <div 
-                      className="flex-[2] bg-[#00A800] border-2 border-dashed border-black/95 relative z-10 flex items-center justify-center shadow-[inset_0_0_2px_rgba(0,0,0,0.4)]" 
-                      title="Поле допуска: ±0.030 мм (В допуске)"
-                    >
-                      <div className="w-full h-px bg-white/40" />
-                    </div>
-
-                    {/* Lower Negative Stepped Gradients (-0.03 to -0.15) */}
-                    <div className="flex-[3] flex flex-col">
-                      <div className="flex-1 bg-[#00C8FF]" title="-0.03 .. -0.06 мм" />
-                      <div className="flex-1 bg-[#0090FF]" title="-0.06 .. -0.09 мм" />
-                      <div className="flex-1 bg-[#0055FF]" title="-0.09 .. -0.12 мм" />
-                      <div className="flex-1 bg-[#0015E0]" title="-0.12 .. -0.15 мм" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom Out-of-Tolerance Cap (Solid Blue Box) */}
-                <div 
-                  className="w-4 sm:w-5 h-2.5 sm:h-3 bg-[#0000FF] border border-black/90 rounded-[1px] shadow-sm mt-0.5" 
-                  title="Недобор < -0.15 мм (Выход за нижнее поле допуска)"
-                />
-              </div>
-            )}
-
-            {/* Inspection Summary Metrics Block */}
-            <div className="bg-slate-950/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-800/80 shadow-sm flex flex-col gap-1.5 min-w-[115px] sm:min-w-[125px] text-right font-mono">
-              {/* Point Count or Triangle Count Metric (Displayed for colormap, mesh, points) */}
-              <div>
-                <div className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                  {activeMode === 'mesh' ? 'КОЛИЧЕСТВО ТРЕУГОЛЬНИКОВ:' : 'ТОЧЕК СКАНА:'}
-                </div>
-                <div className="text-xs sm:text-sm font-black text-white">
-                  {activeMode === 'mesh'
-                    ? (currentModel.triangleCount || Math.round(currentModel.pointCount * 2)).toLocaleString('ru-RU')
-                    : currentModel.pointCount.toLocaleString('ru-RU')}
-                </div>
-              </div>
-
-              {/* Accuracy / Error Metric (Displayed for colormap, mesh, points) */}
-              <div>
-                <div className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                  ПОГРЕШНОСТЬ:
-                </div>
-                <div className="text-[11px] sm:text-xs font-bold text-cyan-400">
-                  0.018 мм
-                </div>
-              </div>
-
-              {/* Tolerance % and Audit Status (Displayed ONLY in 'colormap' / GD&T mode) */}
+          <div className={`absolute top-2.5 right-2.5 z-20 flex flex-col items-end gap-1.5 pointer-events-auto transition-all duration-300 ${!showUi ? 'translate-x-[150%] opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'}`}>
+            {/* Quick Panel Toggle Header for clean uncluttered view */}
+            <div className="flex items-center gap-1 bg-slate-900/80 backdrop-blur-md px-1.5 py-0.5 rounded-lg border border-slate-800 text-[10px] text-slate-300">
               {activeMode === 'colormap' && (
-                <>
+                <button
+                  type="button"
+                  onClick={() => setShowScalePanel(!showScalePanel)}
+                  className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+                    showScalePanel ? 'bg-sky-600/80 text-white font-bold' : 'hover:text-white'
+                  }`}
+                  title={showScalePanel ? 'Скрыть шкалу GD&T' : 'Показать шкалу GD&T'}
+                >
+                  Шкала
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowMetricsPanel(!showMetricsPanel)}
+                className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+                  showMetricsPanel ? 'bg-indigo-600/80 text-white font-bold' : 'hover:text-white'
+                }`}
+                title={showMetricsPanel ? 'Скрыть показатели инспекции' : 'Показать показатели инспекции'}
+              >
+                Показатели
+              </button>
+            </div>
+
+            <div className="flex items-start gap-2">
+              {/* Metrology Comparison Scale (Displayed ONLY in 'colormap' / GD&T mode when enabled) */}
+              {activeMode === 'colormap' && showScalePanel && (
+                <div className="bg-slate-900/90 backdrop-blur-md px-2 py-1.5 rounded-xl border border-slate-800/90 shadow-sm flex flex-col items-center select-none font-mono animate-in fade-in duration-200">
+                  {/* Top Out-of-Tolerance Cap (Solid Red Box) */}
+                  <div 
+                    className="w-4 sm:w-5 h-2.5 sm:h-3 bg-[#FF0000] border border-black/90 rounded-[1px] shadow-sm mb-0.5" 
+                    title="Припуск > +0.15 мм (Выход за верхнее поле допуска)"
+                  />
+
+                  {/* Main Graduated Scale with Values, Pointer Arrows, Dashed Ticks & Stepped Color Bar */}
+                  <div className="relative flex items-stretch gap-1 h-32 sm:h-40 text-[9px] sm:text-[10px]">
+                    {/* Left Values and Pointers Column */}
+                    <div className="flex flex-col justify-between items-end text-right font-bold tracking-tight pr-0.5 select-none py-0.5">
+                      {/* 0,15 */}
+                      <div className="flex items-center gap-0.5 leading-none text-slate-200">
+                        <span>0,15</span>
+                        <svg className="w-1.5 h-2 text-slate-300 dark:text-slate-100 fill-current shrink-0" viewBox="0 0 6 8">
+                          <polygon points="0,0 6,4 0,8" />
+                        </svg>
+                      </div>
+
+                      {/* 0,12 */}
+                      <div className="flex items-center gap-0.5 leading-none text-slate-400 text-[8px] sm:text-[9px]">
+                        <span>0,12</span>
+                        <span className="w-1 border-t border-dashed border-slate-500/80"></span>
+                      </div>
+
+                      {/* 0,09 */}
+                      <div className="flex items-center gap-0.5 leading-none text-slate-400 text-[8px] sm:text-[9px]">
+                        <span>0,09</span>
+                        <span className="w-1 border-t border-dashed border-slate-500/80"></span>
+                      </div>
+
+                      {/* 0,06 */}
+                      <div className="flex items-center gap-0.5 leading-none text-slate-400 text-[8px] sm:text-[9px]">
+                        <span>0,06</span>
+                        <span className="w-1 border-t border-dashed border-slate-500/80"></span>
+                      </div>
+
+                      {/* 0,03 (Upper tolerance threshold in Green) */}
+                      <div className="flex items-center gap-0.5 leading-none text-[#00D000] font-black">
+                        <span>0,03</span>
+                        <svg className="w-1.5 h-2 text-[#00D000] fill-current shrink-0" viewBox="0 0 6 8">
+                          <polygon points="0,0 6,4 0,8" />
+                        </svg>
+                      </div>
+
+                      {/* 0,0 (Center nominal) */}
+                      <div className="flex items-center gap-0.5 leading-none text-slate-200 font-bold">
+                        <span>0,0</span>
+                        <svg className="w-1.5 h-2 text-slate-300 dark:text-slate-100 fill-current shrink-0" viewBox="0 0 6 8">
+                          <polygon points="0,0 6,4 0,8" />
+                        </svg>
+                      </div>
+
+                      {/* -0,03 (Lower tolerance threshold in Green) */}
+                      <div className="flex items-center gap-0.5 leading-none text-[#00D000] font-black">
+                        <span>-0,03</span>
+                        <svg className="w-1.5 h-2 text-[#00D000] fill-current shrink-0" viewBox="0 0 6 8">
+                          <polygon points="0,0 6,4 0,8" />
+                        </svg>
+                      </div>
+
+                      {/* -0,06 */}
+                      <div className="flex items-center gap-0.5 leading-none text-slate-400 text-[8px] sm:text-[9px]">
+                        <span>-0,06</span>
+                        <span className="w-1 border-t border-dashed border-slate-500/80"></span>
+                      </div>
+
+                      {/* -0,09 */}
+                      <div className="flex items-center gap-0.5 leading-none text-slate-400 text-[8px] sm:text-[9px]">
+                        <span>-0,09</span>
+                        <span className="w-1 border-t border-dashed border-slate-500/80"></span>
+                      </div>
+
+                      {/* -0,12 */}
+                      <div className="flex items-center gap-0.5 leading-none text-slate-400 text-[8px] sm:text-[9px]">
+                        <span>-0,12</span>
+                        <span className="w-1 border-t border-dashed border-slate-500/80"></span>
+                      </div>
+
+                      {/* -0,15 */}
+                      <div className="flex items-center gap-0.5 leading-none text-slate-200">
+                        <span>-0,15</span>
+                        <svg className="w-1.5 h-2 text-slate-300 dark:text-slate-100 fill-current shrink-0" viewBox="0 0 6 8">
+                          <polygon points="0,0 6,4 0,8" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Right Stepped Colored Bar Column */}
+                    <div className="relative w-4 sm:w-5 h-full rounded-[1px] overflow-hidden border border-black/90 flex flex-col shadow-inner">
+                      {/* Upper Positive Stepped Gradients (+0.15 to +0.03) */}
+                      <div className="flex-[3] flex flex-col">
+                        <div className="flex-1 bg-[#FF2200]" title="+0.15 .. +0.12 мм" />
+                        <div className="flex-1 bg-[#FF5500]" title="+0.12 .. +0.09 мм" />
+                        <div className="flex-1 bg-[#FF8800]" title="+0.09 .. +0.06 мм" />
+                        <div className="flex-1 bg-[#FFB700]" title="+0.06 .. +0.03 мм" />
+                      </div>
+
+                      {/* Tolerance In-Spec Band (+0.03 to -0.03) with Dashed Perimeter */}
+                      <div 
+                        className="flex-[2] bg-[#00A800] border-2 border-dashed border-black/95 relative z-10 flex items-center justify-center shadow-[inset_0_0_2px_rgba(0,0,0,0.4)]" 
+                        title="Поле допуска: ±0.030 мм (В допуске)"
+                      >
+                        <div className="w-full h-px bg-white/40" />
+                      </div>
+
+                      {/* Lower Negative Stepped Gradients (-0.03 to -0.15) */}
+                      <div className="flex-[3] flex flex-col">
+                        <div className="flex-1 bg-[#00C8FF]" title="-0.03 .. -0.06 мм" />
+                        <div className="flex-1 bg-[#0090FF]" title="-0.06 .. -0.09 мм" />
+                        <div className="flex-1 bg-[#0055FF]" title="-0.09 .. -0.12 мм" />
+                        <div className="flex-1 bg-[#0015E0]" title="-0.12 .. -0.15 мм" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom Out-of-Tolerance Cap (Solid Blue Box) */}
+                  <div 
+                    className="w-4 sm:w-5 h-2.5 sm:h-3 bg-[#0000FF] border border-black/90 rounded-[1px] shadow-sm mt-0.5" 
+                    title="Недобор < -0.15 мм (Выход за нижнее поле допуска)"
+                  />
+                </div>
+              )}
+
+              {/* Inspection Summary Metrics Block (Collapsible) */}
+              {showMetricsPanel && (
+                <div className="bg-slate-950/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-800/80 shadow-sm flex flex-col gap-1.5 min-w-[115px] sm:min-w-[125px] text-right font-mono animate-in fade-in duration-200">
+                  {/* Point Count or Triangle Count Metric (Displayed for colormap, mesh, points) */}
                   <div>
                     <div className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                      В ДОПУСКЕ ±0.030:
+                      {activeMode === 'mesh' ? 'ТРЕУГОЛЬНИКОВ:' : 'ТОЧЕК СКАНА:'}
                     </div>
-                    <div className="text-[11px] sm:text-xs font-bold text-emerald-400">
-                      94.2 %
+                    <div className="text-xs sm:text-sm font-black text-white">
+                      {activeMode === 'mesh'
+                        ? (currentModel.triangleCount || Math.round(currentModel.pointCount * 2)).toLocaleString('ru-RU')
+                        : currentModel.pointCount.toLocaleString('ru-RU')}
                     </div>
                   </div>
 
-                  <div className="pt-0.5 border-t border-slate-800/80">
+                  {/* Accuracy / Error Metric (Displayed for colormap, mesh, points) */}
+                  <div>
                     <div className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                      АУДИТ ГОСТ:
+                      ПОГРЕШНОСТЬ:
                     </div>
-                    <div className="text-[11px] sm:text-xs font-black text-emerald-400 tracking-wider">
-                      СООТВЕТСТВУЕТ
+                    <div className="text-[11px] sm:text-xs font-bold text-cyan-400">
+                      0.018 мм
                     </div>
                   </div>
-                </>
+
+                  {/* Tolerance % and Audit Status (Displayed ONLY in 'colormap' / GD&T mode) */}
+                  {activeMode === 'colormap' && (
+                    <>
+                      <div>
+                        <div className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                          В ДОПУСКЕ ±0.030:
+                        </div>
+                        <div className="text-[11px] sm:text-xs font-bold text-emerald-400">
+                          94.2 %
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                          ТОЧЕК GD&T:
+                        </div>
+                        <div className="text-[11px] sm:text-xs font-bold text-cyan-300">
+                          {currentModel.inspectionPoints?.length || 0} точек
+                        </div>
+                      </div>
+
+                      <div className="pt-0.5 border-t border-slate-800/80">
+                        <div className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                          АУДИТ ГОСТ:
+                        </div>
+                        <div className="text-[11px] sm:text-xs font-black text-emerald-400 tracking-wider">
+                          СООТВЕТСТВУЕТ
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
           </div>

@@ -6,7 +6,6 @@ import {
   ArrowRight, 
   CheckCircle2, 
   ShieldCheck, 
-  Sparkles, 
   Clock, 
   FileSpreadsheet,
   Award,
@@ -22,7 +21,7 @@ export const LeadMagnetSection: React.FC = () => {
     <div className="space-y-8">
       <div className="text-center max-w-3xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 px-4.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-bold">
-          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          <Award className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
           <span>Спецпредложения и сервис для промышленных предприятий</span>
         </div>
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">

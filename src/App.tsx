@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { ThemeProvider } from './context/ThemeContext';
 import { AppProvider, useApp } from './context/AppContext';
 import { Layout } from './components/layout/Layout';
 import { PRODUCTS_DATA, SERVICES_DATA } from './data/mockData';
@@ -9,6 +10,8 @@ import { getCanonicalUrl, parseUrl } from './utils/routes';
 import { usePageVisits } from './hooks/usePageVisits';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
+console.log('[BOOT] [5/5] src/App.tsx module loaded');
+
 // Pages (Direct static imports for instant page switching and 100% resilient rendering)
 import { HomePage } from './pages/HomePage';
 import { SoftwarePage } from './pages/SoftwarePage';
@@ -16,6 +19,7 @@ import { HardwarePage } from './pages/HardwarePage';
 import { ServicesPage } from './pages/ServicesPage';
 import { AboutPage } from './pages/AboutPage';
 import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
+import { GlossaryPage } from './pages/GlossaryPage';
 import { NewsPage } from './pages/NewsPage';
 import { ContactsPage } from './pages/ContactsPage';
 import { CustomPageView } from './pages/CustomPageView';
@@ -23,6 +27,7 @@ import { AccountPage } from './pages/AccountPage';
 import { CmsPage } from './pages/CmsPage';
 import { CrmPage } from './pages/CrmPage';
 import { SitemapPage } from './pages/SitemapPage';
+import { ComparePage } from './pages/ComparePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { YandexMetrica } from './components/common/YandexMetrica';
 
@@ -38,6 +43,7 @@ const PageSkeletonFallback: React.FC = () => (
 );
 
 const AppContent: React.FC = () => {
+  console.log('[APP_BOOT] AppContent rendering...');
   const {
     currentPage,
     customPages,
@@ -51,6 +57,12 @@ const AppContent: React.FC = () => {
     services,
     isAdmin,
   } = useApp();
+
+  console.log('[APP_BOOT] AppContent Context consumed. Current page:', currentPage);
+
+  useEffect(() => {
+    console.log('[APP_BOOT] AppContent mounted successfully. Pathname:', window.location.pathname, 'Hash:', window.location.hash);
+  }, []);
 
   // Track page visit frequency into localStorage
   usePageVisits(currentPage);
@@ -157,6 +169,7 @@ const AppContent: React.FC = () => {
   }, [navigateTo]);
 
   const renderPage = () => {
+    console.log('[APP_BOOT] renderPage executing for currentPage:', currentPage);
     if (currentPage === 'crm') return <CrmPage />;
     if (currentPage === 'cms') {
       return <CmsPage />;
@@ -183,6 +196,8 @@ const AppContent: React.FC = () => {
         return <AboutPage />;
       case 'knowledge':
         return <KnowledgeBasePage />;
+      case 'glossary':
+        return <GlossaryPage />;
       case 'news':
         return <NewsPage />;
       case 'contacts':
@@ -191,6 +206,8 @@ const AppContent: React.FC = () => {
         return <AccountPage />;
       case 'sitemap':
         return <SitemapPage />;
+      case 'compare':
+        return <ComparePage />;
       case 'notfound':
         return <NotFoundPage />;
       default:
@@ -219,12 +236,15 @@ const AppContent: React.FC = () => {
 };
 
 export default function App() {
+  console.log('[APP_BOOT] App component rendering root tree...');
   return (
     <ErrorBoundary>
-      <AppProvider>
-        <YandexMetrica />
-        <AppContent />
-      </AppProvider>
+      <ThemeProvider>
+        <AppProvider>
+          <YandexMetrica />
+          <AppContent />
+        </AppProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

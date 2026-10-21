@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { 
   X, 
   Download, 
@@ -20,6 +21,7 @@ import {
 import { ProjectDocument, ExtendedDeal } from '../../data/mockCrmData';
 import { DsLogo } from '../common/DsLogo';
 import { CurrencyCode, getCurrencySymbol, getCurrencyName } from '../../types';
+import { handleUnifiedA4ExportAction } from '../../utils/a4DocumentExportHandler';
 
 interface CrmDocumentViewerModalProps {
   document: ProjectDocument;
@@ -47,11 +49,19 @@ export const CrmDocumentViewerModal: React.FC<CrmDocumentViewerModalProps> = ({
   const totalWithVat22 = totalWithoutVat + vat22;
   const curSym = getCurrencySymbol(docCurrency);
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    try {
+      await handleUnifiedA4ExportAction('print', {
+        container: printableRef.current || document.body
+      });
+    } catch (e) {
+      console.error('Unified print error:', e);
+      window.focus();
+      window.print();
+    }
   };
 
-  const handleDownloadStub = () => {
+  const handleDownloadStub = async () => {
     if (doc.fileDataUrl) {
       const link = window.document.createElement('a');
       link.href = doc.fileDataUrl;
@@ -62,7 +72,20 @@ export const CrmDocumentViewerModal: React.FC<CrmDocumentViewerModalProps> = ({
       return;
     }
 
-    // Generate downloadable formatted HTML/Text file
+    if (printableRef.current) {
+      try {
+        const safeName = (doc.name || 'Документ').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_');
+        await handleUnifiedA4ExportAction('pdf', {
+          container: printableRef.current,
+          filename: `${safeName}.pdf`
+        });
+        return;
+      } catch (err) {
+        console.error('PDF export error in modal:', err);
+      }
+    }
+
+    // Fallback: Generate downloadable formatted HTML/Text file
     const content = `<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -136,35 +159,47 @@ export const CrmDocumentViewerModal: React.FC<CrmDocumentViewerModalProps> = ({
 
   const badge = getDocTypeBadge();
 
-  return (
-    <div className="fixed inset-0 z-[150] bg-black/70 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto animate-fadeIn">
+  const modalContent = (
+    <div className="fixed inset-0 z-[1000] bg-black/70 backdrop-blur-xs flex items-start justify-center p-3 sm:p-6 overflow-y-auto animate-fadeIn">
       <div className="bg-white rounded-lg max-w-4xl w-full shadow-sm border border-gray-200 flex flex-col mt-4 sm:mt-10 mb-10 max-h-[90vh] overflow-hidden">
         
         {/* Header */}
-        <div className="p-4 sm:p-5 bg-gray-900 text-white flex items-center justify-between gap-3 border-b border-gray-800 shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
-              <FileText className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${badge.color}`}>
-                  {badge.label}
-                </span>
-                <span className="text-[11px] text-gray-400">
-                  {doc.size} • {doc.date}
-                </span>
+        <div className="p-4 sm:p-5 bg-gray-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-800 shrink-0 relative">
+          {/* Top Row: Info & Pinned Mobile Close */}
+          <div className="flex items-center justify-between gap-2 w-full sm:w-auto min-w-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5" />
               </div>
-              <h2 className="text-base sm:text-lg font-bold text-white truncate mt-0.5">
-                {doc.name}
-              </h2>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${badge.color}`}>
+                    {badge.label}
+                  </span>
+                  <span className="text-[11px] text-gray-400">
+                    {doc.size} • {doc.date}
+                  </span>
+                </div>
+                <h2 className="text-base sm:text-lg font-bold text-white truncate mt-0.5">
+                  {doc.name}
+                </h2>
+              </div>
             </div>
+
+            <button
+              onClick={onClose}
+              className="sm:hidden p-2 text-gray-300 hover:text-white bg-gray-800 hover:bg-rose-600 rounded-xl transition-colors cursor-pointer shrink-0 ml-1"
+              title="Закрыть окно"
+              aria-label="Закрыть окно"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 overflow-x-auto no-scrollbar pb-1 sm:pb-0 pt-2 sm:pt-0 border-t border-gray-800 sm:border-t-0 w-full sm:w-auto">
             {/* Currency selector for commercial/contract/spec documents */}
-            <div className="flex items-center gap-1.5 bg-gray-800 px-2.5 py-1 rounded-lg border border-gray-700 text-xs">
+            <div className="flex items-center gap-1.5 bg-gray-800 px-2.5 py-1 rounded-lg border border-gray-700 text-xs shrink-0">
               <Coins className="w-3.5 h-3.5 text-blue-400 shrink-0" />
               <span className="text-gray-400 text-[10px] uppercase font-bold hidden sm:inline">Валюта:</span>
               <select
@@ -182,14 +217,14 @@ export const CrmDocumentViewerModal: React.FC<CrmDocumentViewerModalProps> = ({
 
             <button
               onClick={handlePrint}
-              className="p-2 text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700 transition-colors cursor-pointer"
+              className="p-2 text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700 transition-colors cursor-pointer shrink-0"
               title="Распечатать / Экспорт в PDF"
             >
               <Printer className="w-4 h-4" />
             </button>
             <button
               onClick={handleDownloadStub}
-              className="p-2 text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700 transition-colors cursor-pointer"
+              className="p-2 text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700 transition-colors cursor-pointer shrink-0"
               title="Скачать файл"
             >
               <Download className="w-4 h-4" />
@@ -202,7 +237,7 @@ export const CrmDocumentViewerModal: React.FC<CrmDocumentViewerModalProps> = ({
                     onClose();
                   }
                 }}
-                className="p-2 text-rose-400 hover:text-rose-200 bg-rose-950/40 hover:bg-rose-900/60 rounded-lg border border-rose-800/50 transition-colors cursor-pointer"
+                className="p-2 text-rose-400 hover:text-rose-200 bg-rose-950/40 hover:bg-rose-900/60 rounded-lg border border-rose-800/50 transition-colors cursor-pointer shrink-0"
                 title="Удалить документ"
               >
                 <Trash2 className="w-4 h-4" />
@@ -210,7 +245,8 @@ export const CrmDocumentViewerModal: React.FC<CrmDocumentViewerModalProps> = ({
             )}
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors cursor-pointer ml-1"
+              className="hidden sm:flex items-center justify-center p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors cursor-pointer ml-1 shrink-0"
+              title="Закрыть окно"
             >
               <X className="w-5 h-5" />
             </button>
@@ -232,7 +268,7 @@ export const CrmDocumentViewerModal: React.FC<CrmDocumentViewerModalProps> = ({
             /* Structured Authentic Document Paper Canvas */
             <div 
               ref={printableRef}
-              className="bg-white rounded-lg shadow-lg border border-gray-300 p-6 sm:p-10 max-w-3xl mx-auto text-gray-900 font-sans space-y-6"
+              className="a4-page-render bg-white rounded-lg shadow-lg border border-gray-300 p-6 sm:p-10 max-w-3xl mx-auto text-gray-900 font-sans space-y-6"
             >
               {/* Letterhead Header */}
               <div className="border-b-2 border-blue-600 pb-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -289,7 +325,7 @@ export const CrmDocumentViewerModal: React.FC<CrmDocumentViewerModalProps> = ({
                   </div>
 
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    Уважаемый(ая) <strong>{deal.customerName}</strong>! В ответ на Ваше техническое задание инженерный центр 
+                    Уважаемый(ая) <strong>{deal.customerName}</strong>! В ответ на Ваше техническое задание инжиниринговая компания 
                     «ДС‑Инжиниринг» направляет официальное коммерческое предложение на поставку и пусконаладку оборудования:
                   </p>
 
@@ -556,4 +592,6 @@ export const CrmDocumentViewerModal: React.FC<CrmDocumentViewerModalProps> = ({
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 };

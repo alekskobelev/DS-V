@@ -482,13 +482,13 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
             }}
             onDragLeave={() => setIsDragOver(false)}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-xl p-4 transition-all flex flex-col sm:flex-row items-center justify-between gap-3 ${
+            className={`border-2 border-dashed rounded-xl p-3.5 sm:p-4 transition-all flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 overflow-hidden ${
               isDragOver
                 ? 'border-blue-500 bg-blue-50/60'
                 : 'border-gray-300 bg-slate-50/50 hover:bg-slate-50 hover:border-gray-400'
             }`}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0 max-w-full">
               <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                 {isUploading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -500,22 +500,22 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
                   <Upload className="w-5 h-5" />
                 )}
               </div>
-              <div>
-                <p className="text-xs font-semibold text-gray-800">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-gray-800 leading-tight">
                   {isUploading
                     ? 'Загрузка файла на сервер...'
                     : 'Перетащите файл сюда, выберите на диске или укажите ссылку'}
                 </p>
-                <p className="text-[11px] text-gray-500">{defaultHelper}</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">{defaultHelper}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 shrink-0 w-full xl:w-auto justify-start xl:justify-end mt-1 xl:mt-0">
               <button
                 type="button"
                 disabled={isUploading}
                 onClick={() => fileInputRef.current?.click()}
-                className="px-4.5 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors"
+                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer shrink-0"
               >
                 {isUploading ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -528,10 +528,10 @@ export const FileUploadField: React.FC<FileUploadFieldProps> = ({
               <button
                 type="button"
                 onClick={() => setShowUrlInput(!showUrlInput)}
-                className={`px-4 py-2 border rounded-xl text-xs font-medium transition-colors ${
+                className={`px-3 py-2 border rounded-xl text-xs font-medium transition-colors cursor-pointer shrink-0 ${
                   showUrlInput
                     ? 'bg-blue-50 border-blue-400 text-blue-700'
-                    : 'bg-white hover:bg-gray-100 border-gray-300 text-slate-500'
+                    : 'bg-white hover:bg-gray-100 border-gray-300 text-slate-600'
                 }`}
               >
                 Вставить URL

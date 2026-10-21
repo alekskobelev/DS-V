@@ -327,7 +327,7 @@ export async function sendMaxBotNotification(
     event.type === 'callback' ? 'ЗАКАЗ ОБРАТНОГО ЗВОНКА' : 
     event.type === 'chat_lead' ? 'ОНЛАЙН-ЧАТ: ВЫЗОВ СПЕЦИАЛИСТА' : 
     event.type === 'rfq' ? 'ЗАЯВКА НА РАСЧЕТ / ИНЖИНИРИНГ (RFQ)' : 
-    event.type === 'ticket' ? 'СЕРВИСНЫЙ ТИКЕТ B2B' : 
+    event.type === 'ticket' ? 'СЕРВИСНАЯ ЗАЯВКА B2B' : 
     'НОВАЯ ЗАЯВКА С САЙТА';
 
   const icon = 
@@ -391,15 +391,22 @@ export async function sendMaxBotNotification(
 
   try {
     let targetUrl = effectiveWebhook;
-    const isCustomWebhook = Boolean(targetUrl && !targetUrl.includes('max.ru'));
+    const isIncomingWebhookEndpoint = Boolean(
+      targetUrl && (
+        targetUrl.includes('/api/notifications/max/webhook') ||
+        targetUrl.includes('/api/max/webhook') ||
+        targetUrl.includes('/api/notifications/max')
+      )
+    );
+    const isCustomWebhook = Boolean(targetUrl && !targetUrl.includes('max.ru') && !isIncomingWebhookEndpoint);
 
     // Official Russian Messenger MAX endpoint: POST https://platform-api2.max.ru/messages
-    if (!isCustomWebhook && effectiveToken) {
+    if ((!isCustomWebhook || isIncomingWebhookEndpoint) && effectiveToken) {
       targetUrl = `${effectiveApiUrl}/messages`;
     }
 
-    if (!targetUrl) {
-      return { success: false, message: 'Не определен URL отправки для Российского мессенджера МАКС' };
+    if (!targetUrl || (isIncomingWebhookEndpoint && !effectiveToken)) {
+      return { success: false, message: 'Не определен URL отправки для Российского мессенджера МАКС (укажите Bot Token)' };
     }
 
     const headers: Record<string, string> = {
@@ -448,7 +455,7 @@ export async function sendMaxBotNotification(
       requestBody = payload;
     }
 
-    console.log(`[MAX-BOT] Sending POST to ${targetUrl} with chat_id: ${requestBody.chat_id || 'N/A'}`);
+    console.info(`[MAX-BOT] Dispatching message to ${targetUrl} with chat_id: ${requestBody.chat_id || 'N/A'}`);
     
     const res = await fetch(targetUrl, {
       method: 'POST',
@@ -458,7 +465,7 @@ export async function sendMaxBotNotification(
 
     if (!res.ok) {
       const errBodyText = await res.text().catch(() => '');
-      console.error(`[MAX-BOT ERROR] HTTP ${res.status} to ${targetUrl}. Response: ${errBodyText}`);
+      console.warn(`[MAX-BOT] HTTP ${res.status} from ${targetUrl}: ${errBodyText ? errBodyText.slice(0, 150) : 'No response body'}`);
       
       let parsedErr: any = null;
       try {
@@ -492,7 +499,7 @@ export async function sendMaxBotNotification(
 
     // Success response parsing for detailed logging
     const successBodyText = await res.text().catch(() => '');
-    console.log(`[MAX-BOT SUCCESS] HTTP 200. Response: ${successBodyText}`);
+    console.info(`[MAX-BOT SUCCESS] HTTP 200. Response: ${successBodyText ? successBodyText.slice(0, 150) : 'OK'}`);
     
     logRealtimeEvent({
       category: 'NOTIFICATION',
@@ -618,7 +625,7 @@ export async function dispatchManagerNotification(event: ManagerNotificationEven
       event.type === 'callback' ? 'ЗАКАЗ ОБРАТНОГО ЗВОНКА' : 
       event.type === 'chat_lead' ? 'ОНЛАЙН-ЧАТ: ВЫЗОВ СПЕЦИАЛИСТА' : 
       event.type === 'rfq' ? 'ЗАЯВКА НА РАСЧЕТ / ИНЖИНИРИНГ (RFQ)' : 
-      event.type === 'ticket' ? 'СЕРВИСНЫЙ ТИКЕТ B2B' : 
+      event.type === 'ticket' ? 'СЕРВИСНАЯ ЗАЯВКА B2B' : 
       'НОВАЯ ЗАЯВКА С САЙТА';
 
     const now = new Date();
@@ -913,17 +920,32 @@ export function registerNotificationRoutes(app: Express) {
       const tgConfig = getTelegramConfig();
       const maxConfig = getMaxConfig();
 
+      // Strip dynamic computed fields to prevent pollution of storage
+      const sanitizedUpdates: Partial<NotificationSettings> = { ...updates };
+      delete (sanitizedUpdates as any).telegramBotTokenConfigured;
+      delete (sanitizedUpdates as any).telegramTokenFromEnv;
+      delete (sanitizedUpdates as any).telegramChatIdFromEnv;
+      delete (sanitizedUpdates as any).telegramMaskedToken;
+      delete (sanitizedUpdates as any).telegramEffectiveChatId;
+      delete (sanitizedUpdates as any).maxBotTokenConfigured;
+      delete (sanitizedUpdates as any).maxTokenFromEnv;
+      delete (sanitizedUpdates as any).maxChatIdFromEnv;
+      delete (sanitizedUpdates as any).maxWebhookFromEnv;
+      delete (sanitizedUpdates as any).maxMaskedToken;
+      delete (sanitizedUpdates as any).maxEffectiveChatId;
+      delete (sanitizedUpdates as any).maxEffectiveWebhookUrl;
+
       // If tokens are configured via environment variables or sent masked, prevent overriding
-      if (tgConfig.isEnvToken || (typeof updates.telegramBotToken === 'string' && updates.telegramBotToken.startsWith('•••'))) {
-        delete updates.telegramBotToken;
+      if (tgConfig.isEnvToken || (typeof sanitizedUpdates.telegramBotToken === 'string' && sanitizedUpdates.telegramBotToken.startsWith('•••'))) {
+        delete sanitizedUpdates.telegramBotToken;
       }
-      if (maxConfig.isEnvToken || (typeof updates.maxBotToken === 'string' && updates.maxBotToken.startsWith('•••'))) {
-        delete updates.maxBotToken;
+      if (maxConfig.isEnvToken || (typeof sanitizedUpdates.maxBotToken === 'string' && sanitizedUpdates.maxBotToken.startsWith('•••'))) {
+        delete sanitizedUpdates.maxBotToken;
       }
 
       currentNotificationSettings = {
         ...currentNotificationSettings,
-        ...updates,
+        ...sanitizedUpdates,
         updatedAt: new Date().toISOString()
       };
       
@@ -1299,7 +1321,7 @@ export function registerNotificationRoutes(app: Express) {
           `/rfq — Оформить техническую заявку на расчет стоимости`,
           `/call — Заказать звонок дежурного инженера`,
           `/status — Проверить статус заявки в CRM`,
-          `/contacts — Контакты и адрес инженерного центра в Самаре`,
+          `/contacts — Контакты и адрес главного офиса в Самаре (ул. Свободы, 198)`,
           `/arshin — Сведения о поверке средств измерений`,
           ``,
           `Вы также можете задать любой технический вопрос прямо в этот диалог!`
@@ -1328,7 +1350,7 @@ export function registerNotificationRoutes(app: Express) {
           `📱 Дежурный инженер: +7 (937) 984-61-51`,
           `✉️ Email: info@ds-enginering.ru`,
           `🌐 Официальный сайт: https://ds-enginering.ru`,
-          `🕒 График работы: Пн–Пт с 08:30 до 17:30 (МСК+1 / Самара)`
+          `🕒 График работы: Пн-Пт: 09:00 — 17:00 (МСК+1 / Самара)`
         ].join('\n');
       } else if (lower.startsWith('/arshin') || lower.includes('аршин') || lower.includes('поверк')) {
         replyText = [

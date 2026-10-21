@@ -41,10 +41,10 @@ import {
   ChevronUp,
   RotateCcw,
   Tag,
-  Link2
+  Gauge,
+  TrendingUp
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { copyToClipboard } from '../utils/clipboard';
 import { PRODUCTS_DATA } from '../data/mockData';
 import { Product } from '../types';
 import { ProductGallery } from '../components/common/ProductGallery';
@@ -136,7 +136,9 @@ export const HardwarePage: React.FC = () => {
     activeCategory,
     setActiveCategory,
     siteTexts,
-    navigateTo
+    navigateTo,
+    openConfiguratorModal,
+    openRoiCalculatorModal
   } = useApp();
 
   const hardwareProducts = useMemo(() => {
@@ -403,9 +405,9 @@ export const HardwarePage: React.FC = () => {
         const prodId = (prod.id || '').toLowerCase();
         if (selectedBrand === 'scanline' && !(prodBrand.includes('scanline') || prodId.startsWith('scanline') || prodId.startsWith('eq-scanline'))) return false;
         if (selectedBrand === 'shining' && !(prodBrand.includes('shining') || prodId.startsWith('shining') || prodId.startsWith('freescan') || prodId.startsWith('eq-shining') || prodId.startsWith('eq-freescan'))) return false;
-        if (selectedBrand === 'pmt' && !prodBrand.includes('pmt')) return false;
+        if (selectedBrand === 'pmt' && !(prodBrand.includes('pmt') || prodId.startsWith('pmt') || prodId.startsWith('eq-pmt') || prod.name.toLowerCase().includes('pmt'))) return false;
         if (selectedBrand === 'hexagon' && !(prodBrand.includes('hexagon') || prodBrand.includes('leica') || prodId.startsWith('hexagon') || prodId.startsWith('primescan') || prodId.startsWith('stereoscan') || prodId.startsWith('smartscan') || prodId.startsWith('eq-hexagon'))) return false;
-        if (selectedBrand === 'renishaw' && !prodBrand.includes('renishaw')) return false;
+        if (selectedBrand === 'renishaw' && !(prodBrand.includes('renishaw') || prodId.startsWith('renishaw') || prodId.startsWith('eq-renishaw') || prod.category === 'renishaw' || prod.name.toLowerCase().includes('renishaw'))) return false;
       }
 
       // 3. Search query
@@ -522,7 +524,7 @@ export const HardwarePage: React.FC = () => {
                 {siteTexts.catalogs.hardwareTitle || 'Каталог промышленного метрологического оборудования'}
               </h1>
               <p className="text-xs sm:text-sm text-blue-100 leading-relaxed">
-                {siteTexts.catalogs.hardwareSubtitle || 'Полный спектр высокоточного измерительного оборудования: координатно-измерительные машины PMT, лазерные и оптические 3D-сканеры ScanLine, ручные 3D-сканеры Shining 3D, мобильные КИМ Hexagon Absolute Arm, лазерные трекеры Leica и измерительные системы ScanLine.'}
+                {siteTexts.catalogs.hardwareSubtitle || 'Официальные поставки метрологического оборудования: портативные синие лазерные 3D-сканеры Shining 3D FreeScan, оптические гибридные системы ScanLine со встроенной фотограмметрией и портативные КИМ PMT Alpha Arm (в реестре ФГИС «АРШИН»).'}
               </p>
               <div className="pt-2 flex flex-wrap items-center gap-3 text-xs">
                 <div className="px-4 py-1.5 bg-white/10 rounded-xl flex items-center gap-1.5 font-medium border border-white/10">
@@ -534,6 +536,30 @@ export const HardwarePage: React.FC = () => {
                 <div className="px-4 py-1.5 bg-white/10 rounded-xl flex items-center gap-1.5 font-medium border border-white/10">
                   <Award className="w-3.5 h-3.5 text-blue-300" /> Сертифицированный СЦ
                 </div>
+              </div>
+
+              {/* Quick Interactive Tools Action Bar */}
+              <div className="pt-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={openConfiguratorModal}
+                  className="px-4 py-2.5 bg-white hover:bg-blue-50 text-blue-900 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-95 border border-white/80"
+                >
+                  <Gauge className="w-4 h-4 text-blue-600" />
+                  <span>Метрологический конфигуратор оборудования СИ</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={openRoiCalculatorModal}
+                  className="px-4 py-2.5 bg-blue-950/80 hover:bg-blue-950 text-white rounded-xl text-xs font-bold transition-all border border-blue-400/40 flex items-center gap-2 cursor-pointer active:scale-95"
+                >
+                  <TrendingUp className="w-4 h-4 text-amber-300" />
+                  <span>Калькулятор окупаемости ROI</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/30 text-amber-300 font-bold border border-amber-400/40">
+                    Beta
+                  </span>
+                </button>
               </div>
             </div>
 
@@ -608,12 +634,12 @@ export const HardwarePage: React.FC = () => {
             <Tag className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Бренд:
           </span>
           {[
-            { id: 'all', label: 'Все бренды' },
-            { id: 'scanline', label: '🇷🇺 ScanLine (Россия)', highlight: true, count: 26 },
-            { id: 'shining', label: '🇨🇳 Shining 3D', count: 33 },
-            { id: 'pmt', label: 'PMT Arm & CMM', count: 10 },
-            { id: 'hexagon', label: '🔷 Hexagon & Leica', count: 17 },
-            { id: 'renishaw', label: 'Renishaw', count: 10 },
+            { id: 'all', label: 'Все бренды', count: hardwareProducts.length },
+            { id: 'scanline', label: '🇷🇺 ScanLine (Россия)', highlight: true, count: hardwareProducts.filter(p => p.brand?.toLowerCase().includes('scanline') || p.id.startsWith('scanline') || p.id.startsWith('eq-scanline')).length },
+            { id: 'shining', label: '🇨🇳 Shining 3D', count: hardwareProducts.filter(p => p.brand?.toLowerCase().includes('shining') || p.id.startsWith('shining') || p.id.startsWith('freescan') || p.id.startsWith('eq-shining') || p.id.startsWith('eq-freescan')).length },
+            { id: 'pmt', label: '🏛️ PMT Arm & CMM', count: hardwareProducts.filter(p => p.brand?.toLowerCase().includes('pmt') || p.id.startsWith('pmt') || p.id.startsWith('eq-pmt') || p.name.toLowerCase().includes('pmt')).length },
+            { id: 'hexagon', label: '🔷 Hexagon & Leica', count: hardwareProducts.filter(p => p.brand?.toLowerCase().includes('hexagon') || p.brand?.toLowerCase().includes('leica') || p.id.startsWith('hexagon') || p.id.startsWith('primescan') || p.id.startsWith('stereoscan') || p.id.startsWith('smartscan') || p.id.startsWith('eq-hexagon')).length },
+            { id: 'renishaw', label: '⚡ Renishaw', count: hardwareProducts.filter(p => p.brand?.toLowerCase().includes('renishaw') || p.id.startsWith('renishaw') || p.id.startsWith('eq-renishaw') || p.category === 'renishaw' || p.name.toLowerCase().includes('renishaw')).length },
           ].map((b) => {
             const isBrandActive = selectedBrand === b.id;
             return (
@@ -867,20 +893,6 @@ export const HardwarePage: React.FC = () => {
                         formType: 'quote',
                       })
                     }
-                    onOpenDemo={() =>
-                      openContactModal({
-                        title: `Заказ демо-версии ${prod.name}`,
-                        defaultProduct: prod.name,
-                        formType: 'demo',
-                      })
-                    }
-                    onOpenBrochure={() =>
-                      openContactModal({
-                        title: `Запрос брошюры: ${prod.name}`,
-                        defaultProduct: prod.name,
-                        formType: 'brochure',
-                      })
-                    }
                   />
                 ))}
               </div>
@@ -904,20 +916,6 @@ export const HardwarePage: React.FC = () => {
                   title: `Запрос КП на ${prod.name}`,
                   defaultProduct: prod.name,
                   formType: 'quote',
-                })
-              }
-              onOpenDemo={() =>
-                openContactModal({
-                  title: `Заказ демо-версии ${prod.name}`,
-                  defaultProduct: prod.name,
-                  formType: 'demo',
-                })
-              }
-              onOpenBrochure={() =>
-                openContactModal({
-                  title: `Запрос брошюры: ${prod.name}`,
-                  defaultProduct: prod.name,
-                  formType: 'brochure',
                 })
               }
             />
@@ -1068,15 +1066,15 @@ export const HardwarePage: React.FC = () => {
             Закажите тестовое сканирование вашей детали или выездную демонстрацию
           </h3>
           <p className="text-xs sm:text-sm text-gray-300">
-            Наши инженеры проведут демонстрацию на вашем производстве или в нашем метрологическом центре в Самаре, подготовят метрологический отчет и подберут оптимальную комплектацию КИМ или 3D-сканера.
+            Наши инженеры проведут выездную демонстрацию непосредственно на вашем производстве или организуют онлайн-презентацию, подготовят метрологический расчет и подберут оптимальную комплектацию сканера под ваши задачи.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
           <button
-            onClick={() => openContactModal({ title: 'Заказ демонстрации оборудования', formType: 'demo' })}
+            onClick={() => openContactModal({ title: 'Заказ выездной демонстрации оборудования', formType: 'demo' })}
             className="w-full sm:w-auto px-6 py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition-all whitespace-nowrap"
           >
-            Заказать демонстрацию
+            Заказать выездное демо
           </button>
           <button
             onClick={() => openContactModal({ title: 'Консультация инженера-метролога', formType: 'consultation' })}
@@ -1283,8 +1281,6 @@ interface ProductCardProps {
   isInCompare: boolean;
   onAddToCompare: () => void;
   onOpenQuote: () => void;
-  onOpenDemo: () => void;
-  onOpenBrochure: () => void;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -1293,21 +1289,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   isInCompare,
   onAddToCompare,
   onOpenQuote,
-  onOpenDemo,
-  onOpenBrochure,
 }) => {
-  const { showToast } = useApp();
-  const [isCopied, setIsCopied] = useState(false);
-
-  const handleCopyLink = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const url = typeof window !== 'undefined' ? `${window.location.origin}/hardware/${prod.id}` : `/hardware/${prod.id}`;
-    await copyToClipboard(url);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2500);
-    showToast('Ссылка на товар скопирована');
-  };
-
   const metrology = getProductMetrology(prod);
 
   // Extract and prioritize key technical specs for clear visual presentation
@@ -1337,7 +1319,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       transition={{ duration: 0.35 }}
       className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs hover:shadow-xl hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 flex flex-col justify-between group"
     >
-      {/* Product Image & Badges */}
+      {/* Product Image & Floating Quick Controls */}
       <div className="relative bg-slate-50 dark:bg-slate-800/80 overflow-hidden aspect-[16/10]">
         <img
           src={prod.image}
@@ -1351,19 +1333,39 @@ const ProductCard: React.FC<ProductCardProps> = ({
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
         />
         
-        {/* Top Badges Bar with generous spacing */}
-        <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2 pointer-events-none">
+        {/* Top Floating Bar: Badges on left, Brand & Compare on right */}
+        <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
           {prod.badge ? (
-            <span className="px-2.5 py-1 bg-blue-600/95 backdrop-blur-xs text-white text-[10px] sm:text-[11px] font-bold uppercase tracking-wider rounded-lg shadow-sm line-clamp-1 max-w-[70%] pointer-events-auto">
+            <span className="px-2.5 py-1 bg-blue-600/95 backdrop-blur-xs text-white text-[10px] sm:text-[11px] font-bold uppercase tracking-wider rounded-lg shadow-sm line-clamp-1 max-w-[60%] pointer-events-auto">
               {prod.badge}
             </span>
           ) : (
             <div />
           )}
 
-          <span className="px-2.5 py-1 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs text-slate-800 dark:text-slate-100 text-[10px] sm:text-[11px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm shrink-0 pointer-events-auto">
-            {prod.brand}
-          </span>
+          <div className="flex items-center gap-1.5 pointer-events-auto">
+            <span className="px-2.5 py-1 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs text-slate-800 dark:text-slate-100 text-[10px] sm:text-[11px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm shrink-0">
+              {prod.brand}
+            </span>
+
+            {/* Quick Compare Icon Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToCompare();
+              }}
+              className={`p-1.5 rounded-lg border backdrop-blur-xs transition-all shadow-sm cursor-pointer flex items-center justify-center ${
+                isInCompare
+                  ? 'bg-amber-500 border-amber-500 text-white hover:bg-amber-600'
+                  : 'bg-white/95 dark:bg-slate-900/95 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-blue-600 hover:border-blue-400 dark:hover:text-white'
+              }`}
+              title={isInCompare ? 'В списке сравнения (нажмите для удаления)' : 'Добавить в сравнение'}
+              aria-label={isInCompare ? 'В списке сравнения' : 'Добавить в сравнение'}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1421,87 +1423,30 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons Toolbar with clear mobile & desktop ergonomics */}
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
-          {/* Primary Action Buttons */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onOpenDetail(prod)}
-              className="flex-1 py-2.5 px-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-xl text-xs sm:text-sm transition-all text-center shadow-xs hover:shadow-md cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <span>Подробнее</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+        {/* Action Buttons: Clean 2-Button B2B Layout */}
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => onOpenDetail(prod)}
+            className="flex-1 py-2.5 px-3.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 dark:active:bg-slate-600 text-slate-800 dark:text-slate-200 font-bold rounded-xl text-xs sm:text-sm transition-colors text-center cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <span>Подробнее</span>
+            <ArrowRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+          </button>
 
-            <button
-              onClick={onOpenQuote}
-              className="py-2.5 px-3 sm:px-3.5 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 font-bold rounded-xl text-xs border border-emerald-200 dark:border-emerald-800/60 transition-colors cursor-pointer shrink-0"
-              title="Запросить коммерческое предложение"
-            >
-              Запрос КП
-            </button>
-
-            <button
-              onClick={onOpenDemo}
-              className="py-2.5 px-3 sm:px-3.5 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 dark:bg-amber-950/50 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-bold rounded-xl text-xs border border-amber-200 dark:border-amber-800/60 transition-colors cursor-pointer shrink-0"
-              title="Заказать демонстрацию оборудования"
-            >
-              Демо
-            </button>
-          </div>
-
-          {/* Secondary Utility Row: Compare, Copy Link, Brochure */}
-          <div className="flex items-center justify-between gap-2 text-xs">
-            <button
-              onClick={onAddToCompare}
-              className={`flex-1 py-2 px-2.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
-                isInCompare
-                  ? 'bg-amber-500 border-amber-500 text-white shadow-xs'
-                  : 'border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-              }`}
-              title="Добавить в сравнение характеристик"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>{isInCompare ? 'В сравнении' : 'Сравнить'}</span>
-            </button>
-
-            <button
-              onClick={handleCopyLink}
-              className={`py-2 px-2.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1 shrink-0 ${
-                isCopied
-                  ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-400 text-emerald-600 dark:text-emerald-400'
-                  : 'border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
-              }`}
-              title="Скопировать прямую ссылку на товар"
-            >
-              {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Link2 className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">{isCopied ? 'Скопировано' : 'Ссылка'}</span>
-            </button>
-
-            {prod.brochureUrl ? (
-              <a
-                href={prod.brochureUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="py-2 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-800 hover:text-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium transition-colors shrink-0 flex items-center justify-center gap-1 cursor-pointer"
-                title="Скачать брошюру / паспорт"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Буклет</span>
-              </a>
-            ) : (
-              <button
-                onClick={onOpenBrochure}
-                className="py-2 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-800 hover:text-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium transition-colors shrink-0 flex items-center justify-center gap-1 cursor-pointer"
-                title="Запросить буклет оборудования"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Буклет</span>
-              </button>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={onOpenQuote}
+            className="flex-1 py-2.5 px-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-xl text-xs sm:text-sm transition-all text-center shadow-xs hover:shadow-md cursor-pointer flex items-center justify-center gap-1.5"
+            title="Запросить коммерческое предложение и расчет спецификации"
+          >
+            <span>Запрос КП</span>
+          </button>
         </div>
       </div>
     </motion.div>
   );
 };
+
+export default HardwarePage;
+

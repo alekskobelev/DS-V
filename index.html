@@ -2,6 +2,50 @@
 <html lang="ru" prefix="og: https://ogp.me/ns#">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      (function() {
+        // Safe Service Worker maintenance & cache management
+        try {
+          if ('serviceWorker' in navigator && window.location.search.indexOf('reset-sw=1') !== -1) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              for (var i = 0; i < regs.length; i++) {
+                regs[i].unregister();
+              }
+            }).catch(function() {});
+            if (typeof window !== 'undefined' && 'caches' in window) {
+              caches.keys().then(function(names) {
+                for (var j = 0; j < names.length; j++) {
+                  caches.delete(names[j]);
+                }
+              }).catch(function() {});
+            }
+          }
+        } catch (_e) {}
+
+        var isBenign = function(val) {
+          var msg = String(val && (val.message || val.reason || val) || '');
+          return msg.indexOf('WebSocket') !== -1 || 
+                 msg.indexOf('websocket') !== -1 || 
+                 msg.indexOf('ResizeObserver') !== -1 ||
+                 msg.indexOf('Failed to fetch') !== -1 ||
+                 msg.indexOf('NetworkError') !== -1;
+        };
+        window.addEventListener('unhandledrejection', function(e) {
+          if (isBenign(e.reason)) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+        window.addEventListener('error', function(e) {
+          if (isBenign(e.error || e.message)) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ДС-Инжиниринг — 30 лет опыта в CAD/CAM и метрологии</title>
     <meta name="description" content="Инжиниринговые решения с 1995 года. Официальные поставки инженерного ПО TopSolid 7, Geomagic, Shining 3D, мобильных КИМ PMT и Hexagon Absolute ARM, лазерных трекеров Leica и стационарных КИМ. Услуги 3D-сканирования, контроля точности и разработки постпроцессоров." />
@@ -23,20 +67,32 @@
     <!-- Open Graph / VK / Telegram / Мессенджеры -->
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="ru_RU" />
+    <meta property="og:locale:alternate" content="en_US" />
     <meta property="og:site_name" content="ДС-Инжиниринг" />
     <meta property="og:title" content="ДС-Инжиниринг — 30 лет опыта в CAD/CAM и метрологии" />
     <meta property="og:description" content="Инжиниринговые решения с 1995 года. Официальные поставки инженерного ПО TopSolid 7, Geomagic, Shining 3D, мобильных КИМ PMT и Hexagon Absolute ARM, лазерных трекеров Leica и стационарных КИМ. Услуги 3D-сканирования, контроля точности и разработки постпроцессоров." />
     <meta property="og:url" content="https://ds-engineering.ru/" />
     <meta property="og:image" content="https://ds-engineering.ru/logo.svg" />
+    <meta property="og:image:secure_url" content="https://ds-engineering.ru/logo.svg" />
+    <meta property="og:image:type" content="image/svg+xml" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="ДС-Инжиниринг — CAD/CAM/PDM системы и 3D-метрология" />
+    <meta property="og:updated_time" content="2026-09-22T09:00:00+03:00" />
 
     <!-- Twitter / X Cards -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@ds_engineering" />
+    <meta name="twitter:creator" content="@ds_engineering" />
+    <meta name="twitter:domain" content="ds-engineering.ru" />
+    <meta name="twitter:url" content="https://ds-engineering.ru/" />
     <meta name="twitter:title" content="ДС-Инжиниринг — 30 лет опыта в CAD/CAM и метрологии" />
     <meta name="twitter:description" content="Инжиниринговые решения с 1995 года. Официальные поставки инженерного ПО TopSolid 7, Geomagic, Shining 3D, мобильных КИМ PMT и Hexagon Absolute ARM, лазерных трекеров Leica и стационарных КИМ. Услуги 3D-сканирования, контроля точности и разработки постпроцессоров." />
     <meta name="twitter:image" content="https://ds-engineering.ru/logo.svg" />
+    <meta name="twitter:image:alt" content="ДС-Инжиниринг — CAD/CAM/PDM системы и 3D-метрология" />
+
+    <!-- VK / Прямой шеринг в мессенджеры -->
+    <meta property="vk:image" content="https://ds-engineering.ru/logo.svg" />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" href="/logo.svg" />
@@ -146,15 +202,15 @@
               "name": "Какие возможности предоставляет CAD/CAM/PDM система TopSolid 7?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "TopSolid 7 — это интегрированная сквозная CAD/CAM/PDM система нового поколения, позволяющая проектировать технологическую оснастку, пресс-формы, штампы и разрабатывать управляющие программы для токарной, фрезерной (включая непрерывную 5-осевую) и токарно-фрезерной обработки на станках с ЧПУ с полной верификацией кинематики и контролем столкновений."
+                "text": "TopSolid 7 — интегрированная гибридная среда CAD/CAM/PDM на ядре Parasolid. Объединяет проектирование оснастки (Mold/Progress), программирование ЧПУ (токарная, фрезерная 2.5D–5D, эрозия) и управление ревизиями чертежей без промежуточного экспорта."
               }
             },
             {
               "@type": "Question",
-              "name": "Для каких задач применяется метрологическое программное обеспечение PolyWorks?",
+              "name": "Для каких задач применяется метрологическое программное обеспечение PolyWorks|Inspector™?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "PolyWorks|Inspector — универсальная программная платформа для трехмерного метрологического контроля геометрии деталей, сравнения фактических измерений с CAD-моделью (цветовая карта отклонений), контроля геометрических допусков GD&T по ГОСТ и ISO, а также автоматизации измерений на КИМ, измерительных руках и оптических трекерах."
+                "text": "PolyWorks|Inspector™ — универсальная платформа с сертифицированным ядром PTB для контроля геометрии деталей. Сравнивает измерения с номинальной CAD-моделью, строит цветовую карту отклонений, рассчитывает допуски GD&T по ISO 1101 и ГОСТ и формирует отчеты для ОТК."
               }
             },
             {
@@ -162,7 +218,7 @@
               "name": "Какие услуги 3D-сканирования и реверс-инжиниринга выполняет «ДС-Инжиниринг»?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Компания выполняет высокоточное лазерное и оптическое 3D-сканирование деталей с точностью до 0.02 мм, построение параметрических твердотельных CAD-моделей (STEP, IGES, Parasolid) по полигональным сеткам (обратный инжиниринг), контроль износа штамповой оснастки, а также выездной метрологический контроль на объекте заказчика."
+                "text": "Оцифровываем детали с точностью от 0.02 мм на лазерных и оптических сканерах ScanLine и Shining 3D. Строим параметрические твердотельные CAD-модели (STEP, Parasolid) с деревом построения и оформляем рабочие чертежи по ГОСТ ЕСКД. Выезжаем по всей РФ за 24–48 часов."
               }
             },
             {
@@ -170,7 +226,7 @@
               "name": "Разрабатывает ли «ДС-Инжиниринг» постпроцессоры для станков с ЧПУ?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Да, наши специалисты разрабатывают, тестируют и внедряют индивидуальные постпроцессоры для стоек ЧПУ Fanuc, Heidenhain, Siemens Sinumerik, Haas и др., включая сложные многоосевые обрабатывающие центры, токарно-фрезерные комплексы и роботы-манипуляторы с симуляцией съема материала и защитой от аварийных ситуаций."
+                "text": "Разрабатываем постпроцессоры и кинематические 3D-модели станков в TopSolid 7 CAM, Autodesk PowerMill, FeatureCAM для 3–5 осевых фрезерных, токарных и многоцелевых центров со стойками Fanuc, Heidenhain, Siemens Sinumerik, Haas и др. Гарантируем обработку без столкновений."
               }
             },
             {
@@ -178,7 +234,31 @@
               "name": "Какое координатно-измерительное и оптическое оборудование вы поставляете?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "«ДС-Инжиниринг» осуществляет официальные поставки портативных измерительных рук (PMT Arm), ручных и стационарных лазерных 3D-сканеров Shining 3D (серии FreeScan, EinScan, AutoScan), оптических систем слежения, а также координатно-измерительных машин (КИМ) с пусконаладкой, калибровкой, обучением персонала и метрологическим сопровождением."
+                "text": "Поставляем стационарные и цеховые КИМ PMT, мобильные измерительные руки PMT / Hexagon, лазерные трекеры Leica и 3D-сканеры Shining 3D. Выполняем пусконаладку, калибровку, обучение операторов и организуем поверку во ФГИС «АРШИН»."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "В каких случаях требуется метрологическая экспертиза деталей на КИМ вместо 3D-сканирования?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Стационарные КИМ (PMT Alpha/Gamma) применяются при допусках 1–5 мкм (посадки h6/H7, подшипниковые узлы, шпиндели) и имеют высшую юридическую силу протоколов. Оптические 3D-сканеры оптимальны для криволинейных поверхностей (штампы, лопатки, пресс-формы) с допусками от 0.02 мм, где нужна сплошная цветовая карта отклонений."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "В чем разница между поверхностным (NURBS) и твердотельным (Solid) реверс-инжинирингом?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Поверхностный реверс (AutoSurface NURBS) обтягивает 3D-сетку гладкими лоскутами без истории операций — оптимален для свободных форм, обтекателей и гидродинамики. Твердотельный реверс воссоздает деталь аналитическими телами с деревом построения и чертежами по ЕСКД, что необходимо для механической обработки на станках с ЧПУ."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Каков порядок аттестации и внесения измерительных систем в Госреестр СИ РФ (ФГИС «АРШИН»)?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Оборудование проходит утверждение типа СИ (102-ФЗ), первичную поверку в аккредитованной лаборатории и регистрацию во ФГИС «АРШИН». Межповерочный интервал составляет 12 месяцев."
               }
             }
           ]
@@ -186,6 +266,14 @@
       ]
     }
     </script>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
   </head>
   <body class="bg-white text-gray-800 antialiased selection:bg-blue-600 selection:text-white font-['Inter',sans-serif]">
     <div id="root"></div>

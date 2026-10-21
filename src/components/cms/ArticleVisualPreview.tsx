@@ -32,7 +32,7 @@ export const ArticleVisualPreview: React.FC<ArticleVisualPreviewProps> = ({
 
   const title = article.title || 'Заголовок технической статьи или новости';
   const category = article.category || 'Технологии и метрология';
-  const author = article.author || 'Инженерный центр «ДС-Инжиниринг»';
+  const author = article.author || 'Инжиниринговая компания «ДС‑Инжиниринг»';
   const date = article.date || new Date().toISOString().split('T')[0];
   const readTime = article.readTime || '5 мин';
   const previewText = article.preview || 'Краткий анонс статьи с описанием ключевых технологических аспектов и выводов...';

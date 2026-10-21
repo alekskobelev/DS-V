@@ -6,31 +6,13 @@ import {
 import { Product } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { SoftwareProductCard } from './SoftwareProductCard';
+import { getFaqByCategory } from '../../data/knowledgeBase';
 
 interface SoftwareOverviewSubViewProps {
   products: Product[];
   currentCategory?: string;
   onOpenDetail?: (product: Product) => void;
 }
-
-const GENERAL_SOFTWARE_FAQ = [
-  {
-    q: 'Какое программное обеспечение выбрать под конкретные задачи предприятия?',
-    a: 'Выбор определяется технологическими задачами: для сквозного 3D-проектирования изделий, оснастки, пресс-форм и создания управляющих программ станков с ЧПУ (2D–5D) применяется система TopSolid 7; для метрологического контроля и работы с КИМ, руками и трекерами — PolyWorks|Inspector™; для параметрического построения твердотельных CAD-моделей по полигональным сеткам — Geomagic Design X и EXModel Pro; для автоматизированного контроля геометрии и отчетов FAI — Geomagic Control X и SHINING 3D Inspect.',
-  },
-  {
-    q: 'Предоставляются ли полнофункциональные демонстрационные лицензии для тестирования?',
-    a: 'Да. «ДС‑Инжиниринг» предоставляет временные полнофункциональные лицензии сроком от 14 до 30 дней, а также организует выездные технические демонстрации и тестовую обработку или контрольные замеры реальных деталей заказчика.',
-  },
-  {
-    q: 'Входят ли обучение инженеров и разработка постпроцессоров в договор поставки?',
-    a: 'Да. Мы обеспечиваем полный комплекс внедрения: разработку индивидуальных постпроцессоров и кинематических 3D-моделей станков с ЧПУ, верификацию траекторий, а также очный инструктаж конструкторов, технологов-программистов и контролеров ОТК с выдачей сертификатов.',
-  },
-  {
-    q: 'Какие типы лицензирования поддерживаются (локальные / сетевые)?',
-    a: 'Все программные комплексы поставляются как с локальной привязкой к рабочему месту (Node-locked программный ключ или USB-донгл), так и с плавающими сетевыми лицензиями (Floating / Network) для гибкого распределения рабочих мест между сотрудниками проектных и технологических бюро.',
-  },
-];
 
 export const SoftwareOverviewSubView: React.FC<SoftwareOverviewSubViewProps> = ({
   products,
@@ -111,6 +93,8 @@ export const SoftwareOverviewSubView: React.FC<SoftwareOverviewSubViewProps> = (
       navigateTo('software', product.id);
     }
   };
+
+  const softwareFaqs = useMemo(() => getFaqByCategory('software'), []);
 
   return (
     <div className="space-y-10">
@@ -202,16 +186,16 @@ export const SoftwareOverviewSubView: React.FC<SoftwareOverviewSubViewProps> = (
           <span>Частые вопросы по лицензированию и внедрению ПО</span>
         </h3>
         <div className="space-y-3">
-          {GENERAL_SOFTWARE_FAQ.map((item, idx) => {
+          {softwareFaqs.map((item, idx) => {
             const isOpen = openFaqIndex === idx;
             return (
-              <div key={idx} className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden transition-all bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800">
+              <div key={item.id || idx} className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden transition-all bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800">
                 <button
                   onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
                   className="w-full flex items-center justify-between p-4 sm:p-5 text-left cursor-pointer"
                 >
                   <span className="font-bold text-slate-800 dark:text-slate-200 text-xs sm:text-sm pr-4">
-                    {item.q}
+                    {item.question}
                   </span>
                   {isOpen ? (
                     <ChevronUp className="w-4 h-4 text-blue-600 shrink-0" />
@@ -220,8 +204,13 @@ export const SoftwareOverviewSubView: React.FC<SoftwareOverviewSubViewProps> = (
                   )}
                 </button>
                 {isOpen && (
-                  <div className="px-4 sm:px-5 pb-5 text-slate-500 dark:text-slate-300 text-xs sm:text-sm leading-relaxed border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
-                    {item.a}
+                  <div className="px-4 sm:px-5 pb-5 text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed border-t border-slate-200 dark:border-slate-700 pt-4 mt-2 space-y-2">
+                    <p>{item.answer}</p>
+                    {item.highlight && (
+                      <div className="text-xs text-blue-700 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-950/40 p-2.5 rounded-lg border border-blue-200 dark:border-blue-900/50">
+                        {item.highlight}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

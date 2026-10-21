@@ -864,7 +864,7 @@ export const CmsPagesEditor: React.FC = () => {
                       type="button"
                       onClick={() => setPagePreviewViewport('desktop')}
                       className={`p-1.5 rounded-lg ${pagePreviewViewport === 'desktop' ? 'bg-blue-100 text-blue-800 font-bold' : 'text-gray-400 hover:text-slate-500'}`}
-                      title="Desktop View"
+                      title="Вид для компьютера"
                     >
                       <Monitor className="w-4 h-4" />
                     </button>
@@ -872,7 +872,7 @@ export const CmsPagesEditor: React.FC = () => {
                       type="button"
                       onClick={() => setPagePreviewViewport('mobile')}
                       className={`p-1.5 rounded-lg ${pagePreviewViewport === 'mobile' ? 'bg-blue-100 text-blue-800 font-bold' : 'text-gray-400 hover:text-slate-500'}`}
-                      title="Mobile View"
+                      title="Мобильный вид"
                     >
                       <Smartphone className="w-4 h-4" />
                     </button>
@@ -881,6 +881,7 @@ export const CmsPagesEditor: React.FC = () => {
 
                 <div className={`mx-auto transition-all ${pagePreviewViewport === 'mobile' ? 'max-w-sm border-x border-gray-300' : 'w-full'}`}>
                   <PageVisualPreview
+                    pageId={editingPageId || 'home'}
                     pageTitle={pageTitle}
                     pageDesc={pageDesc}
                     pageSlug={pageSlug}

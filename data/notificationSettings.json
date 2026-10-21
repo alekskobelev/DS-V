@@ -1,7 +1,7 @@
 {
   "browserPopup": true,
   "soundAlert": true,
-  "soundVolume": 0.5,
+  "soundVolume": 0.8,
   "telegramEnabled": false,
   "telegramBotToken": "",
   "telegramChatId": "",
@@ -9,7 +9,7 @@
   "emailEnabled": true,
   "alertEmail": "info@ds-enginering.ru, alekskobelev2025@gmail.com",
   "emailSubjectPrefix": "[ДС-Инжиниринг CRM]",
-  "maxEnabled": false,
+  "maxEnabled": true,
   "maxWebhookUrl": "",
   "maxBotToken": "",
   "maxChatId": "",
@@ -19,6 +19,6 @@
   "notifyOnTicket": true,
   "slaCallbackMinutes": 5,
   "workingHoursStart": "09:00",
-  "workingHoursEnd": "19:00",
-  "updatedAt": "2026-09-07T10:35:00.405Z"
+  "workingHoursEnd": "16:00",
+  "updatedAt": "2026-09-22T14:39:30.621Z"
 }

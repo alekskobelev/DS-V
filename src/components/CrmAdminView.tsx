@@ -29,14 +29,14 @@ import { OnlineEngineerSession } from '../types';
 import { formatChatMessage } from '../utils/chatTextFormatter';
 import { BotSettingsView } from './crm/BotSettingsView';
 import { NotificationSettingsView } from './notifications/NotificationSettingsView';
-import { CrmManualView } from './crm/CrmManualView';
 import { CrmRealtimeLogsView } from './crm/CrmRealtimeLogsView';
 import { CrmAnalyticsDashboard } from './crm/CrmAnalyticsDashboard';
 import { AssetsManagerView } from './crm/AssetsManagerView';
-import { Image } from 'lucide-react';
+import { TelephonyCallsTab } from './crm/TelephonyCallsTab';
+import { Image, Calendar } from 'lucide-react';
 
 export function CrmAdminView() {
-  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'chats' | 'rfqs' | 'tickets' | 'bot-settings' | 'notifications' | 'assets' | 'guide' | 'logs' | 'all'>('analytics');
+  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'chats' | 'rfqs' | 'tickets' | 'telephony' | 'bot-settings' | 'notifications' | 'assets' | 'logs' | 'all'>('analytics');
   const [rfqs, setRfqs] = useState<any[]>([]);
   const [tickets, setTickets] = useState<any[]>([]);
   const [chatSessions, setChatSessions] = useState<OnlineEngineerSession[]>([]);
@@ -55,8 +55,21 @@ export function CrmAdminView() {
         apiService.getB2BTickets(),
         apiService.getEngineerChatSessions()
       ]);
-      setRfqs(r || []);
-      setTickets(t || []);
+      const seenR = new Set<string>();
+      const uniqueR = (r || []).filter((item: any) => {
+        if (!item?.id || seenR.has(item.id)) return false;
+        seenR.add(item.id);
+        return true;
+      });
+      setRfqs(uniqueR);
+
+      const seenT = new Set<string>();
+      const uniqueT = (t || []).filter((item: any) => {
+        if (!item?.id || seenT.has(item.id)) return false;
+        seenT.add(item.id);
+        return true;
+      });
+      setTickets(uniqueT);
       if (chatsRes.success && Array.isArray(chatsRes.data)) {
         setChatSessions(chatsRes.data);
         setUnreadChatCount(chatsRes.unreadCount || 0);
@@ -189,7 +202,7 @@ export function CrmAdminView() {
               )}
             </div>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              Входящие диалоги с виджета «Онлайн-инженер», заявки из онлайн-калькулятора и тикеты B2B поддержки
+              Входящие диалоги с виджета «Онлайн-инженер», заявки из онлайн-калькулятора и сервисные обращения клиентов
             </p>
           </div>
 
@@ -280,6 +293,24 @@ export function CrmAdminView() {
           </button>
 
           <button
+            id="crm-subtab-telephony"
+            onClick={() => setActiveSubTab('telephony')}
+            className={`px-4.5 py-2 font-semibold rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+              activeSubTab === 'telephony'
+                ? 'bg-[#1E3A8A] text-white shadow-sm'
+                : 'bg-slate-50 hover:bg-gray-100 text-slate-500 border border-gray-200'
+            }`}
+          >
+            <Phone className="w-4 h-4 text-emerald-400" />
+            <span>Телефония & SIP-звонки</span>
+            <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
+              activeSubTab === 'telephony' ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/30' : 'bg-emerald-100 text-emerald-800'
+            }`}>
+              SIP
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveSubTab('all')}
             className={`px-4.5 py-2 font-semibold rounded-xl transition-all flex items-center gap-2 ${
               activeSubTab === 'all'
@@ -324,18 +355,6 @@ export function CrmAdminView() {
           >
             <Image className="w-4 h-4 text-teal-500" />
             <span>Логотипы и Печати</span>
-          </button>
-
-          <button
-            onClick={() => setActiveSubTab('guide')}
-            className={`px-4.5 py-2 font-semibold rounded-xl transition-all flex items-center gap-2 ${
-              activeSubTab === 'guide'
-                ? 'bg-[#1E3A8A] text-white shadow-sm'
-                : 'bg-slate-50 hover:bg-gray-100 text-slate-500 border border-gray-200'
-            }`}
-          >
-            <BookOpen className="w-4 h-4 text-blue-500" />
-            <span>Инструкция менеджера</span>
           </button>
 
           <button
@@ -699,8 +718,8 @@ export function CrmAdminView() {
             {rfqs.length === 0 && !isLoading && (
               <div className="text-center py-10 text-gray-500 text-sm">Нет входящих заявок</div>
             )}
-            {rfqs.map(r => (
-              <div key={r.id} className="p-4 border border-gray-200 rounded-xl hover:shadow-md transition-shadow bg-white">
+            {rfqs.map((r, idx) => (
+              <div key={r.id ? `${r.id}-${idx}` : `rfq-${idx}`} className="p-4 border border-gray-200 rounded-xl hover:shadow-md transition-shadow bg-white">
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <span className="text-xs font-bold text-gray-400">ID: {r.id}</span>
@@ -755,8 +774,8 @@ export function CrmAdminView() {
             {tickets.length === 0 && !isLoading && (
               <div className="text-center py-10 text-gray-500 text-sm">Нет B2B обращений</div>
             )}
-            {tickets.map(t => (
-              <div key={t.id} className="p-4 border border-gray-200 rounded-xl hover:shadow-md transition-shadow bg-white">
+            {tickets.map((t, idx) => (
+              <div key={t.id ? `${t.id}-${idx}` : `ticket-${idx}`} className="p-4 border border-gray-200 rounded-xl hover:shadow-md transition-shadow bg-white">
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <span className="text-xs font-bold text-gray-400">ID: {t.id} • {t.organizationId}</span>
@@ -794,6 +813,11 @@ export function CrmAdminView() {
         </div>
       )}
 
+      {/* SUBTAB: CORPORATE TELEPHONY & SIP CALLS */}
+      {activeSubTab === 'telephony' && (
+        <TelephonyCallsTab />
+      )}
+
       {/* SUBTAB 4: BOT RESPONSES & KNOWLEDGE BASE */}
       {activeSubTab === 'bot-settings' && (
         <BotSettingsView />
@@ -807,11 +831,6 @@ export function CrmAdminView() {
       {/* SUBTAB 8: ASSETS MANAGER */}
       {activeSubTab === 'assets' && (
         <AssetsManagerView />
-      )}
-
-      {/* SUBTAB 6: CRM MANUAL & REGULATIONS */}
-      {activeSubTab === 'guide' && (
-        <CrmManualView />
       )}
 
       {/* SUBTAB 7: REALTIME LOGS & DB AUDIT */}

@@ -1,4 +1,4 @@
-import { CrmCompany, CrmContact, UserTask, CalendarEvent, ClientSegmentList } from '../types';
+import { CrmCompany, CrmContact, UserTask, CalendarEvent, ClientSegmentList } from '../types.ts';
 
 export const INITIAL_CRM_COMPANIES: CrmCompany[] = [
   {

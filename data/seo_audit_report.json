@@ -1,0 +1,3142 @@
+{
+  "timestamp": "2026-10-21T07:57:32.040Z",
+  "totalPagesAudited": 185,
+  "indexReadyPages": 185,
+  "totalErrors": 0,
+  "totalWarnings": 78,
+  "averageScore": 97.9,
+  "results": [
+    {
+      "url": "index.html (Базовая разметка)",
+      "pageType": "html_entry",
+      "title": "ДС-Инжиниринг — 30 лет опыта в CAD/CAM и метрологии",
+      "description": "Инжиниринговые решения с 1995 года. Официальные поставки инженерного ПО TopSolid 7, Geomagic, Shining 3D, мобильных КИМ PMT и Hexagon Absolute ARM, лазерных трекеров Leica и стационарных КИМ. Услуги 3D-сканирования, контроля точности и разработки постпроцессоров.",
+      "canonicalUrl": "https://ds-engineering.ru/",
+      "ogType": "website",
+      "ogImage": "https://ds-engineering.ru/logo.svg",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/main",
+      "pageType": "static",
+      "title": "ДС‑Инжиниринг | CAD/CAM/PDM системы, измерительное оборудование и 3D-метрология",
+      "description": "Инжиниринговые решения с 1995 года (более 30 лет опыта). Официальные поставки TopSolid 7, PolyWorks|Inspector, Geomagic, Shining 3D, мобильных КИМ PMT Arm, лазерных трекеров Leica и КИМ. Услуги 3D-сканирования, контроля точности и разработки постпроцессоров.",
+      "canonicalUrl": "https://ds-engineering.ru/main",
+      "ogType": "website",
+      "ogImage": "/logo.svg",
+      "twitterCard": "summary_large_image",
+      "schemaType": "website",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/software",
+      "pageType": "static",
+      "title": "Программное обеспечение TopSolid 7, PolyWorks, Shining 3D, Geomagic | ДС‑Инжиниринг",
+      "description": "Каталог промышленного лицензионного ПО: сквозная CAD/CAM/PDM система TopSolid 7, метрологический комплекс PolyWorks|Inspector, софт для реверс-инжиниринга Shining 3D EXModel на ядре Parasolid, PTB-сертифицированный контроль SHINING 3D Inspect, Geomagic Design X и Control X.",
+      "canonicalUrl": "https://ds-engineering.ru/software",
+      "ogType": "website",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware",
+      "pageType": "static",
+      "title": "Измерительное оборудование: КИМ PMT, мобильные КИМ ROMER / PMT, 3D-сканеры Shining 3D | ДС‑Инжиниринг",
+      "description": "Поставка высокоточного метрологического оборудования: портальные и мостовые КИМ PMT, мобильные КИМ PMT Arm и HEXAGON ROMER, лазерные 3D-сканеры Shining 3D FreeScan, лазерные трекеры Leica Absolute Tracker, измерительные системы Renishaw.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware",
+      "ogType": "website",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (101 симв.), может обрезаться в выдаче"
+        },
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/services",
+      "pageType": "static",
+      "title": "Инжиниринговые услуги: 3D-сканирование, реверс-инжиниринг, разработка постпроцессоров ЧПУ | ДС‑Инжиниринг",
+      "description": "Услуги прецизионного 3D-сканирования деталей в Самаре и с выездом по РФ, реверс-инжиниринг (построение CAD в STEP), контроль геометрии по CAD с протоколом FAI, разработка постпроцессоров под стойки Fanuc, Heidenhain, Siemens, технический инструктаж и консультации инженеров.",
+      "canonicalUrl": "https://ds-engineering.ru/services",
+      "ogType": "website",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "service",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (105 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/calculator",
+      "pageType": "static",
+      "title": "Инженерный калькулятор стоимости 3D-сканирования, контроля точности и реверса | ДС‑Инжиниринг",
+      "description": "Онлайн калькулятор предварительного расчета стоимости и сроков выполнения инжиниринговых услуг: оптическое и лазерное 3D-сканирование, реверс-инжиниринг в твердотельный CAD (STEP), контроль геометрии деталей и написание постпроцессоров.",
+      "canonicalUrl": "https://ds-engineering.ru/calculator",
+      "ogType": "website",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "service",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/about",
+      "pageType": "static",
+      "title": "О компании ДС‑Инжиниринг — более 30 лет опыта в промышленном инжиниринге (с 1995 года)",
+      "description": "ООО «ДС‑Инжиниринг» — ведущий российский системный интегратор в области CAD/CAM/PDM технологий и 3D-метрологии. Основана в 1995 году. Официальный дистрибьютор TopSolid SAS, дилер Hexagon, PMT, Shining 3D, Geomagic, Renishaw.",
+      "canonicalUrl": "https://ds-engineering.ru/about",
+      "ogType": "website",
+      "ogImage": "/logo.svg",
+      "twitterCard": "summary_large_image",
+      "schemaType": "about",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge",
+      "pageType": "static",
+      "title": "База знаний: ГОСТы, руководства по CAD/CAM, методики метрологического контроля | ДС‑Инжиниринг",
+      "description": "Техническая документация, ГОСТы и стандарты (ISO 1101, ASME Y14.5, ISO 10360), руководства пользователя по TopSolid 7, PolyWorks, Shining 3D Inspect и EXModel, практические статьи и видеоинструкции.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge",
+      "ogType": "website",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "faq",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news",
+      "pageType": "static",
+      "title": "Пресс-центр: Новости машиностроения, релизы ПО и выставки | ДС‑Инжиниринг",
+      "description": "Актуальные новости компании «ДС‑Инжиниринг», обзоры обновлений программного обеспечения TopSolid 7, PolyWorks, Shining 3D, анонсы выставок «Металлообработка» и вебинаров по 3D-метрологии.",
+      "canonicalUrl": "https://ds-engineering.ru/news",
+      "ogType": "website",
+      "ogImage": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/contacts",
+      "pageType": "static",
+      "title": "Контакты и реквизиты компании в Самаре | ДС‑Инжиниринг",
+      "description": "Контакты компании ООО «ДС‑Инжиниринг»: телефон +7 (846) 954-02-92, email info@ds-enginering.ru, адрес: г. Самара, ул. Свободы, д. 198. Прямые контакты отделов ПО, разработки постпроцессоров, оснастки и метрологии.",
+      "canonicalUrl": "https://ds-engineering.ru/contacts",
+      "ogType": "website",
+      "ogImage": "/logo.svg",
+      "twitterCard": "summary_large_image",
+      "schemaType": "contact",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/sitemap",
+      "pageType": "static",
+      "title": "Карта сайта (Sitemap) — Полный каталог разделов и оборудования | ДС‑Инжиниринг",
+      "description": "Полная интерактивная карта сайта компании ООО «ДС-Инжиниринг»: каталог программного обеспечения CAD/CAM/PDM (TopSolid, PolyWorks, Shining 3D, Geomagic), метрологического оборудования (PMT, Hexagon, Leica), услуг 3D-сканирования, контроля точности и статей базы знаний.",
+      "canonicalUrl": "https://ds-engineering.ru/sitemap",
+      "ogType": "website",
+      "ogImage": "/logo.svg",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/account",
+      "pageType": "admin",
+      "title": "Личный кабинет заказчика | ДС‑Инжиниринг",
+      "description": "Личный кабинет клиента «ДС‑Инжиниринг»: отслеживание статуса заявок на расчет, заказов оборудования, лицензий ПО и обращений в службу технической поддержки.",
+      "canonicalUrl": "https://ds-engineering.ru/account",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "robots": "noindex, nofollow",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/crm",
+      "pageType": "admin",
+      "title": "CRM-система управления проектами | ДС‑Инжиниринг",
+      "description": "Корпоративная CRM-система для управления промышленными контрактами, сделками и инженерными проектами.",
+      "canonicalUrl": "https://ds-engineering.ru/crm",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "robots": "noindex, nofollow",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/cms",
+      "pageType": "admin",
+      "title": "Панель управления сайтом | ДС‑Инжиниринг CMS",
+      "description": "Административная панель управления контентом, товарами, услугами и заявками клиентов.",
+      "canonicalUrl": "https://ds-engineering.ru/cms",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "robots": "noindex, nofollow",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/software?category=cad_cam",
+      "pageType": "category",
+      "title": "Комплексные CAD/CAM/PDM системы для проектирования и ЧПУ | ДС‑Инжиниринг | ДС‑Инжиниринг",
+      "description": "Сквозные интегрированные системы TopSolid 7 (Design, Cam, Mold, Progress, Sheetmetal) и сопутствующие модули для сквозной подготовки производства.",
+      "canonicalUrl": "https://ds-engineering.ru/software",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        },
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/software?category=metrology_sw",
+      "pageType": "category",
+      "title": "Метрологическое ПО для координатных измерений и 3D-контроля | ДС‑Инжиниринг | ДС‑Инжиниринг",
+      "description": "Лицензионные метрологические комплексы PolyWorks|Inspector™, SHINING 3D Inspect и Geomagic Control X для анализа отклонений и FAI.",
+      "canonicalUrl": "https://ds-engineering.ru/software",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        },
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/software?category=reverse_sw",
+      "pageType": "category",
+      "title": "Программное обеспечение для реверс-инжиниринга | ДС‑Инжиниринг | ДС‑Инжиниринг",
+      "description": "Программы Shining 3D EXModel на ядре Parasolid, Geomagic Design X и Geomagic Wrap для реконструкции CAD-моделей по сканам.",
+      "canonicalUrl": "https://ds-engineering.ru/software",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        },
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware?category=cmm",
+      "pageType": "category",
+      "title": "Координатно-измерительные машины (КИМ) портальные и мостовые | ДС‑Инжиниринг | ДС‑Инжиниринг",
+      "description": "Высокоточные стационарные КИМ PMT, мостовые и портальные измерительные комплексы для метрологических лабораторий и цехового контроля.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        },
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware?category=arms",
+      "pageType": "category",
+      "title": "Мобильные измерительные руки (портативные КИМ) PMT и ROMER | ДС‑Инжиниринг | ДС‑Инжиниринг",
+      "description": "Портативные измерительные манипуляторы PMT ALPHA Arm и Hexagon Absolute Arm с контактными щупами и лазерными сканерами.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        },
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware?category=scanners",
+      "pageType": "category",
+      "title": "Ручные и оптические 3D-сканеры Shining 3D FreeScan и EinScan | ДС‑Инжиниринг | ДС‑Инжиниринг",
+      "description": "Метрологические лазерные сканеры FreeScan Combo, FreeScan UE Pro и оптические системы для быстрого сканирования любых поверхностей.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        },
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware?category=trackers",
+      "pageType": "category",
+      "title": "Лазерные трекеры Leica Absolute Tracker для крупногабаритных измерений | ДС‑Инжиниринг | ДС‑Инжиниринг",
+      "description": "Высокоточные лазерные трекеры Leica AT960, AT500, ATS600 для контроля крупногабаритных узлов, стапелей и авиационных конструкций.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (102 симв.), может обрезаться в выдаче"
+        },
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        },
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 90,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware?category=renishaw",
+      "pageType": "category",
+      "title": "Измерительные системы и датчики Renishaw (Equator, PH20, SP25) | ДС‑Инжиниринг | ДС‑Инжиниринг",
+      "description": "Калибраторы Renishaw Equator 300/500, 5-осевые измерительные головки PH20 и REVO-2, сканирующие щупы и оснастка.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        },
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge?category=gost",
+      "pageType": "category",
+      "title": "Стандарты, ГОСТы и методики GD&T в метрологии | База знаний ДС‑Инжиниринг",
+      "description": "Руководства и стандарты: ISO 1101, ASME Y14.5, ГОСТ Р 53442, ISO 10360-2 для оценки точности КИМ и контроля геометрических допусков изделий.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        },
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge?category=tutorials",
+      "pageType": "category",
+      "title": "Практические руководства по CAD/CAM и метрологии | База знаний ДС‑Инжиниринг",
+      "description": "Инструкции и методики работы в TopSolid 7, PolyWorks|Inspector, Shining 3D Inspect и EXModel: пошаговые уроки от инженеров ДС‑Инжиниринг.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        },
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge?category=cases",
+      "pageType": "category",
+      "title": "Инженерные кейсы и примеры внедрения 3D-технологий | ДС‑Инжиниринг",
+      "description": "Реальные проекты внедрения CAD/CAM решений, 3D-сканирования и контроля геометрии на машиностроительных и авиационных предприятиях РФ.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        },
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge?category=video",
+      "pageType": "category",
+      "title": "Видеоуроки и вебинары по TopSolid и 3D-метрологии | ДС‑Инжиниринг",
+      "description": "Видеозаписи вебинаров, мастер-классов и демонстраций работы с измерительным оборудованием и программными комплексами.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        },
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge?category=faq",
+      "pageType": "category",
+      "title": "Часто задаваемые вопросы по CAD/CAM и метрологии | ДС‑Инжиниринг",
+      "description": "Ответы экспертов на ключевые вопросы по выбору КИМ, 3D-сканеров, лицензированию TopSolid и проведению обратного инжиниринга.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "schemaType": "webpage",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "OG_IMAGE_MISSING",
+          "message": "Отсутствует изображение для превью соцсетей (og:image)"
+        },
+        {
+          "severity": "info",
+          "rule": "SCHEMA_TYPE_DEFAULT",
+          "message": "Тип Schema.org не задан явно (будет использован базовый WebPage)"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/topsolid-7",
+      "pageType": "product",
+      "title": "TopSolid 7 (CAD/CAM/PDM) — купить, внедрение, инструктаж и консультации | ДС‑Инжиниринг",
+      "description": "Официальная поставка и внедрение TopSolid 7: интегрированная параметрическая среда CAD/CAM/PDM (Design, CAM 2D-5D, Mold, Progress, Sheetmetal, Wood). Прямой экспорт в станки с ЧПУ, разработка сертифицированных постпроцессоров, технический инструктаж и консультации специалистов.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/topsolid-7",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/polyworks-inspector",
+      "pageType": "product",
+      "title": "PolyWorks|Inspector™ — универсальное метрологическое ПО 3D-контроля | ДС‑Инжиниринг",
+      "description": "PolyWorks|Inspector™ от InnovMetric — мировой золотой стандарт 3D-метрологии: универсальный контроль деталей по CAD для сканеров Shining 3D, мобильных КИМ PMT и ROMER, лазерных трекеров Leica и КИМ. Расчет GD&T, автоматические отчеты в Excel (ReportLoop) и SPC-анализ.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/polyworks-inspector",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/geomagic-design-x",
+      "pageType": "product",
+      "title": "Geomagic Design X (HEXAGON) — эталонное ПО для реверс-инжиниринга и CAD-моделирования | ДС‑Инжиниринг",
+      "description": "Geomagic Design X (HEXAGON Manufacturing Intelligence): профессиональное ПО для воссоздания параметрических CAD-моделей по облакам точек и полигональным сеткам с прямой передачей дерева построения через технологию LiveTransfer в SolidWorks, Siemens NX, CATIA, Inventor, Creo, TopSolid.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/geomagic-design-x",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (101 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/geomagic-control-x",
+      "pageType": "product",
+      "title": "Geomagic Control X (HEXAGON) — автоматизированный 3D-контроль качества и FAI | ДС‑Инжиниринг",
+      "description": "Geomagic Control X (HEXAGON Manufacturing Intelligence): профессиональная метрологическая платформа для автоматизированного контроля геометрии, расчета допусков GD&T, анализа толщины стенок, контроля профилей лопаток турбин и валидации первого изделия (FAI).",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/geomagic-control-x",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining3d-freescan",
+      "pageType": "product",
+      "title": "Shining 3D FreeScan — поставка, внедрение и консультации | ДС‑Инжиниринг",
+      "description": "Shining 3D FreeScan: Shining 3D FreeScan - это универсальное программное обеспечение для сканирования, специально разработанное для сканеров серии FreeScan и ScanLine. Благодаря мощ...",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining3d-freescan",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining3d-exmodel",
+      "pageType": "product",
+      "title": "Shining 3D EXModel / EXModel Pro | ДС‑Инжиниринг",
+      "description": "Программный комплекс Shining 3D EXModel и EXModel Pro: быстрое преобразование полигональных 3D-сканов в твердотельные и поверхностные параметрические CAD-модели (STEP, Parasolid, IGES, DXF) с контролем точности Live Deviation Analyzer.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining3d-exmodel",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining3d-inspect",
+      "pageType": "product",
+      "title": "SHINING 3D Inspect — метрологический софт 3D-контроля для сканеров SHINING 3D (PTB Class 1) | ДС‑Инжиниринг",
+      "description": "Метрологический программный комплекс SHINING 3D Inspect для работы со сканерами FreeScan и EinScan. Сертифицированные алгоритмы PTB (Германия, Class 1) для 3D-контроля геометрии, расчета допусков GD&T (ISO 1101 / ASME Y14.5), FAI и анализа зазоров.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining3d-inspect",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (107 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/pmt-future-cmm",
+      "pageType": "product",
+      "title": "Прецизионная мостовая КИМ PMT FUTURE и FUTURE PLUS | ДС‑Инжиниринг",
+      "description": "Прецизионная координатно-измерительная машина PMT FUTURE и FUTURE PLUS с замкнутым гранитным порталом, 16 датчиками термокомпенсации, точностью от 0.9+L/450 мкм и поддержкой Renishaw REVO-2.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/pmt-future-cmm",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/pmt-prime-cmm",
+      "pageType": "product",
+      "title": "Цеховая координатно-измерительная машина PMT PRIME | ДС‑Инжиниринг",
+      "description": "Высокопроизводительная цеховая КИМ PMT PRIME с защитой направляющих IP54, скоростью до 550 мм/с и температурным окном 18–28°C для участков станков с ЧПУ.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/pmt-prime-cmm",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/pmt-loong-cmm",
+      "pageType": "product",
+      "title": "Крупногабаритная портальная КИМ PMT LOONG (до 10 метров) | ДС‑Инжиниринг",
+      "description": "Портальная КИМ повышенной грузоподъемности PMT LOONG с рабочим объемом до 10 000 мм для крупногабаритных турбин, рам, штампов и авиадеталей. Двойной привод Dual-Drive.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/pmt-loong-cmm",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/pmt-alpha-p",
+      "pageType": "product",
+      "title": "Мобильная КИМ PMT ALPHA ARM серия P (Прецизионная) | ДС‑Инжиниринг",
+      "description": "Прецизионная портативная координатно-измерительная машина PMT ALPHA ARM серии P. Точность от ±0.015 мм, углепластиковый корпус, балансировка Zero-Stress, работа с PolyWorks|Inspector.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/pmt-alpha-p",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/pmt-alpha-m",
+      "pageType": "product",
+      "title": "Мобильная КИМ PMT ALPHA ARM серия M (Многоцелевая) | ДС‑Инжиниринг",
+      "description": "Универсальная мобильная мобильная КИМ PMT ALPHA ARM серия M для оперативного контроля геометрии на станках и сборочных участках. Диапазон до 4.0 м.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/pmt-alpha-m",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/pmt-alpha-e",
+      "pageType": "product",
+      "title": "Мобильная КИМ PMT ALPHA ARM серия E (Экономичная) | ДС‑Инжиниринг",
+      "description": "Доступная и надежная мобильная КИМ PMT ALPHA ARM серии E для малых и средних производств. Контроль штамповок, сварных узлов и корпусных деталей.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/pmt-alpha-e",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/pmt-alpha-edu",
+      "pageType": "product",
+      "title": "Учебно-метрологический комплекс PMT ALPHA ARM серия EDU | ДС‑Инжиниринг",
+      "description": "Специализированная мобильная КИМ PMT ALPHA ARM серии EDU для оснащения метрологических лабораторий ВУЗов, колледжей и технических центров.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/pmt-alpha-edu",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/pmt-gamma-plus-p",
+      "pageType": "product",
+      "title": "Мобильная КИМ PMT Gamma+ серия P (Прецизионная) нового поколения | ДС‑Инжиниринг",
+      "description": "Флагманская портативная КИМ PMT Gamma+ серии P нового поколения. Инновационная кинематика шарниров, нулевой люфт, OLED-дисплей, повторяемость от ±0.014 мм.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/pmt-gamma-plus-p",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/pmt-gamma-plus-m",
+      "pageType": "product",
+      "title": "Мобильная КИМ PMT Gamma+ серия M (Многоцелевая) | ДС‑Инжиниринг",
+      "description": "Универсальная координатно-измерительная машина PMT Gamma+ серия M. Расширенный рабочий диапазон до 4.0 м, жесткий карбоновый корпус, встроенная термокомпенсация.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/pmt-gamma-plus-m",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/pmt-gamma-plus-e",
+      "pageType": "product",
+      "title": "Мобильная КИМ PMT Gamma+ серия E (Экономичная) | ДС‑Инжиниринг",
+      "description": "Экономичная портативная КИМ серии PMT Gamma+ E для входного контроля и цеховых измерений. Легкая конструкция от 7.2 кг, совместимость со щупами Renishaw.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/pmt-gamma-plus-e",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/hexagon-absolute-arm-7axis",
+      "pageType": "product",
+      "title": "Мобильная КИМ Hexagon Absolute Arm 7-Axis | ДС‑Инжиниринг",
+      "description": "Флагманская 7-осевая мобильная КИМ Hexagon Absolute Arm с энкодерами Zero-G, дисплеем SmartSens и поддержкой лазерных 3D-сканеров AS1, AS1 XL, RS6, RS-SQUARED.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/hexagon-absolute-arm-7axis",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/hexagon-absolute-arm-6axis",
+      "pageType": "product",
+      "title": "Прецизионная контактная мобильная КИМ Hexagon Absolute Arm 6-Axis | ДС‑Инжиниринг",
+      "description": "Сверхточная 6-осевая мобильная КИМ Hexagon Absolute Arm 6-Axis для контактных измерений щупами Renishaw. Повторяемость от ±0.008 мм.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/hexagon-absolute-arm-6axis",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/hexagon-absolute-arm-compact",
+      "pageType": "product",
+      "title": "Портативная КИМ с гранитной плитой Hexagon Absolute Arm Compact | ДС‑Инжиниринг",
+      "description": "Ультракомпактная портативная координатно-измерительная машина Hexagon Absolute Arm Compact со встроенным гранитным основанием. Точность 6 мкм, установка на стол станка.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/hexagon-absolute-arm-compact",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/pmt-scanner-gh",
+      "pageType": "product",
+      "title": "Прецизионный лазерный 3D сканер PMT GH для PMT GAMMA+ | ДС‑Инжиниринг",
+      "description": "Высокоточный лазерный 3D-сканер PMT GH синего лазера высокой четкости (HD) для 7-осевых портативных КИМ PMT GAMMA+ и ALPHA ARM. Скорость 1.2 млн точек/сек.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/pmt-scanner-gh",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/pmt-scanner-gs",
+      "pageType": "product",
+      "title": "Широкополосный лазерный 3D сканер PMT GS для PMT GAMMA+ | ДС‑Инжиниринг",
+      "description": "Широкополосный лазерный 3D-сканер PMT GS с шириной полосы до 200 мм для 7-осевых мобильных КИМ PMT GAMMA+ и ALPHA ARM. Скоростная оцифровка крупных деталей.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/pmt-scanner-gs",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/hexagon-scanner-as1",
+      "pageType": "product",
+      "title": "Лазерный 3D сканер Hexagon Absolute Scanner AS1 (модульный) | ДС‑Инжиниринг",
+      "description": "Флагманский кросс-платформенный 3D-сканер Hexagon Absolute Scanner AS1 (заменил RS6). Работает на мобильной КИМ Absolute Arm 7-Axis и автономно с трекером Leica AT960 в радиусе до 30 м.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/hexagon-scanner-as1",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/hexagon-scanner-as1-xl",
+      "pageType": "product",
+      "title": "Сверхширокополосный лазерный 3D сканер Hexagon AS1 XL | ДС‑Инжиниринг",
+      "description": "Инновационный лазерный 3D-сканер Hexagon AS1 XL с полосой до 600 мм и рабочим расстоянием до 1000 мм для крупногабаритных деталей (авиация, судостроение).",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/hexagon-scanner-as1-xl",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/hexagon-scanner-rs6",
+      "pageType": "product",
+      "title": "Лазерный 3D сканер Hexagon RS6 (технология SHINE) | ДС‑Инжиниринг",
+      "description": "Лазерный 3D-сканер синего лазера Hexagon RS6 с технологией SHINE: скорость 1.2 млн точек/сек, ширина полосы 150 мм. (Снят с производства, заменен на AS1).",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/hexagon-scanner-rs6",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/hexagon-scanner-rs5",
+      "pageType": "product",
+      "title": "Лазерный 3D сканер Hexagon RS5 для рук Absolute Arm | ДС‑Инжиниринг",
+      "description": "Универсальный лазерный 3D-сканер Hexagon RS5 синего лазера с полосой 115 мм для задач общего машиностроения, контроля отливок и штампов.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/hexagon-scanner-rs5",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/hexagon-scanner-hp-l-20-8",
+      "pageType": "product",
+      "title": "Прецизионный лазерный 3D сканер Hexagon HP-L-20.8 | ДС‑Инжиниринг",
+      "description": "Оптический лазерный сенсор Hexagon HP-L-20.8 с непрерывной авторегулировкой мощности луча для контроля сложных криволинейных поверхностей и лопаток турбин.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/hexagon-scanner-hp-l-20-8",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/hexagon-scanner-llp",
+      "pageType": "product",
+      "title": "Лазерный 3D-сканер Laser Line Probe (LLP) для КИМ | ДС‑Инжиниринг",
+      "description": "Компактный лазерный датчик сечений Laser Line Probe (LLP) для портативных КИМ: быстрая оцифровка кромок, отверстий и плоских профилей.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/hexagon-scanner-llp",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/hexagon-scanner-hp-l-8-9",
+      "pageType": "product",
+      "title": "Лазерный 3D сканер Hexagon HP-L-8.9 (начальный уровень) | ДС‑Инжиниринг",
+      "description": "Доступный синий лазерный 3D-сканер Hexagon HP-L-8.9 начального уровня для мобильных КИМ Absolute Arm 7-Axis. Масса всего 330 грамм.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/hexagon-scanner-hp-l-8-9",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/hexagon-scanner-rs-squared",
+      "pageType": "product",
+      "title": "Оптический площадной сканер Hexagon RS-SQUARED Area Scanner | ДС‑Инжиниринг",
+      "description": "Революционный площадной сканер структурированного света Hexagon RS-SQUARED Area Scanner: оцифровка поверхностей крупными кадрами 300×300 мм без маркеров.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/hexagon-scanner-rs-squared",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/hexagon-scanner-rs4",
+      "pageType": "product",
+      "title": "Встроенный лазерный 3D сканер Hexagon RS4 для серии SI | ДС‑Инжиниринг",
+      "description": "Полностью интегрированный в запястье лазерный 3D-сканер Hexagon RS4 для мобильных КИМ Absolute Arm 73/75/77-SI без внешних кабелей.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/hexagon-scanner-rs4",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-einstar",
+      "pageType": "product",
+      "title": "3D сканер Shining 3D Einstar | Официальный дилер ДС‑Инжиниринг",
+      "description": "Портативный 3D-сканер Shining 3D Einstar с инфракрасным источником VCSEL и цветной камерой RGB для полноцветной 3D-печати и оцифровки.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-einstar",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-einstar-2",
+      "pageType": "product",
+      "title": "3D сканер Shining 3D Einstar 2 | ДС‑Инжиниринг",
+      "description": "Обновленный портативный 3D-сканер Shining 3D Einstar 2-го поколения с улучшенной матрицей и повышенной детализацией.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-einstar-2",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-einstar-vega",
+      "pageType": "product",
+      "title": "Автономный 3D сканер Shining 3D Einstar VEGA | ДС‑Инжиниринг",
+      "description": "Полностью автономный беспроводной 3D-сканер Shining 3D Einstar VEGA со встроенным сенсорным экраном, процессором и аккумулятором. Сканирование без проводов и ПК.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-einstar-vega",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-einstar-rockit",
+      "pageType": "product",
+      "title": "3D сканер Shining 3D Einstar Rockit | ДС‑Инжиниринг",
+      "description": "Скоростной ручной 3D-сканер Shining 3D Einstar Rockit повышенной производительности для реверса и дизайна.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-einstar-rockit",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-einscan-se-v2",
+      "pageType": "product",
+      "title": "Настольный 3D сканер Shining 3D EinScan SE V2 | ДС‑Инжиниринг",
+      "description": "Настольный 3D-сканер EinScan-SE V2 с поворотным столом белого структурированного света для точной оцифровки мелких деталей.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-einscan-se-v2",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-einscan-sp-v2",
+      "pageType": "product",
+      "title": "Прецизионный настольный 3D сканер Shining 3D EinScan SP V2 | ДС‑Инжиниринг",
+      "description": "Профессиональный настольный 3D-сканер EinScan-SP V2 повышенной точности (до 0.05 мм) с оптическими маркерами на поворотном столе.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-einscan-sp-v2",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-medixa",
+      "pageType": "product",
+      "title": "Медицинский 3D сканер Shining 3D Medixa | ДС‑Инжиниринг",
+      "description": "Специализированный 3D-сканер Shining 3D Medixa для ортопедии, протезирования, пластической хирургии и бесконтактной оцифровки человека.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-medixa",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-rigil-pro",
+      "pageType": "product",
+      "title": "Флагманский 3D сканер Shining 3D EinScan Rigil Pro | ДС‑Инжиниринг",
+      "description": "Гибридный лазерный 3D-сканер профессиональной серии Shining 3D EinScan Rigil Pro: синий лазер + VCSEL для реверса и контроля деталей.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-rigil-pro",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-rigil",
+      "pageType": "product",
+      "title": "3D сканер Shining 3D EinScan Rigil | ДС‑Инжиниринг",
+      "description": "Профессиональный ручной 3D-сканер Shining 3D EinScan Rigil для конструкторских бюро и производства.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-rigil",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-rigil-accessories-pro-kit",
+      "pageType": "product",
+      "title": "3D сканер Shining 3D EinScan Rigil + Accessories Pro Kit | ДС‑Инжиниринг",
+      "description": "Комплект сканера EinScan Rigil с расширенным набором аксессуаров Pro Kit: поворотный стол, штатив, маркеры и кейс.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-rigil-accessories-pro-kit",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-rigil-lite",
+      "pageType": "product",
+      "title": "3D сканер Shining 3D EinScan Rigil Lite | ДС‑Инжиниринг",
+      "description": "Легкий и экономичный ручной 3D-сканер Shining 3D EinScan Rigil Lite для макетирования и базового реверса.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-rigil-lite",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-hx2",
+      "pageType": "product",
+      "title": "3D сканер ScanLine EasyScan HX2 2-го поколения | ДС‑Инжиниринг",
+      "description": "Модернизированный российский 3D-сканер ScanLine EasyScan HX2 с повышенной скоростью и улучшенным лазерным сенсором.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-hx2",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-libre",
+      "pageType": "product",
+      "title": "Беспроводной 3D сканер ScanLine EasyScan Libre | ДС‑Инжиниринг",
+      "description": "Беспроводной мобильный 3D-сканер ScanLine EasyScan Libre для свободного сканирования в цеху и на монтажных площадках.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-libre",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-combo",
+      "pageType": "product",
+      "title": "Метрологический 3D сканер ScanLine EasyScan Combo (Аналог FreeScan Combo) | ДС‑Инжиниринг",
+      "description": "Российский метрологический 3D-сканер ScanLine EasyScan Combo: 26 синих лазерных линий + VCSEL. Точность 0.02 мм. Аналог Shining 3D FreeScan Combo.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-combo",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-combo-exmodel-pro",
+      "pageType": "product",
+      "title": "3D сканер ScanLine EasyScan Combo + ПО EXModel Pro Bundle | ДС‑Инжиниринг",
+      "description": "Комплект метрологического сканера ScanLine EasyScan Combo с лицензией ПО обратного инжиниринга EXModel Pro.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-combo-exmodel-pro",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-combo-plus",
+      "pageType": "product",
+      "title": "3D сканер повышенной мощности ScanLine EasyScan Combo+ | ДС‑Инжиниринг",
+      "description": "Флагманский 3D-сканер ScanLine EasyScan Combo+ со скоростью свыше 2.2 млн точек/сек для полированных поверхностей.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-combo-plus",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-combo-plus-exmodel-pro",
+      "pageType": "product",
+      "title": "3D сканер ScanLine EasyScan Combo+ and EXModel Pro Bundle | ДС‑Инжиниринг",
+      "description": "Инженерный комплекс: сканер EasyScan Combo+ и лицензия САПР EXModel Pro.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-combo-plus-exmodel-pro",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-hx",
+      "pageType": "product",
+      "title": "Российский 3D сканер ScanLine EasyScan HX (Аналог EinScan HX) | ДС‑Инжиниринг",
+      "description": "Отечественный гибридный лазерный 3D-сканер ScanLine EasyScan HX: синий лазер + LED подсветка. Прямой аналог Shining 3D EinScan HX с гарантией и сервисом в РФ.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-hx",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-rigil",
+      "pageType": "product",
+      "title": "3D сканер ScanLine EasyScan Rigil — поставка, внедрение и консультации | ДС‑Инжиниринг",
+      "description": "3D сканер ScanLine EasyScan Rigil: ScanLine EasyScan Rigil — независимый ручной 3D-сканер «всё-в-одном» со встроенным вычислительным модулем, сенсорным экраном и беспроводной передачей данных по ...",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-rigil",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-staticscan-inspec2",
+      "pageType": "product",
+      "title": "3D сканер ScanLine StaticScan Inspec2 — поставка, внедрение и консультации | ДС‑Инжиниринг",
+      "description": "3D сканер ScanLine StaticScan Inspec2: ScanLine StaticScan Inspec2 — лабораторный стационарный 3D-сканер со встроенной поворотной платформой на 3 моторизованных оси. Обеспечивает автоматическое скани...",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-staticscan-inspec2",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-ue-pro",
+      "pageType": "product",
+      "title": "3D сканер ScanLine EasyScan UE PRO с фотограмметрией (Аналог FreeScan UE Pro) | ДС‑Инжиниринг",
+      "description": "Российский метрологический сканер ScanLine EasyScan UE PRO со встроенной фотограмметрией. Точность 0.02 мм на больших деталях. Аналог FreeScan UE Pro.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-ue-pro",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-ue-pro-exmodel-pro",
+      "pageType": "product",
+      "title": "3D сканер ScanLine EasyScan UE PRO and EXModel Pro Bundle | ДС‑Инжиниринг",
+      "description": "Инженерный комплекс для контроля геометрии крупных деталей: сканер EasyScan UE PRO + ПО EXModel Pro.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-ue-pro-exmodel-pro",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-ue-pro2",
+      "pageType": "product",
+      "title": "Флагманский 3D сканер ScanLine EasyScan UE PRO2 (50 лазерных линий) | ДС‑Инжиниринг",
+      "description": "Флагманский российский 3D-сканер 2-го поколения ScanLine EasyScan UE PRO2 с 50 синими лазерными линиями и скоростью 3.45 млн точек/сек.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-ue-pro2",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-ue-pro2-exmodel-pro",
+      "pageType": "product",
+      "title": "3D сканер ScanLine EasyScan UE PRO2 and EXModel Pro Bundle | ДС‑Инжиниринг",
+      "description": "Топовый комплекс лазерного 3D-сканирования и реверса: 50-линейный сканер EasyScan UE PRO2 + САПР EXModel Pro.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-ue-pro2-exmodel-pro",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-omni",
+      "pageType": "product",
+      "title": "3D сканер ScanLine EasyScan Omni — поставка, внедрение и консультации | ДС‑Инжиниринг",
+      "description": "3D сканер ScanLine EasyScan Omni: ScanLine EasyScan Omni — флагманский отечественный метрологический оптический гибридный 3D-сканер со встроенной фотограмметрией VPG и алгоритмами нейросетевого ...",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-omni",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-freescan-omni-lite",
+      "pageType": "product",
+      "title": "3D сканер Shining 3D FreeScan Omni Lite (модульный) | ДС‑Инжиниринг",
+      "description": "Метрологический модульный лазерный 3D-сканер нового поколения Shining 3D FreeScan Omni Lite с поддержкой апгрейда модулями 1, 2 (VPG) и 3 (AI).",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-freescan-omni-lite",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-omni-module-1-upfront",
+      "pageType": "product",
+      "title": "Module 1 upfront для сканера FreeScan Omni Lite | ДС‑Инжиниринг",
+      "description": "Аппаратный модуль расширения скорости и поля обзора для метрологического сканера Shining 3D FreeScan Omni Lite.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-omni-module-1-upfront",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-omni-module-2-vpg",
+      "pageType": "product",
+      "title": "Module 2 (VPG) для сканера FreeScan Omni Lite | ДС‑Инжиниринг",
+      "description": "Модуль виртуальной фотограмметрии Virtual Photogrammetry Grid (VPG) для сканера FreeScan Omni Lite. Исключение накопления погрешности на длине.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-omni-module-2-vpg",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-omni-module-3-ai",
+      "pageType": "product",
+      "title": "Module 3 (AI Feature Recognition) для Omni Lite | ДС‑Инжиниринг",
+      "description": "Интеллектуальный нейросетевой модуль распознавания геометрических элементов (отверстия, кромки, пазы) в реальном времени для FreeScan Omni Lite.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-omni-module-3-ai",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-freescan-omni",
+      "pageType": "product",
+      "title": "Флагманский 3D сканер Shining 3D FreeScan Omni | ДС‑Инжиниринг",
+      "description": "Топовая конфигурация метрологического лазерного сканера Shining 3D FreeScan Omni со встроенными модулями VPG фотограмметрии и AI распознавания элементов.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-freescan-omni",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-trio",
+      "pageType": "product",
+      "title": "3-камерный 3D сканер ScanLine EasyScan TRIO | ДС‑Инжиниринг",
+      "description": "Инновационный российский 3D-сканер ScanLine EasyScan TRIO с 3 промышленными камерами по 5 Мп для одновременного охвата широкого поля и микрорельефа.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-trio",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-easyscan-ue-pronova",
+      "pageType": "product",
+      "title": "3D сканер ScanLine EasyScan UE ProNova | ДС‑Инжиниринг",
+      "description": "Метрологический лазерный сканер ScanLine EasyScan UE ProNova с поддержкой бесшовного апгрейда до оптической трекинговой КИМ TrackerScan.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-easyscan-ue-pronova",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-trackerscan-pronova",
+      "pageType": "product",
+      "title": "Оптическая координатно-измерительная система ScanLine TrackerScan ProNova | ДС‑Инжиниринг",
+      "description": "Флагманская российская оптическая КИМ динамического трекинга TrackerScan ProNova. Лазерное 3D-сканирование БЕЗ наклеивания маркеров на деталь.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-trackerscan-pronova",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-upgrade-pronova-to-trackerscan",
+      "pageType": "product",
+      "title": "Модернизация EasyScan UE ProNova до TrackerScan ProNova | ДС‑Инжиниринг",
+      "description": "Пакет сервисной модернизации сканера EasyScan UE ProNova до полноценной оптической координатно-измерительной системы TrackerScan ProNova.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-upgrade-pronova-to-trackerscan",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-trackerscan-pro-s",
+      "pageType": "product",
+      "title": "Оптическая КИМ ScanLine TrackerScan Pro S | ДС‑Инжиниринг",
+      "description": "Оптическая координатно-измерительная система со стандартным полем трекинга ScanLine TrackerScan Pro S для цехового контроля без маркеров.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-trackerscan-pro-s",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-extra-tracker-pro-s",
+      "pageType": "product",
+      "title": "Дополнительный трекер ScanLine TrackerScan Pro S | ДС‑Инжиниринг",
+      "description": "Второй оптический трекер расширения для многокамерной измерительной сети ScanLine TrackerScan Pro S без слепых зон.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-extra-tracker-pro-s",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-trackerscan-pro-w",
+      "pageType": "product",
+      "title": "Широкопольная оптическая КИМ ScanLine TrackerScan Pro W | ДС‑Инжиниринг",
+      "description": "Широкопольная оптическая координатно-измерительная система ScanLine TrackerScan Pro W (Wide) с объемом контроля до 30 м³ для авиации и судостроения.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-trackerscan-pro-w",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-extra-tracker-pro-w",
+      "pageType": "product",
+      "title": "Дополнительный широкопольный трекер ScanLine TrackerScan Pro W | ДС‑Инжиниринг",
+      "description": "Синхронизируемый широкоугольный трекер для масштабирования измерительного пространства TrackerScan Pro W до 100 м³.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-extra-tracker-pro-w",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-freeprobe-1-2",
+      "pageType": "product",
+      "title": "Беспроводной контактный щуп FreeProbe / FreeProbe 2 | ДС‑Инжиниринг",
+      "description": "Беспроводной контактный щуп FreeProbe / FreeProbe 2 для оптических КИМ TrackerScan. Измерение скрытых зон, отверстий и базовых поверхностей (GD&T).",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-freeprobe-1-2",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-freeprobe-2-pro",
+      "pageType": "product",
+      "title": "Прецизионный контактный щуп FreeProbe 2 Pro | ДС‑Инжиниринг",
+      "description": "Флагманский беспроводной оптический щуп FreeProbe 2 Pro с пьезоэлектрическим датчиком усилия касания для субмикронной повторяемости.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-freeprobe-2-pro",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/shining-autoscan-inspec-2",
+      "pageType": "product",
+      "title": "Автоматический 3D сканер Shining 3D AutoScan Inspec 2 | ДС‑Инжиниринг",
+      "description": "Полностью автоматический 3-осевой настольный 3D-сканер Shining 3D AutoScan Inspec 2 с точностью 10 мкм для мелких прецизионных деталей.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/shining-autoscan-inspec-2",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-staticscan-q9",
+      "pageType": "product",
+      "title": "Стационарный оптический 3D сканер ScanLine StaticScan Q9 (9 Мп) | ДС‑Инжиниринг",
+      "description": "Российский стационарный оптический 3D-сканер ScanLine StaticScan Q9 с двумя 9 Мп камерами и точностью 0.008 мм для контроля штампов и отливок.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-staticscan-q9",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-staticscan-q12",
+      "pageType": "product",
+      "title": "Стационарный 3D сканер сверхвысокого разрешения ScanLine StaticScan Q12 (12 Мп) | ДС‑Инжиниринг",
+      "description": "Флагманский отечественный стационарный 3D-сканер ScanLine StaticScan Q12 с двумя 12 Мп матрицами и точностью до 0.005 мм (5 мкм).",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-staticscan-q12",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/scanline-robotscan-q12",
+      "pageType": "product",
+      "title": "Роботизированная система 3D-контроля ScanLine RobotScan Q12 | ДС‑Инжиниринг",
+      "description": "Роботизированная ячейка автоматического 3D-контроля ScanLine RobotScan Q12 на базе 6-осевого промышленного робота и оптического сенсора 12 Мп.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/scanline-robotscan-q12",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/freescan-combo",
+      "pageType": "product",
+      "title": "Лазерный 3D-сканер Shining 3D FreeScan Combo (двойной источник) | ДС‑Инжиниринг",
+      "description": "Метрологический портативный 3D-сканер Shining 3D FreeScan Combo: 26 синих лазерных линий + инфракрасный VCSEL источник. Точность до 0.02 мм, сканирование металла без матирующего спрея.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/freescan-combo",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/freescan-ue-pro",
+      "pageType": "product",
+      "title": "Лазерный 3D-сканер Shining 3D FreeScan UE Pro с фотограмметрией | ДС‑Инжиниринг",
+      "description": "Метрологический 3D-сканер FreeScan UE Pro со встроенной фотограмметрией: 32 синие лазерные линии, объемная точность 0.02+0.015 мм/м, оцифровка крупногабаритных деталей.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/freescan-ue-pro",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/einscan-pro-hd",
+      "pageType": "product",
+      "title": "Ручной 3D-сканер Shining 3D EinScan Pro HD | ДС‑Инжиниринг",
+      "description": "Мультифункциональный оптический 3D-сканер EinScan Pro HD со структурированным светом: ручной HD режим, режим со штативом и поворотным столом, цветная текстурная камера.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/einscan-pro-hd",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/leica-at960",
+      "pageType": "product",
+      "title": "Лазерный трекер Leica Absolute Tracker AT960 (6DoF) | ДС‑Инжиниринг",
+      "description": "Флагманский 6DoF лазерный трекер Leica Absolute Tracker AT960. Интерферометр AIFM, частота 1000 Гц, поддержка 3D-сканера Absolute Scanner AS1, беспроводного щупа T-Probe и B-Probe.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/leica-at960",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/leica-at500",
+      "pageType": "product",
+      "title": "Лазерный трекер Leica Absolute Tracker AT500 (автономный 6DoF) | ДС‑Инжиниринг",
+      "description": "Портативный лазерный трекер нового поколения Leica Absolute Tracker AT500. Встроенный контроллер без внешних блоков, защита IP54, аккумуляторы горячей замены, щуп B-Probeplus.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/leica-at500",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/leica-at930",
+      "pageType": "product",
+      "title": "Лазерный трекер Leica Absolute Tracker AT930 (динамический 3D) | ДС‑Инжиниринг",
+      "description": "Высокодинамичный 3D лазерный трекер Leica Absolute Tracker AT930 со встроенным абсолютным интерферометром AIFM и системой PowerLock для скоростных измерений по отражателям SMR.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/leica-at930",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/leica-ats600",
+      "pageType": "product",
+      "title": "Лазерный трекер прямого сканирования Leica Absolute Tracker ATS600 | ДС‑Инжиниринг",
+      "description": "Первый в мире сканирующий лазерный трекер Leica ATS600 без отражателей. Прямое лазерное 3D-сканирование крупногабаритных поверхностей на дистанциях до 60 метров с точностью от 0.3 мм.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/leica-ats600",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/leica-ats800",
+      "pageType": "product",
+      "title": "Лазерный трекер Leica Absolute Tracker ATS800 (скоростное сканирование) | ДС‑Инжиниринг",
+      "description": "Инновационный лазерный трекер прямого сканирования Leica ATS800. Высокоскоростная оцифровка поверхностей и автоматическое распознавание кромок и отверстий без мишеней до 80 м.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/leica-ats800",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/leica-at403",
+      "pageType": "product",
+      "title": "Лазерный трекер Leica Absolute Tracker AT403 (Hexagon) | ДС‑Инжиниринг",
+      "description": "Ультрапортативный лазерный трекер Leica AT403 с защитой IP54, сферой измерений до 320 м и автономным питанием от аккумуляторов для крупногабаритного контроля в цеху и на улице.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/leica-at403",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/renishaw-equator-300",
+      "pageType": "product",
+      "title": "Калибрующая система Renishaw Equator 300 / 500 | ДС‑Инжиниринг",
+      "description": "Универсальный цеховой сравнительный калибратор Renishaw Equator 300 / 500 для 100% контроля серийных деталей рядом со станком с ЧПУ. Автоматическая термокомпенсация 10–40°C.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/renishaw-equator-300",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/renishaw-ph20-sp25",
+      "pageType": "product",
+      "title": "Измерительные головки и датчики Renishaw PH20 / REVO / SP25M | ДС‑Инжиниринг",
+      "description": "Поставка, монтаж и модернизация КИМ 5-осевыми измерительными головками Renishaw PH20, REVO-2 и сканирующими датчиками SP25M. Ускорение циклов измерений в 3 раза.",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/renishaw-ph20-sp25",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/renishaw-revo-2",
+      "pageType": "product",
+      "title": "5-осевая сканирующая измерительная система Renishaw REVO-2 — поставка, внедрение и консультации | ДС‑Инжиниринг",
+      "description": "5-осевая сканирующая измерительная система Renishaw REVO-2: Renishaw REVO-2 — флагманская мультисенсорная 5-осевая система для координатно-измерительных машин. Совмещает 2 оси поворота головки и 3 оси КИМ, обеспечивая не...",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/renishaw-revo-2",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (111 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/renishaw-stylus-fixtures",
+      "pageType": "product",
+      "title": "Прецизионные измерительные щупы, стилусы и оснастка Renishaw M2 / M3 / M4 / M5 — поставка, внедрение и консультации | ДС‑Инжиниринг",
+      "description": "Прецизионные измерительные щупы, стилусы и оснастка Renishaw M2 / M3 / M4 / M5: ДС‑Инжиниринг осуществляет прямые поставки оригинальных измерительных щупов Renishaw всех стандартов резьб (M2, M3, M4, M5). В ассортименте: прямые рубиновые и ...",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/renishaw-stylus-fixtures",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (131 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/renishaw-tp20-tp200",
+      "pageType": "product",
+      "title": "Триггерные датчики Renishaw TP20 / TP200 и магазины автосмены MCR20 / SCR200 — поставка, внедрение и консультации | ДС‑Инжиниринг",
+      "description": "Триггерные датчики Renishaw TP20 / TP200 и магазины автосмены MCR20 / SCR200: Датчики Renishaw TP20 (кинематический) и TP200 (тензометрический субмикронной точности) — мировой промышленный стандарт для дискретных контактных замеров на коо...",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/renishaw-tp20-tp200",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (129 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/renishaw-ucc-retrofit",
+      "pageType": "product",
+      "title": "ЧПУ-контроллеры и комплекты глубокой модернизации (ретрофита) КИМ Renishaw UCC — поставка, внедрение и консультации | ДС‑Инжиниринг",
+      "description": "ЧПУ-контроллеры и комплекты глубокой модернизации (ретрофита) КИМ Renishaw UCC: Комплексный ретрофит КИМ от инженеров ДС‑Инжиниринг на базе ЧПУ контроллеров Renishaw UCC позволяет вернуть старым координатно-измерительным машинам (DEA, Zeiss...",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/renishaw-ucc-retrofit",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (131 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/hexagon-aicon-stereoscan-neo",
+      "pageType": "product",
+      "title": "Оптический стационарный 3D-сканер Hexagon AICON StereoScan neo — поставка, внедрение и консультации | ДС‑Инжиниринг",
+      "description": "Оптический стационарный 3D-сканер Hexagon AICON StereoScan neo: Hexagon AICON StereoScan neo — флагманский стационарный оптический 3D-сканер высшего разрешения. Оснащен двумя 16-мегапиксельными цифровыми камерами и цифровым ...",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/hexagon-aicon-stereoscan-neo",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (115 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/hexagon-aicon-primescan",
+      "pageType": "product",
+      "title": "Оптический 3D-сканер Hexagon AICON PrimeScan — поставка, внедрение и консультации | ДС‑Инжиниринг",
+      "description": "Оптический 3D-сканер Hexagon AICON PrimeScan: Hexagon AICON PrimeScan предлагает непревзойденное качество оцифровки в компактном и надежном моноблочном корпусе. Доступен в 8 фиксированных конфигурациях поле...",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/hexagon-aicon-primescan",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (97 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/pmt-alpha-7axis-pro",
+      "pageType": "product",
+      "title": "Мобильная 7-осевая КИМ PMT ALPHA ARM Pro 7-Axis со сканером PMT GH — поставка, внедрение и консультации | ДС‑Инжиниринг",
+      "description": "Мобильная 7-осевая КИМ PMT ALPHA ARM Pro 7-Axis со сканером PMT GH: Комплекс PMT ALPHA ARM Pro 7-Axis объединяет прецизионные контактные измерения рубиновыми щупами Renishaw и сверхскоростное бесконтактное 3D-сканирование синим ...",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/pmt-alpha-7axis-pro",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (119 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/hardware/industrial-3d-printer-slm",
+      "pageType": "product",
+      "title": "Промышленный металлический 3D-принтер SLM / DMP — поставка, внедрение и консультации | ДС‑Инжиниринг",
+      "description": "Промышленный металлический 3D-принтер SLM / DMP: Предназначен для изготовления сложных прототипов, литьевой оснастки с конформным охлаждением и мелкосерийных деталей ответственного назначения для авиации и кос...",
+      "canonicalUrl": "https://ds-engineering.ru/hardware/industrial-3d-printer-slm",
+      "ogType": "product",
+      "ogImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "product",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (100 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/services/3d-scanning",
+      "pageType": "service",
+      "title": "Услуги прецизионного 3D-сканирования деталей в Самаре и по РФ | ДС‑Инжиниринг",
+      "description": "Лазерное и оптическое 3D-сканирование изделий от 10 мм до 20 м: ScanLine EasyScan Omni, Hexagon RS6, Leica AT403. Точность до 0.020 мм, выезд инженеров-метрологов по всей России за 24–48 часов.",
+      "canonicalUrl": "https://ds-engineering.ru/services/3d-scanning",
+      "ogType": "website",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "service",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/services/reverse-engineering",
+      "pageType": "service",
+      "title": "Обратный инжиниринг (реверс) и 3D-моделирование по сканам (STEP, ЕСКД) | ДС‑Инжиниринг",
+      "description": "Профессиональный реверс-инжиниринг деталей, оснастки и узлов по данным 3D-сканирования и КИМ: создание точных твердотельных CAD-моделей (STEP, Parasolid, IGES) для станков с ЧПУ и комплекта чертежей по ЕСКД.",
+      "canonicalUrl": "https://ds-engineering.ru/services/reverse-engineering",
+      "ogType": "website",
+      "ogImage": "https://images.unsplash.com/photo-158109226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "service",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/services/parts-inspection",
+      "pageType": "service",
+      "title": "Метрологический контроль геометрии деталей и FAI-протоколы (GD&T) | ДС‑Инжиниринг",
+      "description": "Метрологический 3D-контроль геометрии деталей и оснастки по CAD-моделям: расчет отклонений формы и расположения (GD&T ISO 1101 / ASME Y14.5), инспекция первого изделия (FAI) в PolyWorks|Inspector™.",
+      "canonicalUrl": "https://ds-engineering.ru/services/parts-inspection",
+      "ogType": "website",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "service",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/services/postprocessors-dev",
+      "pageType": "service",
+      "title": "Разработка постпроцессоров для станков с ЧПУ (Fanuc, Heidenhain, Siemens) | ДС‑Инжиниринг",
+      "description": "Разработка и наладка надежных постпроцессоров для 3–5 осевых фрезерных, токарных и многозадачных станков с ЧПУ (TopSolid 7 CAM, PowerMill). 100% кинематическая симуляция и защита от аварий.",
+      "canonicalUrl": "https://ds-engineering.ru/services/postprocessors-dev",
+      "ogType": "website",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "service",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/services/tooling-design",
+      "pageType": "service",
+      "title": "Проектирование и изготовление пресс-форм и штампов \"под ключ\" | ДС‑Инжиниринг",
+      "description": "Сквозное проектирование технологической оснастки: пресс-формы для литья пластмасс и металлов под давлением, гибочные и вырубные штампы, модельные комплекты. DFM-анализ, КД по ЕСКД и мехобработка на ЧПУ.",
+      "canonicalUrl": "https://ds-engineering.ru/services/tooling-design",
+      "ogType": "website",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "service",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/services/cmm-maintenance",
+      "pageType": "service",
+      "title": "Сервисное обслуживание, калибровка и модернизация КИМ по ISO 10360 | ДС‑Инжиниринг",
+      "description": "Комплексное ТО, диагностика, юстировка и калибровка координатно-измерительных машин с выдачей сертификатов по ISO 10360-2. Модернизация контроллерами Renishaw UCC и переход на PolyWorks.",
+      "canonicalUrl": "https://ds-engineering.ru/services/cmm-maintenance",
+      "ogType": "website",
+      "ogImage": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "service",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/news-rel-1",
+      "pageType": "news",
+      "title": "Вышел долгожданный релиз TopSolid 7.20: Новые алгоритмы 5-осевой обработки | Пресс-центр ДС‑Инжиниринг",
+      "description": "TopSolid SAS представила масштабное обновление. Ключевые новшества: ускоренный расчет траекторий обработки крыльчаток, улучшенный модуль PDM и поддержка облачной совместной работы.",
+      "canonicalUrl": "https://ds-engineering.ru/news/news-rel-1",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (102 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/news-rel-2",
+      "pageType": "news",
+      "title": "Обновление PolyWorks 2025: Улучшенная интеграция с лазерными трекерами | Пресс-центр ДС‑Инжиниринг",
+      "description": "InnovMetric Software выпустила новую версию платформы PolyWorks. Основной акцент сделан на бесшовную работу с оптическими 3D-сканерами и лазерными трекерами.",
+      "canonicalUrl": "https://ds-engineering.ru/news/news-rel-2",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (98 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/news-rel-3",
+      "pageType": "news",
+      "title": "Анонс модуля TopSolid'Inspection для сквозного контроля качества | Пресс-центр ДС‑Инжиниринг",
+      "description": "В экосистеме TopSolid появился специализированный модуль для подготовки программ измерения на КИМ и создания карт контроля прямо из 3D-модели (PMI).",
+      "canonicalUrl": "https://ds-engineering.ru/news/news-rel-3",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/news-expo-1",
+      "pageType": "news",
+      "title": "Итоги выставки «Металлообработка 2026»: новые контакты и контракты | Пресс-центр ДС‑Инжиниринг",
+      "description": "Стенд «ДС‑Инжиниринг» посетили более 1500 специалистов. Мы представили новейшие 3D-сканеры Shining 3D и провели живые демонстрации TopSolid 7.",
+      "canonicalUrl": "https://ds-engineering.ru/news/news-expo-1",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/news-expo-2",
+      "pageType": "news",
+      "title": "Участие в форуме «Технопром-2026» в Новосибирске | Пресс-центр ДС‑Инжиниринг",
+      "description": "Мы приняли участие в международном форуме технологического развития «Технопром». Обсудили перспективы цифровизации зауральских производств.",
+      "canonicalUrl": "https://ds-engineering.ru/news/news-expo-2",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/news-expo-3",
+      "pageType": "news",
+      "title": "ДС‑Инжиниринг на выставке «Машиностроение. Металлургия» (Самара) | Пресс-центр ДС‑Инжиниринг",
+      "description": "На домашней площадке в Самаре компания продемонстрировала работу роботизированной ячейки для 3D-сканирования автомобильных кузовов.",
+      "canonicalUrl": "https://ds-engineering.ru/news/news-expo-3",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/news-proj-1",
+      "pageType": "news",
+      "title": "Внедрение TopSolid 7 на крупном приборостроительном заводе | Пресс-центр ДС‑Инжиниринг",
+      "description": "Успешно завершен первый этап интеграции единой CAD/CAM среды для проектирования и изготовления сложной СВЧ-оснастки.",
+      "canonicalUrl": "https://ds-engineering.ru/news/news-proj-1",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/news-proj-2",
+      "pageType": "news",
+      "title": "Реверс-инжиниринг импеллера турбины для энергокомпании | Пресс-центр ДС‑Инжиниринг",
+      "description": "Специалисты ДС‑Инжиниринг выполнили высокоточное 3D-сканирование и обратное проектирование вышедшего из строя ротора газовой турбины.",
+      "canonicalUrl": "https://ds-engineering.ru/news/news-proj-2",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092162384-8987c1d64718?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/news-proj-3",
+      "pageType": "news",
+      "title": "Поставка и ПНР портальной КИМ PMT для автопрома | Пресс-центр ДС‑Инжиниринг",
+      "description": "На заводе по производству автокомпонентов установлена и введена в эксплуатацию высокоточная портальная координатно-измерительная машина PMT ALPHA.",
+      "canonicalUrl": "https://ds-engineering.ru/news/news-proj-3",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/news-event-1",
+      "pageType": "news",
+      "title": "Расширение мобильного парка 3D-сканеров и выездных инжиниринговых услуг | Пресс-центр ДС‑Инжиниринг",
+      "description": "«ДС-Инжиниринг» усиливает направление выездного метрологического контроля и обратного инжиниринга новейшими оптическими гибридными 3D-сканерами Shining 3D FreeScan со статусом СИ в ФГИС «АРШИН».",
+      "canonicalUrl": "https://ds-engineering.ru/news/news-event-1",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (99 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/news-event-2",
+      "pageType": "news",
+      "title": "Бесплатный вебинар: \"Секреты эффективного программирования токарно-фрезерных ОЦ\" | Пресс-центр ДС‑Инжиниринг",
+      "description": "Приглашаем программистов ЧПУ и технологов на технический вебинар. Разберем сложные случаи программирования автоматов продольного точения в TopSolid.",
+      "canonicalUrl": "https://ds-engineering.ru/news/news-event-2",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1588196749597-9ff0468927b1?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (108 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/news-event-3",
+      "pageType": "news",
+      "title": "ДС‑Инжиниринг подтвердил статус платинового реселлера TopSolid SAS | Пресс-центр ДС‑Инжиниринг",
+      "description": "По итогам прошедшего года наша компания вновь была удостоена высшего партнерского статуса от разработчика программного комплекса TopSolid.",
+      "canonicalUrl": "https://ds-engineering.ru/news/news-event-3",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1552581234-26160f608093?auto=format&fit=crop&w=800&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/art-tech-laser-scanning",
+      "pageType": "news",
+      "title": "Методология высокоточного лазерного 3D-сканирования сварных корпусных конструкций | Пресс-центр ДС‑Инжиниринг",
+      "description": "Инженерный регламент контроля геометрии и остаточных сварочных деформаций крупногабаритных рам с применением лазерных 3D-сканеров и фотограмметрии. Интерактивный калькулятор допусков и эпюра отклонений.",
+      "canonicalUrl": "https://ds-engineering.ru/news/art-tech-laser-scanning",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (109 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/art-tech-5axis-postprocessing",
+      "pageType": "news",
+      "title": "Постпроцессирование для 5-осевых фрезерных ОЦ в TopSolid 7: кинематика RTCP | Пресс-центр ДС‑Инжиниринг",
+      "description": "Математические модели кинематической трансформации угловых координат (стол-стол, голова-стол, голова-голова), компенсация длины инструмента G43.4/G43.5 и сглаживание траекторий в TopSolid'Cam.",
+      "canonicalUrl": "https://ds-engineering.ru/news/art-tech-5axis-postprocessing",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (103 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/news/art-tech-polyworks-automation",
+      "pageType": "news",
+      "title": "Автоматизация метрологических инспекций в PolyWorks: скриптинг макросов и интеграция с КИМ | Пресс-центр ДС‑Инжиниринг",
+      "description": "Практическое руководство по созданию пользовательских сценариев на командном языке PolyWorks для серийного контроля геометрических элементов, формирования сводных паспортов качества и экспорта данных.",
+      "canonicalUrl": "https://ds-engineering.ru/news/art-tech-polyworks-automation",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (118 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-1",
+      "pageType": "knowledge",
+      "title": "Как выбрать между лазерным трекером и мобильной КИМ для контроля геометрии? | База знаний ДС‑Инжиниринг",
+      "description": "Сравнение точности, радиуса действия, портативности и трудоемкости измерений на примере Leica AT403/AT960 и Hexagon Absolute Arm с AS1.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-1",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (103 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-2",
+      "pageType": "knowledge",
+      "title": "Настройка многоосевых трансформаций TRAORI и CYCLE800 в постпроцессорах для стойки Siemens 840D | База знаний ДС‑Инжиниринг",
+      "description": "Особенности математического описания кинематических цепочек станка типа стол-стол и голова-голова в CAM-системах TopSolid и PowerMill.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-2",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (123 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-3",
+      "pageType": "knowledge",
+      "title": "Рекомендации по подготовке блестящих и прозрачных поверхностей к 3D-сканированию | База знаний ДС‑Инжиниринг",
+      "description": "Когда необходимо применять матирующие спреи и как сканеры синего лазера (Hexagon AS1, Shining3D FreeScan) справляются с бликами без спрея.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-3",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (108 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-4",
+      "pageType": "knowledge",
+      "title": "Преимущества встроенной PDM в TopSolid 7 перед раздельными CAD и PDM системами | База знаний ДС‑Инжиниринг",
+      "description": "Почему сквозная PDM архитектура исключает потерю ссылок, дублирование файлов и ошибки в версиях чертежей.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-4",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (106 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-5",
+      "pageType": "knowledge",
+      "title": "Порядок поверки и калибровки КИМ по стандарту ГОСТ Р ИСО 10360-2 | База знаний ДС‑Инжиниринг",
+      "description": "Методика подтверждения максимальной допускаемой погрешности линейных измерений (MPEe) с помощью концевых мер длины и лазерных интерферометров.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-5",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [],
+      "score": 100,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-6",
+      "pageType": "knowledge",
+      "title": "Методика построения B-Spline поверхностей по облаку точек в Geomagic Design X для авиационных лопаток | База знаний ДС‑Инжиниринг",
+      "description": "Пошаговый алгоритм ориентации сканированной сетки, нарезки профильных сечений лопатки и параметризации перового элемента с допуском менее 0.01 мм.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-6",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (129 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-7",
+      "pageType": "knowledge",
+      "title": "Настройка RTCP (Rotating Tool Center Point) и G43.4 для станочных стоек Fanuc 31i-B5 в TopSolid'CAM 7 | База знаний ДС‑Инжиниринг",
+      "description": "Разбор параметров векторов ориентации инструмента, задержек компенсации длины и защиты от столкновений при непрерывной 5-осевой обработке.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-7",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (129 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-8",
+      "pageType": "knowledge",
+      "title": "Развертывание клиент-серверной архитектуры PolyWorks|DataLoop™ на промышленном предприятии | База знаний ДС‑Инжиниринг",
+      "description": "Централизованное хранение проектов 3D-контроля геометрии, поддержка версионности ревизий и автоматическое формирование статистических отчетов SPC.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-8",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (118 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-9",
+      "pageType": "knowledge",
+      "title": "Метрологические испытания 3D-сканеров по международному стандарту VDI/VDE 2634 (Часть 2 и 3) | База знаний ДС‑Инжиниринг",
+      "description": "Методика подтверждения объемной точности ручных лазерных и оптических 3D-сканеров (ScanLine, Shining 3D) с использованием артефактов и эталонных жезлов.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-9",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (120 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-10",
+      "pageType": "knowledge",
+      "title": "Базирование по системе RPS (Reference Point System) в PolyWorks|Inspector™ для кузовных штамповок | База знаний ДС‑Инжиниринг",
+      "description": "Пошаговое построение баз RPS с ограничением степеней свободы по технологическим отверстиям и пазам автомобильных деталей.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-10",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (125 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-11",
+      "pageType": "knowledge",
+      "title": "Сравнение циклов 5-осевой обработки M128/TCPM и Plane Spatial в стойках Heidenhain TNC 640 и Mazak SmoothX | База знаний ДС‑Инжиниринг",
+      "description": "Особенности синтаксиса и алгоритмов интерполяции при переводе NC-программ между европейскими и японскими 5-осевыми обрабатывающими центрами.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-11",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (134 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-12",
+      "pageType": "knowledge",
+      "title": "Высокоскоростное фрезерование (HSM) закаленных пресс-форм HRC 55-62 в TopSolid'CAM 7 | База знаний ДС‑Инжиниринг",
+      "description": "Стратегии трохоидального резания, минимизация динамических нагрузок на шпиндель и выбор инструментального патрона с термозажимом.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-12",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (112 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-13",
+      "pageType": "knowledge",
+      "title": "Автоматизированный 100% контроль геометрии серийных литых деталей на базе ScanLine RobotScan Q12 | База знаний ДС‑Инжиниринг",
+      "description": "Проектирование и интеграция автоматизированных ячеек неразрушающего контроля с 6-осевыми роботами и формированием отчета за 90 секунд.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-13",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (124 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-14",
+      "pageType": "knowledge",
+      "title": "Расчет допусков и износа при восстановлении червячных пар и корпусных деталей машин | База знаний ДС‑Инжиниринг",
+      "description": "Инженерная методика определения первоначальных чертежных размеров по изношенным образцам с учетом стандартных рядов модулей и посадок по ГОСТ.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-14",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (111 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-15",
+      "pageType": "knowledge",
+      "title": "Регламент планового ТО и калибровки кинематических шарниров КИМ Hexagon Absolute Arm | База знаний ДС‑Инжиниринг",
+      "description": "Инструкция для метрологов по регулярной проверке портативных рук Hexagon (серии 8520/8320/8530) с помощью калибровочной сферы.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-15",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (112 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-16",
+      "pageType": "knowledge",
+      "title": "Сквозная параметризация и проектирование сложной литьевой оснастки в TopSolid'Mold 7 | База знаний ДС‑Инжиниринг",
+      "description": "Автоматический расчет усадки полимеров, разводка линий разъема пуансон/матрица, библиотека стандартных блоков Fohrenbach/Hasco/Meusburger и кинематическая симуляция выталкивания.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-16",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (112 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-17",
+      "pageType": "knowledge",
+      "title": "Оптимизация расчета погрешности позиционирования и формы по стандарту ASME Y14.5-2018 в PolyWorks|Inspector™ | База знаний ДС‑Инжиниринг",
+      "description": "Практическое руководство по созданию составных позиционных допусков (Composite Position), баз состояния материала (MMC/LMC) и динамических рамок допуска.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-17",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (136 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-18",
+      "pageType": "knowledge",
+      "title": "Пакетный реверс-инжиниринг штамповой оснастки с передачей параметрического дерева в Geomagic Design X через LiveTransfer™ | База знаний ДС‑Инжиниринг",
+      "description": "Сквозной пайплайн передачи истории построения (эскизы, сопряжения, вытягивания, скругления) напрямую в SolidWorks, Siemens NX и TopSolid 7 без потери параметрических связей.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-18",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (149 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-19",
+      "pageType": "knowledge",
+      "title": "Сравнение алгоритмов расчета геометрии Гаусса, Чебышёва и наименьших квадратов в SHINING 3D Inspect | База знаний ДС‑Инжиниринг",
+      "description": "Влияние выбора математического метода аппроксимации примитивов на результаты метрологических измерений деталей с дефектами шероховатости.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-19",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (127 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-20",
+      "pageType": "knowledge",
+      "title": "Специфика измерений на портальных КИМ PMT Alpha / Gamma: юстировка термокомпенсации и подбор щупов Renishaw | База знаний ДС‑Инжиниринг",
+      "description": "Расчет погрешностей удлинителей из карбона и керамики, подбор наконечников из рубина и нитрида кремния при контроле титана и алюминия.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-20",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (135 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-21",
+      "pageType": "knowledge",
+      "title": "Практика применения лазерного трекера Leica AT960 в связке с T-Probe и сканером AS1 для крупногабаритной оснастки | База знаний ДС‑Инжиниринг",
+      "description": "Методика 6DoF измерений крупногабаритных авиационных и судовых конструкций без необходимости прямой видимости отражателя.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-21",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (141 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-22",
+      "pageType": "knowledge",
+      "title": "Метрологический регламент поверки оптических сканеров ScanLine Combo и EasyScan по эталонной пластине PTB | База знаний ДС‑Инжиниринг",
+      "description": "Инструкция по калибровке лазерной триангуляционной оптической системы перед началом ответственных измерений в условиях цехового перепада температур.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-22",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (133 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-23",
+      "pageType": "knowledge",
+      "title": "Интеграция цехового компаратора Renishaw Equator 300 со станком Fanuc для автоматической коррекции инструмента | База знаний ДС‑Инжиниринг",
+      "description": "100% контроль размеров серийных токарно-фрезерных деталей рядом со станком с замкнутым циклом автокоррекции таблицы износа резцов.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-23",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (138 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-24",
+      "pageType": "knowledge",
+      "title": "Методика контроля шероховатости и геометрии рабочих колес гидротурбин и насосов сложной пространственной формы | База знаний ДС‑Инжиниринг",
+      "description": "Комплексный подход к оцифровке закрытых межлопаточных каналов, расчет проходных сечений и выявление гидродинамической кавитации.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-24",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (138 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-25",
+      "pageType": "knowledge",
+      "title": "Выпуск конструкторской документации по ЕСКД на основе 3D-сканов корпусных деталей для импортозамещения | База знаний ДС‑Инжиниринг",
+      "description": "Правила оформления сборочных чертежей, деталировок, назначения шероховатостей и технических требований по ГОСТ 2.109 и ГОСТ 2.308.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-25",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (130 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-26",
+      "pageType": "knowledge",
+      "title": "Методология размерного анализа и контроля геометрии кузовных сборочных кондукторов и стапелей | База знаний ДС‑Инжиниринг",
+      "description": "Выверка прижимных баз, контрольных штырей (Pins) и базирующих ложементов сварочной оснастки в автомобилестроении.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-26",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (121 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-27",
+      "pageType": "knowledge",
+      "title": "3D-сканирование и моделирование литейной модельной оснастки с расчетом формовочных уклонов | База знаний ДС‑Инжиниринг",
+      "description": "Инженерный аудит деревянной, алюминиевой и полиуретановой модельной оснастки для песчано-глинистых и ХТС-форм.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-27",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (118 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-28",
+      "pageType": "knowledge",
+      "title": "Реализация кинематики токарно-фрезерных обрабатывающих центров с осью B и контршпинделем в TopSolid'CAM 7 | База знаний ДС‑Инжиниринг",
+      "description": "Синхронизация револьверных головок, перехват детали на лету в контршпиндель (Part Transfer) и расчет траекторий обработки по осям X, Y, Z, C, B.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-28",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (133 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-29",
+      "pageType": "knowledge",
+      "title": "Специфика постпроцессирования для 5-осевых портальных станков с поворотной фрезерной головой Nutated Head (угол 45°) | База знаний ДС‑Инжиниринг",
+      "description": "Математические преобразования кинематических уравнений наклонной оси (оси под углом 45 градусов) в стойках Heidenhain и Sinumerik.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-29",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (144 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-30",
+      "pageType": "knowledge",
+      "title": "Интеграция виртуального контроллера ЧПУ (VNCK / CSE) для 100% симуляции G-кода внутри CAM | База знаний ДС‑Инжиниринг",
+      "description": "Прямая верификация сформированного управляющего кода G-code с эмуляцией реального ядра ЧПУ Siemens Sinumerik и Fanuc Virtual Controller.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-30",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (117 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-31",
+      "pageType": "knowledge",
+      "title": "Разработка постпроцессоров для китайских стоек ЧПУ Syntec, GSK и LNC для 3-х и 5-осевых фрезерных станков | База знаний ДС‑Инжиниринг",
+      "description": "Адаптация управляющих программ под современные китайские контроллеры ЧПУ: формат циклов нарезания резьбы G84/G74, высокоскоростной режим G05.1 и 3+2 позиционирование.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-31",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (133 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-32",
+      "pageType": "knowledge",
+      "title": "Каковы требования к освещению, температуре и вибрациям при проведении лазерного 3D-сканирования в цехе? | База знаний ДС‑Инжиниринг",
+      "description": "Практические рекомендации инженеров-метрологов по минимизации погрешности измерений при работе рядом с работающими прессами и станками.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-32",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (131 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-33",
+      "pageType": "knowledge",
+      "title": "В чем разница между поверхностным (NURBS) и твердотельным (Solid) реверс-инжинирингом? | База знаний ДС‑Инжиниринг",
+      "description": "Критерии выбора типа математической модели изделия в зависимости от дальнейшего производственного применения: литье, мехобработка на ЧПУ или 3D-печать.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-33",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (114 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-34",
+      "pageType": "knowledge",
+      "title": "Как подготовить техническое задание (ТЗ) на разработку кинематического постпроцессора для станка с ЧПУ? | База знаний ДС‑Инжиниринг",
+      "description": "Чек-лист необходимых исходных данных для технологов: кинематическая схема станка, руководство по программированию стойки, примеры рабочих УП и чертеж шпиндельного узла.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-34",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (131 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-35",
+      "pageType": "knowledge",
+      "title": "В каких случаях требуется метрологическая экспертиза деталей на КИМ вместо 3D-сканирования? | База знаний ДС‑Инжиниринг",
+      "description": "Сравнение контактных координатно-измерительных машин и оптических 3D-сканеров по классу точности, допускам формы и юридической силе протоколов.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-35",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (119 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-36",
+      "pageType": "knowledge",
+      "title": "Порядок аттестации и внесения измерительных систем в Госреестр СИ РФ (ФГИС «АРШИН») | База знаний ДС‑Инжиниринг",
+      "description": "Правовые аспекты применения КИМ и лазерных трекеров на предприятиях РФ, периодичность поверки и оформление свидетельств государственного образца.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-36",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (111 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-37",
+      "pageType": "knowledge",
+      "title": "Архитектура и производственные возможности сквозной CAD/CAM/PDM системы TopSolid 7 | База знаний ДС‑Инжиниринг",
+      "description": "Интегрированная система проектирования технологической оснастки, штампов, пресс-форм и разработки УП для станков с ЧПУ без сторонних трансляторов.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-37",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (110 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-38",
+      "pageType": "knowledge",
+      "title": "Применение метрологической платформы PolyWorks|Inspector™ для 3D-контроля геометрии | База знаний ДС‑Инжиниринг",
+      "description": "Универсальное метрологическое ядро для портальных КИМ, лазерных сканеров и трекеров с контролем геометрических допусков GD&T по ГОСТ и ISO.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-38",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (111 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-39",
+      "pageType": "knowledge",
+      "title": "Регламент выполнения услуг высокоточного 3D-сканирования и реверс-инжиниринга | База знаний ДС‑Инжиниринг",
+      "description": "Точность сканирования и КИМ до 0.015–0.02 мм, разработка твердотельных CAD-моделей STEP/Parasolid по ЕСКД и протоколы контроля.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-39",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (105 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-40",
+      "pageType": "knowledge",
+      "title": "Методология разработки и верификации кинематических постпроцессоров ЧПУ | База знаний ДС‑Инжиниринг",
+      "description": "Индивидуальные постпроцессоры для стоек Fanuc, Heidenhain, Siemens Sinumerik и Haas с 3D-симуляцией станка и защитой от аварийных столкновений.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-40",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (99 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-41",
+      "pageType": "knowledge",
+      "title": "Поставка и сервисная поддержка измерительных машин PMT и 3D-сканеров Shining 3D | База знаний ДС‑Инжиниринг",
+      "description": "Официальные поставки координатно-измерительных машин PMT, мобильных рук и лазерных сканеров с поверкой по ГОСТ Р ИСО 10360 и ФГИС «АРШИН».",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-41",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (107 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-42",
+      "pageType": "knowledge",
+      "title": "Инженерный регламент калибровки и экспресс-проверки мобильных КИМ (Hexagon Absolute Arm) в цеховых условиях | База знаний ДС‑Инжиниринг",
+      "description": "Методология цеховой квалификации контактных щупов по эталонной сфере, тест бруса длины (Length Check Bar) и контроль стабильности базирования.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-42",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (135 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    },
+    {
+      "url": "https://ds-engineering.ru/knowledge/kb-43",
+      "pageType": "knowledge",
+      "title": "Методика температурной компенсации при измерениях крупногабаритных деталей: учет КЛТР, термодатчики и приведение к 20 °C | База знаний ДС‑Инжиниринг",
+      "description": "Физические основы теплового расширения крупногабаритных металлоконструкций (до 15 м), градиенты температур цеха и правила настройки PolyWorks|Inspector.",
+      "canonicalUrl": "https://ds-engineering.ru/knowledge/kb-43",
+      "ogType": "article",
+      "ogImage": "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80",
+      "twitterCard": "summary_large_image",
+      "schemaType": "article",
+      "issues": [
+        {
+          "severity": "warning",
+          "rule": "TITLE_TOO_LONG",
+          "message": "Заголовок превышает 95 символов (148 симв.), может обрезаться в выдаче"
+        }
+      ],
+      "score": 95,
+      "isIndexReady": true
+    }
+  ]
+}

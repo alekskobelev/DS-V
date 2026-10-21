@@ -18,6 +18,7 @@ import { apiService } from '../../services/apiService';
 import { CompanyModal } from './CompanyModal';
 import { ContactModal } from './ContactModal';
 import { exportTableToPdf } from '../../utils/exportTablePdf';
+import { useModalStack } from '../../hooks/useModalStack';
 
 import { getUserPermissions } from '../../types';
 
@@ -36,6 +37,20 @@ export const MetrologyReportsRegistry: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isEquipmentPickerOpen, setIsEquipmentPickerOpen] = useState(false);
   const [equipmentSearchQuery, setEquipmentSearchQuery] = useState('');
+
+  const certModal = useModalStack({
+    id: 'metrology-report-editor-modal',
+    isOpen: isCertModalOpen && !!editingCert,
+    onClose: () => setIsCertModalOpen(false),
+    baseZIndex: 400
+  });
+
+  const equipmentPickerModal = useModalStack({
+    id: 'metrology-equipment-picker-modal',
+    isOpen: isEquipmentPickerOpen,
+    onClose: () => setIsEquipmentPickerOpen(false),
+    baseZIndex: 520
+  });
   
   // File attachments state
   const [attachTarget, setAttachTarget] = useState<MetrologyReport | null>(null);
@@ -908,8 +923,16 @@ export const MetrologyReportsRegistry: React.FC = () => {
 
       {/* EDIT / CREATE REPORT MODAL */}
       {isCertModalOpen && editingCert && (
-        <div className={`fixed inset-0 z-[200] flex items-center justify-center bg-black/75 sm: backdrop-blur-xs overflow-hidden ${isFullscreen ? 'p-0' : 'p-2 sm:p-4'}`}>
-          <div className={`${isFullscreen ? 'fixed inset-0 z-[201] w-screen h-screen max-w-none max-h-none rounded-none' : 'relative max-w-3xl w-full h-full max-h-[94vh] sm:max-h-[90vh] rounded-lg sm:rounded-lg'} bg-white shadow-sm border border-gray-100 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200`}>
+        <div 
+          className={`fixed inset-0 flex items-center justify-center bg-black/75 sm: backdrop-blur-xs overflow-hidden ${isFullscreen ? 'p-0' : 'p-2 sm:p-4'}`}
+          style={{ zIndex: certModal.zIndex }}
+        >
+          <div 
+            ref={certModal.containerRef}
+            tabIndex={-1}
+            className={`${isFullscreen ? 'fixed inset-0 w-screen h-screen max-w-none max-h-none rounded-none' : 'relative max-w-3xl w-full h-full max-h-[94vh] sm:max-h-[90vh] rounded-lg sm:rounded-lg'} bg-white shadow-xl border border-gray-200 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200`}
+            style={isFullscreen ? { zIndex: certModal.zIndex + 1 } : undefined}
+          >
             
             {/* Modal Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-slate-50/80 shrink-0">
@@ -1395,9 +1418,16 @@ export const MetrologyReportsRegistry: React.FC = () => {
 
       {/* EQUIPMENT PICKER MODAL */}
       {isEquipmentPickerOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsEquipmentPickerOpen(false)} />
-          <div className="relative w-full max-w-2xl bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+        <div 
+          className="fixed inset-0 flex items-center justify-center p-4"
+          style={{ zIndex: equipmentPickerModal.zIndex }}
+        >
+          <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" onClick={() => setIsEquipmentPickerOpen(false)} />
+          <div 
+            ref={equipmentPickerModal.containerRef}
+            tabIndex={-1}
+            className="relative w-full max-w-2xl bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh] z-10"
+          >
             <div className="p-5 border-b border-gray-100 bg-slate-50/80 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Wrench className="w-5 h-5 text-blue-600" />

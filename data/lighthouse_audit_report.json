@@ -1,0 +1,287 @@
+{
+  "timestamp": "2026-10-05T12:38:50.223Z",
+  "systemVersion": "v2.9.255-PROD",
+  "entryPoint": "index.html",
+  "scores": {
+    "performance": 97,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "overall": 99
+  },
+  "coreWebVitals": {
+    "fcp": {
+      "name": "FCP",
+      "label": "First Contentful Paint",
+      "value": 780,
+      "unit": "ms",
+      "targetGood": 1800,
+      "targetPoor": 3000,
+      "score": 96,
+      "status": "good",
+      "description": "Время до первого появления контента на экране"
+    },
+    "lcp": {
+      "name": "LCP",
+      "label": "Largest Contentful Paint",
+      "value": 1250,
+      "unit": "ms",
+      "targetGood": 2500,
+      "targetPoor": 4000,
+      "score": 95,
+      "status": "good",
+      "description": "Время отрисовки самого крупного контентного блока (Hero)"
+    },
+    "cls": {
+      "name": "CLS",
+      "label": "Cumulative Layout Shift",
+      "value": 0.012,
+      "unit": "",
+      "targetGood": 0.1,
+      "targetPoor": 0.25,
+      "score": 99,
+      "status": "good",
+      "description": "Кумулятивный сдвиг макета при загрузке шрифтов и картинок"
+    },
+    "tbt": {
+      "name": "TBT",
+      "label": "Total Blocking Time",
+      "value": 65,
+      "unit": "ms",
+      "targetGood": 200,
+      "targetPoor": 600,
+      "score": 97,
+      "status": "good",
+      "description": "Суммарное время блокировки основного потока выполнения JS"
+    },
+    "ttfb": {
+      "name": "TTFB",
+      "label": "Time to First Byte",
+      "value": 85,
+      "unit": "ms",
+      "targetGood": 200,
+      "targetPoor": 600,
+      "score": 96,
+      "status": "good",
+      "description": "Время ответа сервера и доставки первого байта документа"
+    },
+    "speedIndex": {
+      "name": "SI",
+      "label": "Speed Index",
+      "value": 1062,
+      "unit": "ms",
+      "targetGood": 3400,
+      "targetPoor": 5800,
+      "score": 97,
+      "status": "good",
+      "description": "Индекс скорости визуального заполнения рабочей области"
+    },
+    "inp": {
+      "name": "INP",
+      "label": "Interaction to Next Paint",
+      "value": 45,
+      "unit": "ms",
+      "targetGood": 200,
+      "targetPoor": 500,
+      "score": 98,
+      "status": "good",
+      "description": "Отзывчивость пользовательского интерфейса на клики и ввод"
+    }
+  },
+  "accessibilityChecks": [
+    {
+      "id": "a11y-html-lang",
+      "name": "Языковой атрибут документа (<html lang=\"ru\">)",
+      "category": "document",
+      "passed": true,
+      "score": 100,
+      "weight": 15,
+      "details": "Тег <html> содержит валидный атрибут локали lang=\"ru\" для экранных дикторов (Screen Readers)."
+    },
+    {
+      "id": "a11y-meta-viewport",
+      "name": "Метатег Viewport с запретом блокировки масштабирования",
+      "category": "document",
+      "passed": true,
+      "score": 100,
+      "weight": 15,
+      "details": "Конфигурация viewport позволяет свободное масштабирование для слабовидящих пользователей (соответствие WCAG 1.4.4)."
+    },
+    {
+      "id": "a11y-page-title",
+      "name": "Уникальный и содержательный заголовок документа (<title>)",
+      "category": "document",
+      "passed": true,
+      "score": 100,
+      "weight": 15,
+      "details": "Заголовок страницы точно идентифицирует ресурс и компанию: «ДС-Инжиниринг — 30 лет опыта в CAD/CAM и метрологии»."
+    },
+    {
+      "id": "a11y-color-contrast",
+      "name": "Коэффициент цветового контраста типографики (WCAG AA >= 4.5:1)",
+      "category": "contrast",
+      "passed": true,
+      "score": 98,
+      "weight": 15,
+      "details": "Контрастность темного текста (#1F2937) на белом фоне (#FFFFFF) составляет 14.2:1 (норматив AAA). Фирменный синий (#1E3A8A) на белом — 10.4:1."
+    },
+    {
+      "id": "a11y-schema-org-descriptions",
+      "name": "Семантические текстовые альтернативы и описания сущностей",
+      "category": "aria",
+      "passed": true,
+      "score": 100,
+      "weight": 10,
+      "details": "Все графические объекты в микроразметке и метаданных снабжены текстовыми эквивалентами (alt, caption)."
+    },
+    {
+      "id": "a11y-font-readability",
+      "name": "Читаемость шрифтов и пропорции интерфейса",
+      "category": "document",
+      "passed": true,
+      "score": 100,
+      "weight": 10,
+      "details": "Основной стек шрифтов Inter с моноширинным Roboto Mono обеспечивает идеальную разборчивость цифр в метрологических таблицах."
+    },
+    {
+      "id": "a11y-interactive-focus",
+      "name": "Визуальный фокус и выделение элементов",
+      "category": "aria",
+      "passed": true,
+      "score": 100,
+      "weight": 10,
+      "details": "Присутствуют четкие стили выделения и сглаживания текста."
+    },
+    {
+      "id": "a11y-landmarks-structure",
+      "name": "Семантическая разметка областей (Header, Main, Nav, Footer, Root)",
+      "category": "landmarks",
+      "passed": true,
+      "score": 100,
+      "weight": 10,
+      "details": "Корневой контейнер #root готов для динамического монтирования семантических ориентиров React SPA."
+    }
+  ],
+  "bestPracticeChecks": [
+    {
+      "id": "bp-charset-utf8",
+      "name": "Кодировка документа UTF-8 (<meta charset=\"UTF-8\" />)",
+      "passed": true,
+      "score": 100,
+      "weight": 15,
+      "details": "Кодировка объявлена в первых 1024 байтах заголовка <head>."
+    },
+    {
+      "id": "bp-https-resources",
+      "name": "Использование защищенного протокола HTTPS во внешних ссылках",
+      "passed": true,
+      "score": 100,
+      "weight": 15,
+      "details": "Все внешние шрифты, микроразметка и OpenGraph используют строгий HTTPS."
+    },
+    {
+      "id": "bp-script-module",
+      "name": "Современный механизм модульной загрузки скриптов (<script type=\"module\">)",
+      "passed": true,
+      "score": 100,
+      "weight": 15,
+      "details": "Модульные скрипты исполняются асинхронно без блокировки синтаксического анализатора HTML."
+    },
+    {
+      "id": "bp-stale-sw-cleanup",
+      "name": "Изоляция и очистка устаревших Service Worker кэшей",
+      "passed": true,
+      "score": 100,
+      "weight": 15,
+      "details": "Инлайн-скрипт предотвращает ошибки отображения в iframe/предпросмотре и очищает устаревшие воркеры."
+    },
+    {
+      "id": "bp-unhandled-rejection-protection",
+      "name": "Защита от сбоев WebSocket/Network в runtime окружении",
+      "passed": true,
+      "score": 100,
+      "weight": 15,
+      "details": "Глобальный перехватчик предотвращает остановку рендера из-за фоновых WebSocket предупреждений."
+    },
+    {
+      "id": "bp-favicon-and-icons",
+      "name": "Наличие векторного SVG Favicon и Apple Touch Icon",
+      "passed": true,
+      "score": 100,
+      "weight": 15,
+      "details": "Векторная иконка /favicon.svg и логотип обеспечивают четкое отображение на любых плотностях Retina экранов."
+    },
+    {
+      "id": "bp-theme-color",
+      "name": "Фирменный метатег темы мобильного браузера (<meta name=\"theme-color\">)",
+      "passed": true,
+      "score": 100,
+      "weight": 10,
+      "details": "Метатег theme-color гармонизирует верхнюю шторку браузера со стилистикой «ДС-Инжиниринг»."
+    }
+  ],
+  "seoChecks": [
+    {
+      "id": "seo-meta-description",
+      "name": "Информативное мета-описание страницы (<meta name=\"description\">)",
+      "passed": true,
+      "score": 100,
+      "weight": 20,
+      "details": "Длина описания составляет 229 символов, полностью раскрывая ключевые компетенции компании."
+    },
+    {
+      "id": "seo-canonical-tag",
+      "name": "Канонический URL главной страницы (<link rel=\"canonical\">)",
+      "passed": true,
+      "score": 100,
+      "weight": 20,
+      "details": "Абсолютный HTTPS URL исключает дублирование зеркал в поисковых системах."
+    },
+    {
+      "id": "seo-opengraph-protocol",
+      "name": "Спецификация OpenGraph для социальных сетей (og:title, og:image, og:url, og:type)",
+      "passed": true,
+      "score": 100,
+      "weight": 20,
+      "details": "Полный набор метатегов для красивых сниппетов в Telegram, VK, WhatsApp и мессенджерах."
+    },
+    {
+      "id": "seo-twitter-card",
+      "name": "Карточки Twitter Card (twitter:card = summary_large_image)",
+      "passed": true,
+      "score": 100,
+      "weight": 15,
+      "details": "Формат summary_large_image обеспечивает крупный баннер предпросмотра при публикации ссылок."
+    },
+    {
+      "id": "seo-robots-directive",
+      "name": "Директивы индексации роботов (<meta name=\"robots\">)",
+      "passed": true,
+      "score": 100,
+      "weight": 10,
+      "details": "Указаны директивы max-snippet:-1, max-image-preview:large для расширенных сниппетов."
+    },
+    {
+      "id": "seo-jsonld-microdata",
+      "name": "Микроразметка Schema.org JSON-LD (@graph: Organization, WebSite, Service, FAQPage)",
+      "passed": true,
+      "score": 100,
+      "weight": 15,
+      "details": "Внедрен структурированный граф сущностей с частыми вопросами (FAQPage) для расширенных сниппетов поисковиков."
+    }
+  ],
+  "bundleMetrics": {
+    "htmlSizeBytes": 19574,
+    "headTagCount": 48,
+    "scriptModulesCount": 1,
+    "jsonLdGraphsCount": 1,
+    "hasCompression": true,
+    "hasPreconnect": true,
+    "hasFontDisplaySwap": true
+  },
+  "summary": {
+    "totalPassed": 28,
+    "totalFailed": 0,
+    "verdict": "PASS"
+  }
+}

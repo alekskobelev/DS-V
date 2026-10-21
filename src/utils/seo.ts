@@ -7,6 +7,15 @@ export interface BreadcrumbItem {
   url: string;
 }
 
+import { COMMON_INDUSTRY_FAQ_ITEMS as KB_COMMON_INDUSTRY_FAQ_ITEMS } from '../data/knowledgeBase';
+
+export interface FaqQuestionAnswer {
+  question: string;
+  answer: string;
+}
+
+export const COMMON_INDUSTRY_FAQ_ITEMS: FaqQuestionAnswer[] = KB_COMMON_INDUSTRY_FAQ_ITEMS;
+
 export interface SeoMetadata {
   title: string;
   description: string;
@@ -14,12 +23,38 @@ export interface SeoMetadata {
   ogTitle?: string;
   ogDescription?: string;
   ogImage?: string;
+  ogImageSecureUrl?: string;
+  ogImageWidth?: number | string;
+  ogImageHeight?: number | string;
+  ogImageAlt?: string;
+  ogImageType?: string;
+  ogLocaleAlternate?: string;
+  ogUpdatedTime?: string;
   ogType?: 'website' | 'article' | 'product';
   canonicalUrl?: string;
   schemaType?: 'product' | 'article' | 'service' | 'faq' | 'webpage' | 'website' | 'about' | 'contact';
   schemaData?: Record<string, unknown>;
   robots?: string;
   breadcrumbs?: BreadcrumbItem[];
+  // Twitter Cards
+  twitterCard?: 'summary' | 'summary_large_image' | 'app' | 'player';
+  twitterSite?: string;
+  twitterCreator?: string;
+  twitterImage?: string;
+  twitterImageAlt?: string;
+  twitterDomain?: string;
+  twitterUrl?: string;
+  // Article specific social metadata
+  articlePublishedTime?: string;
+  articleModifiedTime?: string;
+  articleSection?: string;
+  articleTags?: string[];
+  articleAuthor?: string;
+  // Product specific social metadata
+  productPrice?: number | string;
+  productCurrency?: string;
+  productAvailability?: string;
+  productBrand?: string;
 }
 
 export const GLOBAL_DEFAULT_KEYWORDS = [
@@ -125,6 +160,17 @@ export const PAGE_SEO_DATA: Record<string, SeoMetadata> = {
     ogTitle: 'База знаний и техническая библиотека | ДС‑Инжиниринг',
     ogDescription: 'Руководства, ГОСТы, методики измерений и экспертные статьи по цифровому производству.',
     ogImage: 'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80',
+    schemaType: 'faq',
+  },
+  glossary: {
+    title: 'Технический глоссарий: GD&T, ISO 1101, КИМ, постпроцессоры и CAD/CAM | ДС‑Инжиниринг',
+    description: 'Инженерно-технический глоссарий терминов метрологии, координатных измерений и станков с ЧПУ: GD&T, ISO 1101, кинематическая модель станка, постпроцессор, B-Rep, NURBS, MPE, RTCP, Leapfrog.',
+    keywords: 'технический глоссарий, GD&T, ISO 1101, кинематическая модель станка, постпроцессор, B-Rep, NURBS, MPE, RTCP, Leapfrog, FAI, координатные измерения, САПР термины, ДС‑Инжиниринг',
+    canonicalUrl: 'https://ds-engineering.ru/glossary',
+    ogTitle: 'Технический глоссарий инженера и метролога | ДС‑Инжиниринг',
+    ogDescription: 'Профессиональный справочник определений стандартов, допусков формы и расположения, метрологического оборудования и систем ЧПУ.',
+    ogImage: 'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80',
+    schemaType: 'article',
   },
   news: {
     title: 'Пресс-центр: Новости машиностроения, релизы ПО и выставки | ДС‑Инжиниринг',
@@ -136,12 +182,12 @@ export const PAGE_SEO_DATA: Record<string, SeoMetadata> = {
     ogImage: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80',
   },
   contacts: {
-    title: 'Контакты и демонстрационный центр в Самаре | ДС‑Инжиниринг',
+    title: 'Контакты и реквизиты компании в Самаре | ДС‑Инжиниринг',
     description: 'Контакты компании ООО «ДС‑Инжиниринг»: телефон +7 (846) 954-02-92, email info@ds-enginering.ru, адрес: г. Самара, ул. Свободы, д. 198. Прямые контакты отделов ПО, разработки постпроцессоров, оснастки и метрологии.',
-    keywords: 'контакты ДС‑Инжиниринг, телефон ДС‑Инжиниринг Самара, адрес ул Свободы 198, Скобелев Александр, Морозов Владимир, Ярыш Иван, демо центр КИМ',
+    keywords: 'контакты ДС‑Инжиниринг, телефон ДС‑Инжиниринг Самара, адрес ул Свободы 198, Скобелев Александр, Морозов Владимир, Ярыш Иван, координатно-измерительные машины, 3D-сканеры, метрология',
     canonicalUrl: 'https://ds-engineering.ru/contacts',
-    ogTitle: 'Контакты и филиалы | ДС‑Инжиниринг',
-    ogDescription: 'Офис и демонстрационный метрологический зал в Самаре и Тольятти. График работы, реквизиты и схема проезда.',
+    ogTitle: 'Контакты и реквизиты | ДС‑Инжиниринг',
+    ogDescription: 'Офис компании ООО «ДС-Инжиниринг» в Самаре. График работы, реквизиты и схема проезда.',
     ogImage: '/logo.svg',
     schemaType: 'contact',
   },
@@ -151,19 +197,22 @@ export const PAGE_SEO_DATA: Record<string, SeoMetadata> = {
     keywords: 'личный кабинет ДС‑Инжиниринг, статус заявки, техподдержка TopSolid, мои лицензии',
     canonicalUrl: 'https://ds-engineering.ru/account',
     ogTitle: 'Личный кабинет клиента | ДС‑Инжиниринг',
-    ogDescription: 'Управление проектами, отслеживание метрологических отчетов и тикетов поддержки.',
+    ogDescription: 'Управление проектами, отслеживание метрологических отчетов и сервисных заявок.',
+    robots: 'noindex, nofollow',
   },
   crm: {
     title: 'CRM-система управления проектами | ДС‑Инжиниринг',
     description: 'Корпоративная CRM-система для управления промышленными контрактами, сделками и инженерными проектами.',
     keywords: 'crm, сделки, заказчики, ДС‑Инжиниринг',
     canonicalUrl: 'https://ds-engineering.ru/crm',
+    robots: 'noindex, nofollow',
   },
   cms: {
     title: 'Панель управления сайтом | ДС‑Инжиниринг CMS',
     description: 'Административная панель управления контентом, товарами, услугами и заявками клиентов.',
     keywords: 'cms, панель управления, админка',
     canonicalUrl: 'https://ds-engineering.ru/cms',
+    robots: 'noindex, nofollow',
   },
   sitemap: {
     title: 'Карта сайта (Sitemap) — Полный каталог разделов и оборудования | ДС‑Инжиниринг',
@@ -174,6 +223,23 @@ export const PAGE_SEO_DATA: Record<string, SeoMetadata> = {
     ogDescription: 'Интерактивная карта портала ДС-Инжиниринг с быстрой навигацией по всем продуктам, услугам, статьям и ГОСТам.',
     ogImage: '/logo.svg',
     schemaType: 'webpage',
+  },
+  compare: {
+    title: 'Сравнение оборудования и ПО: 3D-сканеры, КИМ и CAD/CAM | ДС‑Инжиниринг',
+    description: 'Интерактивная сравнительная таблица технических характеристик оборудования и программного обеспечения «ДС-Инжиниринг». Сопоставление точности (MPE), рабочих диапазонов, оптических датчиков и комплектаций.',
+    keywords: 'сравнение 3d-сканеров, сравнение ким, сопоставление характеристик cad cam, точность 3d сканирования, технические характеристики метрология, ДС-Инжиниринг',
+    canonicalUrl: 'https://ds-engineering.ru/compare',
+    ogTitle: 'Сравнение технических характеристик оборудования и ПО | ДС‑Инжиниринг',
+    ogDescription: 'Сравнительный анализ параметров 3D-сканеров, координатно-измерительных машин и ПО CAD/CAM.',
+    ogImage: '/logo.svg',
+    schemaType: 'webpage',
+  },
+  notfound: {
+    title: 'Страница не найдена (404) | ДС‑Инжиниринг',
+    description: 'Запрашиваемая страница не существует или была перемещена в структуре портала «ДС-Инжиниринг».',
+    keywords: '404, страница не найдена, ошибка, ДС‑Инжиниринг',
+    canonicalUrl: 'https://ds-engineering.ru/notfound',
+    robots: 'noindex, nofollow',
   }
 };
 
@@ -442,12 +508,6 @@ export const PRODUCT_SEO_DATA: Record<string, SeoMetadata> = {
     description: 'Крупногабаритная портальная КИМ PMT LOONG для авиастроения, судостроения и тяжелого машиностроения с рабочим полем до 10 000 мм. Контактные и лазерные сканирующие головки Renishaw.',
     keywords: 'портальная КИМ, крупногабаритная КИМ, PMT LOONG, измерение крупногабаритных деталей, авиационная КИМ, КИМ для штампов, ДС‑Инжиниринг',
     ogTitle: 'Портальная крупногабаритная КИМ PMT LOONG',
-  },
-  'coord3-universal': {
-    title: 'Мостовая КИМ Coord3 Universal / Ares (Италия) | ДС‑Инжиниринг',
-    description: 'Высокоточная итальянская координатно-измерительная машина Coord3 с легкосплавным порталом, динамической термокомпенсацией и непрерывными сканирующими головками Renishaw SP25M.',
-    keywords: 'Coord3 Universal, КИМ Coord3 Ares, итальянская КИМ, координатно-измерительные машины, метрологический контроль, ДС‑Инжиниринг',
-    ogTitle: 'Мостовая КИМ Coord3 Universal / Ares',
   },
   'romer-absolute-arm-rs6': {
     title: 'Hexagon Absolute Arm 7-Axis со сканером AS1 | Флагманский комплекс | ДС‑Инжиниринг',
@@ -757,7 +817,7 @@ export const PRODUCT_SEO_DATA: Record<string, SeoMetadata> = {
 export const SERVICE_SEO_DATA: Record<string, SeoMetadata> = {
   '3d-scanning': {
     title: 'Услуги прецизионного 3D-сканирования деталей в Самаре и по РФ | ДС‑Инжиниринг',
-    description: 'Лазерное и оптическое 3D-сканирование изделий от 10 мм до 20 м: ScanLine EasyScan Omni, Hexagon RS6, Leica AT403. Точность до 0.020 мм, выезд бригады инженеров по всей России за 24–48 часов.',
+    description: 'Лазерное и оптическое 3D-сканирование изделий от 10 мм до 20 м: ScanLine EasyScan Omni, Hexagon RS6, Leica AT403. Точность до 0.020 мм, выезд инженеров-метрологов по всей России за 24–48 часов.',
     keywords: 'услуги 3D сканирования, лазерное сканирование деталей, выездное 3D сканирование, точность 20 мкм, сканирование штампов и пресс-форм, Самара, Москва, Екатеринбург, ДС‑Инжиниринг',
     canonicalUrl: 'https://ds-engineering.ru/services/3d-scanning',
     ogTitle: 'Высокоточное 3D-сканирование деталей и оснастки | ДС‑Инжиниринг',
@@ -767,7 +827,7 @@ export const SERVICE_SEO_DATA: Record<string, SeoMetadata> = {
   },
   'reverse-engineering': {
     title: 'Обратный инжиниринг (реверс) и 3D-моделирование по сканам (STEP, ЕСКД) | ДС‑Инжиниринг',
-    description: 'Профессиональный реверс-инжиниринг деталей, оснастки и узлов по полигональным сканам: создание параметрических CAD-моделей в TopSolid 7, SolidWorks, NX со 100% деревом построения и комплектом чертежей по ЕСКД.',
+    description: 'Профессиональный реверс-инжиниринг деталей, оснастки и узлов по данным 3D-сканирования и КИМ: создание точных твердотельных CAD-моделей (STEP, Parasolid, IGES) для станков с ЧПУ и комплекта чертежей по ЕСКД.',
     keywords: 'обратный инжиниринг, реверс инжиниринг, построение CAD по STL, твердотельное моделирование, импортозамещение деталей, чертежи ЕСКД, Geomagic Design X, TopSolid 7, ДС‑Инжиниринг',
     canonicalUrl: 'https://ds-engineering.ru/services/reverse-engineering',
     ogTitle: 'Обратный инжиниринг и построение CAD по 3D-сканам | ДС‑Инжиниринг',
@@ -901,6 +961,9 @@ export function resolveDynamicSeo(params: {
   selectedKnowledgeCategory?: string | null;
   customPages?: CustomPage[];
   services?: ServiceItem[];
+  products?: Product[];
+  news?: Article[];
+  knowledge?: KnowledgeItem[];
   isAdmin?: boolean;
 }): SeoMetadata {
   const {
@@ -929,6 +992,10 @@ export function resolveDynamicSeo(params: {
       { name: selectedProduct.name, url: canonicalUrl }
     ];
 
+    const ogImageAlt = prodSeo?.ogImageAlt || `${selectedProduct.name} — ${selectedProduct.brand || 'ДС‑Инжиниринг'}`;
+    const productPrice = selectedProduct.price;
+    const productBrand = selectedProduct.brand;
+
     if (prodSeo) {
       return {
         ...prodSeo,
@@ -941,6 +1008,14 @@ export function resolveDynamicSeo(params: {
           category: selectedProduct.categoryLabel,
         },
         breadcrumbs,
+        ogImage: prodSeo.ogImage || selectedProduct.image,
+        ogImageAlt,
+        twitterCard: 'summary_large_image',
+        twitterImageAlt: ogImageAlt,
+        productPrice,
+        productBrand,
+        productCurrency: 'RUB',
+        productAvailability: 'in stock',
       };
     }
 
@@ -966,6 +1041,7 @@ export function resolveDynamicSeo(params: {
       ogTitle: title,
       ogDescription: description,
       ogImage: selectedProduct.image,
+      ogImageAlt,
       ogType: 'product',
       canonicalUrl,
       schemaType: 'product',
@@ -975,6 +1051,12 @@ export function resolveDynamicSeo(params: {
         category: selectedProduct.categoryLabel,
       },
       breadcrumbs,
+      twitterCard: 'summary_large_image',
+      twitterImageAlt: ogImageAlt,
+      productPrice,
+      productBrand,
+      productCurrency: 'RUB',
+      productAvailability: 'in stock',
     };
   }
 
@@ -984,6 +1066,8 @@ export function resolveDynamicSeo(params: {
     const srvSeo = SERVICE_SEO_DATA[selectedServiceId];
     const srvItem = services.find(s => s.id === selectedServiceId);
     const serviceName = srvItem?.title || srvSeo?.title || 'Инжиниринговая услуга';
+    const srvImg = srvItem?.image || srvSeo?.ogImage || 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=1200&q=80';
+    const srvAlt = `${serviceName} — ДС‑Инжиниринг`;
 
     const breadcrumbs: BreadcrumbItem[] = [
       { name: 'Главная', url: 'https://ds-engineering.ru/main' },
@@ -996,6 +1080,10 @@ export function resolveDynamicSeo(params: {
         ...srvSeo,
         canonicalUrl,
         ogType: 'website',
+        ogImage: srvImg,
+        ogImageAlt: srvAlt,
+        twitterCard: 'summary_large_image',
+        twitterImageAlt: srvAlt,
         schemaType: 'service',
         breadcrumbs,
       };
@@ -1010,6 +1098,10 @@ export function resolveDynamicSeo(params: {
       keywords,
       ogTitle: title,
       ogDescription: description,
+      ogImage: srvImg,
+      ogImageAlt: srvAlt,
+      twitterCard: 'summary_large_image',
+      twitterImageAlt: srvAlt,
       canonicalUrl,
       schemaType: 'service',
       breadcrumbs,
@@ -1023,6 +1115,7 @@ export function resolveDynamicSeo(params: {
     const articleContentStr = typeof selectedArticle.content === 'string' ? selectedArticle.content : selectedArticle.content?.join(' ');
     const description = selectedArticle.metaDescription || selectedArticle.preview || articleContentStr?.slice(0, 160) || 'Новости компании ДС‑Инжиниринг.';
     const keywords = selectedArticle.metaKeywords?.join(', ') || `${selectedArticle.title}, ${selectedArticle.category}, ${selectedArticle.tags?.join(', ')}, новости ДС‑Инжиниринг`;
+    const artAlt = `${selectedArticle.title} — Пресс-центр ДС‑Инжиниринг`;
 
     const breadcrumbs: BreadcrumbItem[] = [
       { name: 'Главная', url: 'https://ds-engineering.ru/main' },
@@ -1036,7 +1129,8 @@ export function resolveDynamicSeo(params: {
       keywords,
       ogTitle: title,
       ogDescription: description,
-      ogImage: selectedArticle.image,
+      ogImage: selectedArticle.image || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80',
+      ogImageAlt: artAlt,
       ogType: 'article',
       canonicalUrl,
       schemaType: 'article',
@@ -1044,6 +1138,12 @@ export function resolveDynamicSeo(params: {
         datePublished: selectedArticle.date,
       },
       breadcrumbs,
+      twitterCard: 'summary_large_image',
+      twitterImageAlt: artAlt,
+      articlePublishedTime: selectedArticle.date,
+      articleSection: selectedArticle.category,
+      articleTags: selectedArticle.tags,
+      articleAuthor: 'Инженерный центр ДС‑Инжиниринг',
     };
   }
 
@@ -1053,6 +1153,7 @@ export function resolveDynamicSeo(params: {
     const title = `${selectedKnowledgeItem.title} | База знаний ДС‑Инжиниринг`;
     const description = selectedKnowledgeItem.summary || selectedKnowledgeItem.content?.slice(0, 160) || 'Материал технической базы знаний ДС‑Инжиниринг.';
     const keywords = `${selectedKnowledgeItem.title}, ${selectedKnowledgeItem.category || ''}, база знаний, ГОСТ, GD&T, CAD CAM, ДС‑Инжиниринг`;
+    const knowAlt = `${selectedKnowledgeItem.title} — База знаний ДС‑Инжиниринг`;
 
     const breadcrumbs: BreadcrumbItem[] = [
       { name: 'Главная', url: 'https://ds-engineering.ru/main' },
@@ -1066,10 +1167,16 @@ export function resolveDynamicSeo(params: {
       keywords,
       ogTitle: title,
       ogDescription: description,
+      ogImage: 'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1200&q=80',
+      ogImageAlt: knowAlt,
       ogType: 'article',
       canonicalUrl,
       schemaType: 'article',
       breadcrumbs,
+      twitterCard: 'summary_large_image',
+      twitterImageAlt: knowAlt,
+      articleSection: selectedKnowledgeItem.category || 'Техническая документация',
+      articleAuthor: 'Инженерный центр ДС‑Инжиниринг',
     };
   }
 
@@ -1159,6 +1266,7 @@ export function resolveDynamicSeo(params: {
     services: 'Услуги',
     about: 'О компании',
     knowledge: 'База знаний',
+    glossary: 'Технический глоссарий',
     news: 'Новости',
     contacts: 'Контакты',
     calculator: 'Калькулятор',
@@ -1195,6 +1303,54 @@ export function resolveDynamicSeo(params: {
 }
 
 /**
+ * Helper to ensure URLs are absolute for social network crawlers (VK, Telegram, WhatsApp, Twitter, etc.)
+ */
+export function toAbsoluteUrl(url?: string | null): string {
+  if (!url) return 'https://ds-engineering.ru/logo.svg';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const origin = typeof window !== 'undefined' && window.location.origin
+    ? window.location.origin
+    : 'https://ds-engineering.ru';
+  const cleanPath = url.startsWith('/') ? url : `/${url}`;
+  return `${origin}${cleanPath}`;
+}
+
+/**
+ * Infer MIME type from image URL extension
+ */
+export function inferImageMimeType(url: string): string {
+  const clean = url.split('?')[0].toLowerCase();
+  if (clean.endsWith('.svg')) return 'image/svg+xml';
+  if (clean.endsWith('.png')) return 'image/png';
+  if (clean.endsWith('.webp')) return 'image/webp';
+  if (clean.endsWith('.gif')) return 'image/gif';
+  return 'image/jpeg';
+}
+
+/**
+ * Helper to update or create or remove a <meta> element in document.head
+ */
+export function setOrCreateMeta(attrName: 'name' | 'property', attrValue: string, content?: string | null): void {
+  if (typeof document === 'undefined') return;
+  const selector = `meta[${attrName}="${attrValue}"]`;
+  const tag = document.querySelector(selector);
+  if (!content) {
+    if (tag && tag.parentNode) {
+      tag.parentNode.removeChild(tag);
+    }
+    return;
+  }
+  if (!tag) {
+    const newTag = document.createElement('meta');
+    newTag.setAttribute(attrName, attrValue);
+    newTag.setAttribute('content', content);
+    document.head.appendChild(newTag);
+  } else {
+    tag.setAttribute('content', content);
+  }
+}
+
+/**
  * Updates DOM head meta tags dynamically for SEO bots, OpenGraph & social previews
  */
 export function updateDocumentSeo(meta: SeoMetadata) {
@@ -1206,31 +1362,15 @@ export function updateDocumentSeo(meta: SeoMetadata) {
   }
 
   // 2. Update Meta Description
-  let descTag = document.querySelector('meta[name="description"]');
-  if (!descTag) {
-    descTag = document.createElement('meta');
-    descTag.setAttribute('name', 'description');
-    document.head.appendChild(descTag);
-  }
-  descTag.setAttribute('content', meta.description);
+  setOrCreateMeta('name', 'description', meta.description);
 
   // 3. Update Meta Keywords
-  let kwTag = document.querySelector('meta[name="keywords"]');
-  if (!kwTag) {
-    kwTag = document.createElement('meta');
-    kwTag.setAttribute('name', 'keywords');
-    document.head.appendChild(kwTag);
-  }
-  kwTag.setAttribute('content', meta.keywords || GLOBAL_DEFAULT_KEYWORDS);
+  setOrCreateMeta('name', 'keywords', meta.keywords || GLOBAL_DEFAULT_KEYWORDS);
 
-  // 4. Update Robots Directives (Dynamic protection for admin / crm / private account / 404 pages)
-  let robotsTag = document.querySelector('meta[name="robots"]');
-  if (!robotsTag) {
-    robotsTag = document.createElement('meta');
-    robotsTag.setAttribute('name', 'robots');
-    document.head.appendChild(robotsTag);
-  }
-  
+  // 4. Update Author
+  setOrCreateMeta('name', 'author', 'ООО «ДС-Инжиниринг»');
+
+  // 5. Update Robots Directives (Dynamic protection for admin / crm / private account / 404 pages)
   const isPrivateOrErrorPage = meta.canonicalUrl?.includes('/crm') || 
     meta.canonicalUrl?.includes('/cms') || 
     meta.canonicalUrl?.includes('/account') || 
@@ -1240,9 +1380,9 @@ export function updateDocumentSeo(meta: SeoMetadata) {
     ? 'noindex, nofollow' 
     : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1');
   
-  robotsTag.setAttribute('content', robotsContent);
+  setOrCreateMeta('name', 'robots', robotsContent);
 
-  // 5. Update Canonical URL
+  // 6. Update Canonical URL
   const canonicalUrl = meta.canonicalUrl || (typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}${window.location.hash || ''}` : 'https://ds-engineering.ru/');
   
   let canonicalTag = document.querySelector('link[rel="canonical"]');
@@ -1253,105 +1393,154 @@ export function updateDocumentSeo(meta: SeoMetadata) {
   }
   canonicalTag.setAttribute('href', canonicalUrl);
 
-  // 6. Update OpenGraph Tags
-  let ogTitleTag = document.querySelector('meta[property="og:title"]');
-  if (!ogTitleTag) {
-    ogTitleTag = document.createElement('meta');
-    ogTitleTag.setAttribute('property', 'og:title');
-    document.head.appendChild(ogTitleTag);
-  }
-  ogTitleTag.setAttribute('content', meta.ogTitle || meta.title);
+  // 7. Resolve Social Media Images and Dimensions
+  const rawImage = meta.ogImage || '/logo.svg';
+  const absoluteImageUrl = toAbsoluteUrl(rawImage);
+  const imageMimeType = meta.ogImageType || inferImageMimeType(absoluteImageUrl);
+  const imageWidth = String(meta.ogImageWidth || '1200');
+  const imageHeight = String(meta.ogImageHeight || '630');
+  const imageAlt = meta.ogImageAlt || meta.twitterImageAlt || meta.ogTitle || meta.title;
+  const effectiveOgType = meta.ogType || (meta.schemaType === 'article' ? 'article' : meta.schemaType === 'product' ? 'product' : 'website');
 
-  let ogDescTag = document.querySelector('meta[property="og:description"]');
-  if (!ogDescTag) {
-    ogDescTag = document.createElement('meta');
-    ogDescTag.setAttribute('property', 'og:description');
-    document.head.appendChild(ogDescTag);
-  }
-  ogDescTag.setAttribute('content', meta.ogDescription || meta.description);
+  // 8. OpenGraph / VK / Telegram / Messengers Tags
+  setOrCreateMeta('property', 'og:type', effectiveOgType);
+  setOrCreateMeta('property', 'og:locale', 'ru_RU');
+  setOrCreateMeta('property', 'og:locale:alternate', meta.ogLocaleAlternate || 'en_US');
+  setOrCreateMeta('property', 'og:site_name', 'ДС‑Инжиниринг');
+  setOrCreateMeta('property', 'og:title', meta.ogTitle || meta.title);
+  setOrCreateMeta('property', 'og:description', meta.ogDescription || meta.description);
+  setOrCreateMeta('property', 'og:url', canonicalUrl);
+  setOrCreateMeta('property', 'og:image', absoluteImageUrl);
+  setOrCreateMeta('property', 'og:image:secure_url', absoluteImageUrl);
+  setOrCreateMeta('property', 'og:image:type', imageMimeType);
+  setOrCreateMeta('property', 'og:image:width', imageWidth);
+  setOrCreateMeta('property', 'og:image:height', imageHeight);
+  setOrCreateMeta('property', 'og:image:alt', imageAlt);
+  setOrCreateMeta('property', 'og:updated_time', meta.ogUpdatedTime || new Date().toISOString());
 
-  let ogUrlTag = document.querySelector('meta[property="og:url"]');
-  if (!ogUrlTag) {
-    ogUrlTag = document.createElement('meta');
-    ogUrlTag.setAttribute('property', 'og:url');
-    document.head.appendChild(ogUrlTag);
-  }
-  ogUrlTag.setAttribute('content', canonicalUrl);
+  // 9. Twitter / X Cards Tags
+  setOrCreateMeta('name', 'twitter:card', meta.twitterCard || 'summary_large_image');
+  setOrCreateMeta('name', 'twitter:site', meta.twitterSite || '@ds_engineering');
+  setOrCreateMeta('name', 'twitter:creator', meta.twitterCreator || '@ds_engineering');
+  setOrCreateMeta('name', 'twitter:domain', meta.twitterDomain || 'ds-engineering.ru');
+  setOrCreateMeta('name', 'twitter:url', meta.twitterUrl || canonicalUrl);
+  setOrCreateMeta('name', 'twitter:title', meta.ogTitle || meta.title);
+  setOrCreateMeta('name', 'twitter:description', meta.ogDescription || meta.description);
+  setOrCreateMeta('name', 'twitter:image', absoluteImageUrl);
+  setOrCreateMeta('name', 'twitter:image:alt', imageAlt);
 
-  let ogTypeTag = document.querySelector('meta[property="og:type"]');
-  if (!ogTypeTag) {
-    ogTypeTag = document.createElement('meta');
-    ogTypeTag.setAttribute('property', 'og:type');
-    document.head.appendChild(ogTypeTag);
-  }
-  ogTypeTag.setAttribute('content', meta.ogType || (meta.schemaType === 'article' ? 'article' : meta.schemaType === 'product' ? 'product' : 'website'));
+  // 10. VK / Direct Messengers
+  setOrCreateMeta('property', 'vk:image', absoluteImageUrl);
 
-  let ogSiteNameTag = document.querySelector('meta[property="og:site_name"]');
-  if (!ogSiteNameTag) {
-    ogSiteNameTag = document.createElement('meta');
-    ogSiteNameTag.setAttribute('property', 'og:site_name');
-    document.head.appendChild(ogSiteNameTag);
-  }
-  ogSiteNameTag.setAttribute('content', 'ДС‑Инжиниринг');
+  // 11. Article-specific Social Meta Tags (for news, knowledge, technical articles)
+  if (effectiveOgType === 'article') {
+    const pubDate = meta.articlePublishedTime || (meta.schemaData?.datePublished as string) || '2026-09-01T00:00:00+03:00';
+    const modDate = meta.articleModifiedTime || pubDate;
+    setOrCreateMeta('property', 'article:published_time', pubDate);
+    setOrCreateMeta('property', 'article:modified_time', modDate);
+    setOrCreateMeta('property', 'article:section', meta.articleSection || 'Инжиниринг и метрология');
+    setOrCreateMeta('property', 'article:author', meta.articleAuthor || 'Инженерный центр ДС‑Инжиниринг');
+    setOrCreateMeta('property', 'article:publisher', 'https://ds-engineering.ru');
 
-  let ogLocaleTag = document.querySelector('meta[property="og:locale"]');
-  if (!ogLocaleTag) {
-    ogLocaleTag = document.createElement('meta');
-    ogLocaleTag.setAttribute('property', 'og:locale');
-    document.head.appendChild(ogLocaleTag);
-  }
-  ogLocaleTag.setAttribute('content', 'ru_RU');
-
-  if (meta.ogImage) {
-    let ogImgTag = document.querySelector('meta[property="og:image"]');
-    if (!ogImgTag) {
-      ogImgTag = document.createElement('meta');
-      ogImgTag.setAttribute('property', 'og:image');
-      document.head.appendChild(ogImgTag);
-    }
-    ogImgTag.setAttribute('content', meta.ogImage);
-  }
-
-  // 7. Update Twitter Cards
-  let twCardTag = document.querySelector('meta[name="twitter:card"]');
-  if (!twCardTag) {
-    twCardTag = document.createElement('meta');
-    twCardTag.setAttribute('name', 'twitter:card');
-    document.head.appendChild(twCardTag);
-  }
-  twCardTag.setAttribute('content', 'summary_large_image');
-
-  let twTitleTag = document.querySelector('meta[name="twitter:title"]');
-  if (!twTitleTag) {
-    twTitleTag = document.createElement('meta');
-    twTitleTag.setAttribute('name', 'twitter:title');
-    document.head.appendChild(twTitleTag);
-  }
-  twTitleTag.setAttribute('content', meta.ogTitle || meta.title);
-
-  let twDescTag = document.querySelector('meta[name="twitter:description"]');
-  if (!twDescTag) {
-    twDescTag = document.createElement('meta');
-    twDescTag.setAttribute('name', 'twitter:description');
-    document.head.appendChild(twDescTag);
-  }
-  twDescTag.setAttribute('content', meta.ogDescription || meta.description);
-
-  if (meta.ogImage) {
-    let twImgTag = document.querySelector('meta[name="twitter:image"]');
-    if (!twImgTag) {
-      twImgTag = document.createElement('meta');
-      twImgTag.setAttribute('name', 'twitter:image');
-      document.head.appendChild(twImgTag);
-    }
-    twImgTag.setAttribute('content', meta.ogImage);
+    // Clean old article tags and recreate
+    document.querySelectorAll('meta[property="article:tag"]').forEach((t) => t.remove());
+    const tags = meta.articleTags || (meta.keywords ? meta.keywords.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 6) : []);
+    tags.forEach((tagText) => {
+      const tagMeta = document.createElement('meta');
+      tagMeta.setAttribute('property', 'article:tag');
+      tagMeta.setAttribute('content', tagText);
+      document.head.appendChild(tagMeta);
+    });
+  } else {
+    setOrCreateMeta('property', 'article:published_time', null);
+    setOrCreateMeta('property', 'article:modified_time', null);
+    setOrCreateMeta('property', 'article:section', null);
+    setOrCreateMeta('property', 'article:author', null);
+    setOrCreateMeta('property', 'article:publisher', null);
+    document.querySelectorAll('meta[property="article:tag"]').forEach((t) => t.remove());
   }
 
-  // 8. Dynamic Schema.org JSON-LD structured data injection
+  // 12. Product-specific Social Meta Tags
+  if (effectiveOgType === 'product') {
+    const priceAmount = meta.productPrice 
+      ? String(meta.productPrice) 
+      : (meta.schemaData?.price ? String(meta.schemaData.price) : undefined);
+    setOrCreateMeta('property', 'product:price:amount', priceAmount || '150000');
+    setOrCreateMeta('property', 'product:price:currency', meta.productCurrency || 'RUB');
+    setOrCreateMeta('property', 'product:availability', meta.productAvailability || 'in stock');
+    setOrCreateMeta('property', 'product:brand', meta.productBrand || (meta.schemaData?.brand as string) || 'ДС‑Инжиниринг');
+  } else {
+    setOrCreateMeta('property', 'product:price:amount', null);
+    setOrCreateMeta('property', 'product:price:currency', null);
+    setOrCreateMeta('property', 'product:availability', null);
+    setOrCreateMeta('property', 'product:brand', null);
+  }
+
+  // 13. Dynamic Schema.org JSON-LD structured data injection
   updateDynamicJsonLdSchema(meta, canonicalUrl);
 
-  // 9. Dynamic Schema.org BreadcrumbList structured data injection
+  // 14. Dynamic Schema.org BreadcrumbList structured data injection
   updateDynamicBreadcrumbSchema(meta, canonicalUrl);
+
+  // 15. Dynamic Schema.org FAQPage structured data injection based on common industry queries
+  updateDynamicFaqSchema(meta, canonicalUrl);
+}
+
+/**
+ * Backward compatible alias for updateDocumentSeo
+ */
+export const applySeoToDom = updateDocumentSeo;
+
+/**
+ * Generates valid Schema.org FAQPage JSON-LD microdata object
+ */
+export function generateFaqPageSchema(faqItems?: FaqQuestionAnswer[], pageUrl?: string): Record<string, unknown> {
+  const items = faqItems && faqItems.length > 0 ? faqItems : COMMON_INDUSTRY_FAQ_ITEMS;
+  const canonicalUrl = pageUrl || 'https://ds-engineering.ru/knowledge';
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': `${canonicalUrl}#faq`,
+    url: canonicalUrl,
+    inLanguage: 'ru-RU',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer
+      }
+    }))
+  };
+}
+
+/**
+ * Updates or injects dynamic Schema.org FAQPage structured data into document head
+ */
+export function updateDynamicFaqSchema(meta: SeoMetadata, canonicalUrl: string) {
+  if (typeof document === 'undefined') return;
+
+  let faqScript = document.getElementById('dynamic-faq-schema') as HTMLScriptElement | null;
+  const isFaqRelevant = meta.schemaType === 'faq' || 
+                        Boolean(meta.schemaData?.faqItems) || 
+                        canonicalUrl.includes('/knowledge') || 
+                        canonicalUrl.endsWith('/main') || 
+                        canonicalUrl === 'https://ds-engineering.ru/';
+
+  if (isFaqRelevant) {
+    if (!faqScript) {
+      faqScript = document.createElement('script');
+      faqScript.id = 'dynamic-faq-schema';
+      faqScript.type = 'application/ld+json';
+      document.head.appendChild(faqScript);
+    }
+    const faqItems = (meta.schemaData?.faqItems as FaqQuestionAnswer[]) || COMMON_INDUSTRY_FAQ_ITEMS;
+    const faqSchema = generateFaqPageSchema(faqItems, canonicalUrl);
+    faqScript.textContent = JSON.stringify(faqSchema, null, 2);
+  } else if (faqScript) {
+    faqScript.remove();
+  }
 }
 
 /**
@@ -1360,10 +1549,10 @@ export function updateDocumentSeo(meta: SeoMetadata) {
 function updateDynamicJsonLdSchema(meta: SeoMetadata, canonicalUrl: string) {
   if (typeof document === 'undefined') return;
 
-  let scriptTag = document.getElementById('dynamic-page-schema') as HTMLScriptElement | null;
+  let scriptTag = (document.getElementById('dynamic-schema') || document.getElementById('dynamic-page-schema')) as HTMLScriptElement | null;
   if (!scriptTag) {
     scriptTag = document.createElement('script');
-    scriptTag.id = 'dynamic-page-schema';
+    scriptTag.id = 'dynamic-schema';
     scriptTag.type = 'application/ld+json';
     document.head.appendChild(scriptTag);
   }
@@ -1382,7 +1571,10 @@ function updateDynamicJsonLdSchema(meta: SeoMetadata, canonicalUrl: string) {
     }
   };
 
-  if (meta.schemaType === 'product' || meta.schemaData?.type === 'product') {
+  if (meta.schemaType === 'faq') {
+    const faqItems = (meta.schemaData?.faqItems as FaqQuestionAnswer[]) || COMMON_INDUSTRY_FAQ_ITEMS;
+    schemaObj = generateFaqPageSchema(faqItems, canonicalUrl);
+  } else if (meta.schemaType === 'product' || meta.schemaData?.type === 'product') {
     schemaObj = {
       '@context': 'https://schema.org',
       '@type': 'Product',
@@ -1391,7 +1583,7 @@ function updateDynamicJsonLdSchema(meta: SeoMetadata, canonicalUrl: string) {
       image: meta.ogImage || 'https://ds-engineering.ru/logo.svg',
       brand: {
         '@type': 'Brand',
-        name: (meta.schemaData?.brand as string) || 'ДС‑Инжиниринг'
+        name: meta.productBrand || (meta.schemaData?.brand as string) || 'ДС‑Инжиниринг'
       },
       offers: {
         '@type': 'AggregateOffer',
@@ -1455,7 +1647,7 @@ function updateDynamicJsonLdSchema(meta: SeoMetadata, canonicalUrl: string) {
           url: 'https://ds-engineering.ru/logo.svg'
         }
       },
-      datePublished: (meta.schemaData?.datePublished as string) || '2026-09-03',
+      datePublished: meta.articlePublishedTime || (meta.schemaData?.datePublished as string) || '2026-09-03',
       dateModified: '2026-09-03'
     };
   } else if (meta.schemaType === 'about') {
@@ -1617,13 +1809,34 @@ export function runSeoAudit(): SeoAuditReport {
   const ogDesc = document.querySelector('meta[property="og:description"]')?.getAttribute('content');
   const ogImage = document.querySelector('meta[property="og:image"]')?.getAttribute('content');
   const ogUrl = document.querySelector('meta[property="og:url"]')?.getAttribute('content');
-  const isOgComplete = Boolean(ogTitle && ogDesc && ogImage);
+  const ogType = document.querySelector('meta[property="og:type"]')?.getAttribute('content');
+  const ogWidth = document.querySelector('meta[property="og:image:width"]')?.getAttribute('content');
+  const ogHeight = document.querySelector('meta[property="og:image:height"]')?.getAttribute('content');
+  const isOgComplete = Boolean(ogTitle && ogDesc && ogImage && ogUrl);
   checks.push({
-    name: 'Разметка соцсетей (Open Graph: VK, Telegram)',
+    name: 'Разметка соцсетей (Open Graph: VK, Telegram, Мессенджеры)',
     passed: isOgComplete,
     importance: 'high',
-    message: isOgComplete ? 'Все ключевые теги OpenGraph настроены' : 'Некоторые теги OpenGraph отсутствуют',
+    message: isOgComplete 
+      ? `Все ключевые теги OpenGraph настроены (${ogType || 'website'}, ${ogWidth && ogHeight ? `${ogWidth}x${ogHeight}px` : '1200x630px'})` 
+      : 'Некоторые теги OpenGraph отсутствуют',
     details: `og:title: ${ogTitle ? '✓' : '✗'}, og:image: ${ogImage ? '✓' : '✗'}, og:url: ${ogUrl ? '✓' : '✗'}`
+  });
+
+  // 5b. Twitter / X Cards
+  const twCard = document.querySelector('meta[name="twitter:card"]')?.getAttribute('content');
+  const twTitle = document.querySelector('meta[name="twitter:title"]')?.getAttribute('content');
+  const twImage = document.querySelector('meta[name="twitter:image"]')?.getAttribute('content');
+  const twSite = document.querySelector('meta[name="twitter:site"]')?.getAttribute('content');
+  const isTwitterComplete = Boolean(twCard && twTitle && twImage);
+  checks.push({
+    name: 'Карточки шеринга Twitter / X Cards',
+    passed: isTwitterComplete,
+    importance: 'high',
+    message: isTwitterComplete 
+      ? `Карточки Twitter Card активны (${twCard}, ${twSite || '@ds_engineering'})` 
+      : 'Теги Twitter Card настроены не полностью',
+    details: `card: ${twCard || '✗'}, title: ${twTitle ? '✓' : '✗'}, image: ${twImage ? '✓' : '✗'}`
   });
 
   // 6. Schema.org Microdata (JSON-LD)
@@ -1699,3 +1912,27 @@ export function runSeoAudit(): SeoAuditReport {
     }
   };
 }
+
+/**
+ * Dynamic Keyword Meta Tag Optimizer
+ * Enhances standard SEO metadata with high-converting organic keywords from Google Search Console & Yandex Metrica.
+ */
+export function injectOrganicKeywordsIntoSeoMeta(
+  baseMeta: SeoMetadata,
+  organicKeywords: string[]
+): SeoMetadata {
+  if (!organicKeywords || organicKeywords.length === 0) return baseMeta;
+
+  const mergedKeywords = Array.from(
+    new Set([
+      ...organicKeywords.map((k) => k.trim()),
+      ...baseMeta.keywords.split(',').map((k) => k.trim()),
+    ])
+  ).filter(Boolean).join(', ');
+
+  return {
+    ...baseMeta,
+    keywords: mergedKeywords,
+  };
+}
+

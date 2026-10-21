@@ -530,3 +530,130 @@ export const textConstants = pgTable('text_constants', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// === 20. ПРАЙС-ЛИСТ И НОМЕНКЛАТУРНЫЙ СПРАВОЧНИК CRM (Price Items Catalog & Price History Engine) ===
+
+// 20.1. КАТЕГОРИИ И ПОДКАТЕГОРИИ НОМЕНКЛАТУРЫ (Price Categories)
+export const priceCategories = pgTable('price_categories', {
+  id: varchar('id', { length: 100 }).primaryKey(),
+  parentId: varchar('parent_id', { length: 100 }), // Иерархическая привязка к родительской категории
+  slug: text('slug').notNull().unique(),
+  name: text('name').notNull(),
+  description: text('description'),
+  icon: text('icon').default('Tag'), // Имя иконки Lucide (Cpu, Package, Wrench, Tag, Truck)
+  colorTheme: text('color_theme').default('blue'),
+  orderIndex: integer('order_index').default(0).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('price_categories_parent_idx').on(table.parentId),
+  index('price_categories_slug_idx').on(table.slug),
+  index('price_categories_active_idx').on(table.isActive),
+]);
+
+// 20.2. НОМЕНКЛАТУРНЫЕ ПОЗИЦИИ: ТОВАРЫ, ПО, УСЛУГИ, ОСНАСТКА (Price Items)
+export const priceItems = pgTable('price_items', {
+  id: varchar('id', { length: 100 }).primaryKey(),
+  sku: text('sku').notNull().unique(),
+  name: text('name').notNull(),
+  itemType: varchar('item_type', { length: 50 }).default('product').notNull(), // 'product' | 'software_license' | 'engineering_service' | 'accessory' | 'non_core_service'
+  categoryId: varchar('category_id', { length: 100 }).references(() => priceCategories.id),
+  category: text('category').notNull(), // 'software' | 'hardware' | 'services' | 'accessories' | 'non_core_services'
+  categoryLabel: text('category_label').notNull(),
+  subCategory: text('sub_category'),
+  manufacturer: text('manufacturer').notNull(),
+  description: text('description').notNull(),
+  unit: text('unit').notNull().default('шт.'),
+  currency: varchar('currency', { length: 10 }).default('RUB').notNull(),
+  costPriceRub: real('cost_price_rub').default(0).notNull(), // Закупочная себестоимость
+  priceRub: real('price_rub').notNull(), // Базовая розничная / продажная цена без НДС
+  partnerPriceRub: real('partner_price_rub'), // Оптовая / партнерская цена для интеграторов
+  priceUsd: real('price_usd'),
+  priceEur: real('price_eur'),
+  vatRate: real('vat_rate').default(22).notNull(), // Базовая ставка НДС 22%
+  maxDiscountPercent: real('max_discount_percent').default(15).notNull(), // Предел скидки менеджера
+  marginPercent: real('margin_percent'), // Авторасчет маржинальности %
+  markupPercent: real('markup_percent'), // Авторасчет наценки %
+  inStock: boolean('in_stock').default(true).notNull(),
+  leadTimeDays: integer('lead_time_days').default(3).notNull(),
+  warrantyMonths: integer('warranty_months').default(12),
+  supplierName: text('supplier_name'),
+  supplierContact: text('supplier_contact'),
+  minOrderQty: integer('min_order_qty').default(1),
+  specifications: jsonb('specifications').default('{}'),
+  notes: text('notes'),
+  tags: jsonb('tags').default('[]'),
+  isPopular: boolean('is_popular').default(false).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  currentVersion: integer('current_version').default(1).notNull(), // Текущая версия цены
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('price_items_sku_idx').on(table.sku),
+  index('price_items_category_idx').on(table.category),
+  index('price_items_cat_id_idx').on(table.categoryId),
+  index('price_items_name_idx').on(table.name),
+  index('price_items_active_idx').on(table.isActive),
+]);
+
+// 20.3. ИСТОРИЯ И ВЕРСИОНИРОВАНИЕ ЦЕН (Price History & Versioning Audit Log)
+export const priceHistory = pgTable('price_history', {
+  id: varchar('id', { length: 100 }).primaryKey(), // UUID или 'phist-001'
+  itemId: varchar('item_id', { length: 100 }).references(() => priceItems.id, { onDelete: 'cascade' }).notNull(),
+  versionNumber: integer('version_number').notNull(),
+  costPriceRub: real('cost_price_rub').notNull(), // Закупочная себестоимость в этой версии
+  priceRub: real('price_rub').notNull(), // Розничная / продажная цена в этой версии
+  partnerPriceRub: real('partner_price_rub'),
+  priceUsd: real('price_usd'),
+  vatRate: real('vat_rate').default(22).notNull(),
+  marginPercent: real('margin_percent'),
+  markupPercent: real('markup_percent'),
+  maxDiscountPercent: real('max_discount_percent').default(15),
+  validFrom: timestamp('valid_from').defaultNow().notNull(),
+  validTo: timestamp('valid_to'), // null если версия активна в текущий момент
+  changeReason: text('change_reason').notNull(), // Причина: 'Индексация прайса вендора', 'Курсовая корректировка', etc.
+  changedByUserId: text('changed_by_user_id'),
+  changedByManagerName: text('changed_by_manager_name').notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('price_history_item_idx').on(table.itemId),
+  index('price_history_valid_idx').on(table.validFrom),
+  index('price_history_version_idx').on(table.versionNumber),
+]);
+
+// 20.4. ТИПЫ ЦЕН И ПРАВИЛА СКИДОК ДЛЯ СЕГМЕНТОВ (Price Tiers & Customer Rules)
+export const priceTierRules = pgTable('price_tier_rules', {
+  id: varchar('id', { length: 100 }).primaryKey(), // 'retail' | 'partner' | 'vip' | 'tender'
+  name: text('name').notNull(),
+  description: text('description'),
+  discountPercent: real('discount_percent').default(0).notNull(),
+  minMarginThresholdPercent: real('min_margin_threshold_percent').default(15).notNull(), // Защитный порог маржи
+  isDefault: boolean('is_default').default(false).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// === СВЯЗИ ДЛЯ ПРАЙС-ЛИСТОВ И ИСТОРИИ ЦЕН (Price Lists Relations) ===
+export const priceCategoriesRelations = relations(priceCategories, ({ one, many }) => ({
+  parent: one(priceCategories, { fields: [priceCategories.parentId], references: [priceCategories.id] }),
+  children: many(priceCategories),
+  items: many(priceItems),
+}));
+
+export const priceItemsRelations = relations(priceItems, ({ one, many }) => ({
+  categoryObj: one(priceCategories, { fields: [priceItems.categoryId], references: [priceCategories.id] }),
+  history: many(priceHistory),
+}));
+
+export const priceHistoryRelations = relations(priceHistory, ({ one }) => ({
+  item: one(priceItems, { fields: [priceHistory.itemId], references: [priceItems.id] }),
+}));
+
+export type PriceCategoryRecord = typeof priceCategories.$inferSelect;
+export type PriceItemRecord = typeof priceItems.$inferSelect;
+export type PriceHistoryRecord = typeof priceHistory.$inferSelect;
+export type PriceTierRuleRecord = typeof priceTierRules.$inferSelect;
+
+

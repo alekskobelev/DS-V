@@ -196,7 +196,7 @@ export const CallbackModal: React.FC = () => {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
+      className="fixed inset-0 z-[300] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) closeCallbackModal();
       }}
@@ -234,7 +234,7 @@ export const CallbackModal: React.FC = () => {
             Заказ обратного звонка
           </h2>
           <p className="text-blue-100 text-[11px] sm:text-xs mt-1 leading-relaxed">
-            Оставьте номер телефона, и дежурный инженер-технолог перезвонит вам в течение 10–15 минут для технической консультации.
+            Оставьте номер телефона, и инженер-технолог перезвонит вам для предметной консультации по вашей задаче.
           </p>
         </div>
 

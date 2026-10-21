@@ -20,11 +20,13 @@ export const CmsBackupTab: React.FC = () => {
     exportAllDataJSON,
     importDataJSON,
     resetToDefaultData,
+    resetCrmDatabase,
     showToast
   } = useApp();
 
   const [importJsonText, setImportJsonText] = useState('');
   const [copiedScript, setCopiedScript] = useState(false);
+  const [isResettingCrm, setIsResettingCrm] = useState(false);
 
   const handleDownloadBackup = () => {
     const jsonStr = exportAllDataJSON();
@@ -59,6 +61,15 @@ export const CmsBackupTab: React.FC = () => {
       resetToDefaultData();
       showToast('Данные CMS сброшены к исходным');
     }
+  };
+
+  const handleResetCrmDb = async () => {
+    if (!confirm('Сбросить всю базу данных CRM и Личного кабинета к начальному состоянию?\n\nБудут восстановлены заводские эталоны договоров, счетов, коммерческих предложений, обращений клиентов, парка оборудования и лицензий ООО «ДС-Инжиниринг».')) {
+      return;
+    }
+    setIsResettingCrm(true);
+    const ok = await resetCrmDatabase();
+    setIsResettingCrm(false);
   };
 
   const copyBash = () => {
@@ -155,6 +166,33 @@ export const CmsBackupTab: React.FC = () => {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* CRM & Client Cabinet Database Reset Card */}
+      <div className="bg-gradient-to-br from-amber-50 to-orange-50/50 rounded-xl p-6 border border-amber-200 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-100/80 px-2.5 py-1 rounded-md">
+              <RefreshCw className="w-3.5 h-3.5 text-amber-600" />
+              <span>База данных CRM и Личного кабинета клиентов</span>
+            </div>
+            <h3 className="text-lg font-bold text-gray-900">
+              Полный сброс реестра договоров, коммерческих предложений, обращений и сделок
+            </h3>
+            <p className="text-xs text-slate-600 leading-relaxed max-w-3xl">
+              Сбрасывает все текущие и измененные записи CRM (сделки, коммерческие предложения, реестр договоров, сервисные заявки техподдержки, реестр лицензий, парк оборудования КИМ и клиентские заказы) к исходным заводским эталонам ООО «ДС-Инжиниринг».
+            </p>
+          </div>
+
+          <button
+            onClick={handleResetCrmDb}
+            disabled={isResettingCrm}
+            className="px-5 py-3 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-semibold text-xs rounded-xl shadow-xs flex items-center gap-2 transition-colors shrink-0"
+          >
+            <RefreshCw className={`w-4 h-4 ${isResettingCrm ? 'animate-spin' : ''}`} />
+            <span>{isResettingCrm ? 'Сброс базы CRM...' : 'Сбросить базу данных CRM и Кабинета'}</span>
+          </button>
         </div>
       </div>
 

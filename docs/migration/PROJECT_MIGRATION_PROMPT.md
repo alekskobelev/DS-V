@@ -87,14 +87,15 @@
 ├── .env.example               # Шаблон переменных окружения
 ├── data/                      # Локальные JSON-дампы и персистентность
 ├── docs/                      # Проектная документация:
-│   ├── SITE_PASSPORT.md       # Паспорт сайта (v2.9.40-PROD)
+│   ├── README.md              # Реестр документации и быстрый старт
+│   ├── SITE_PASSPORT.md       # Паспорт сайта (v2.9.254-PROD)
 │   ├── USER_MANUAL.md         # Руководство пользователя (47 разделов)
 │   ├── CHANGELOG.md           # История версий и изменений
 │   ├── DATABASE_DEPLOYMENT.md # Руководство по PostgreSQL 17 и Drizzle
-│   ├── BUSINESS_ANALYTICS.md  # Аналитика и KPI
-│   ├── PRESENTATION_CEO.md    # Презентация руководству
-│   ├── PROJECT_MIGRATION_PROMPT.md # Настоящий файл миграции
-│   └── README.md              # Реестр документации
+│   ├── architecture/          # Архитектура, бизнес-логика, аудит и KPI
+│   ├── deployment/            # Инструкции по развертыванию на VPS/NAS
+│   ├── migration/             # Гайды по миграции, промпты и презентации
+│   └── testing/               # QA регламенты, тест-планы и отчеты (84 автотеста)
 └── src/                       # Исходный код React-приложения:
     ├── components/
     │   ├── crm/               # CRM Pro, Дашборд (CrmDashboard), ТКП, контракты

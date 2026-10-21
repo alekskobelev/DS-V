@@ -18,6 +18,7 @@ import {
   Briefcase
 } from 'lucide-react';
 import { ProjectContract, AttachedDocument, CurrencyCode, getCurrencySymbol } from '../../types';
+import { useApp } from '../../context/AppContext';
 import { AccountFileModal } from './AccountFileModal';
 import { AccountDocViewerModal } from './AccountDocViewerModal';
 
@@ -40,6 +41,8 @@ export const AccountContractModal: React.FC<AccountContractModalProps> = ({
   onClose,
   onSave,
 }) => {
+  const { crmSettings } = useApp();
+  const defaultVat = crmSettings?.defaultVatRate ?? 22;
   const isEditing = !!contract;
 
   const [number, setNumber] = useState(contract?.number || `ДОГ-2026/${Math.floor(100 + Math.random() * 900)}`);
@@ -105,7 +108,7 @@ export const AccountContractModal: React.FC<AccountContractModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-white rounded-xl max-w-3xl w-full shadow-sm border border-gray-200 overflow-hidden flex flex-col my-auto max-h-[92vh]">
         
         {/* Header */}
@@ -255,7 +258,7 @@ export const AccountContractModal: React.FC<AccountContractModalProps> = ({
           {/* Amount & Currency */}
           <div>
             <label className="block text-xs font-bold text-slate-500 mb-1 flex items-center justify-between">
-              <span>Сумма договора (с НДС 22%)</span>
+              <span>Сумма договора (с НДС {defaultVat}%)</span>
               <span className="text-[10px] text-gray-500 font-normal">Валюта договора:</span>
             </label>
             <div className="flex gap-2">
@@ -283,20 +286,21 @@ export const AccountContractModal: React.FC<AccountContractModalProps> = ({
               const num = parseInt((amount || '').replace(/\D/g, ''), 10);
               if (!num || isNaN(num) || num <= 0) return null;
               const sym = getCurrencySymbol(currency);
-              const withoutVat = Math.round(num / 1.22);
-              const vat = Math.round(withoutVat * 0.22);
+              const rateMultiplier = 1 + (defaultVat / 100);
+              const withoutVat = defaultVat > 0 ? Math.round(num / rateMultiplier) : num;
+              const vat = defaultVat > 0 ? Math.round(withoutVat * (defaultVat / 100)) : 0;
               return (
-                <div className="mt-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] space-y-1">
+                <div className="mt-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] space-y-1">
                   <div className="flex justify-between text-slate-500">
                     <span>ИТОГО без НДС:</span>
                     <span className="font-mono font-bold text-gray-800">{withoutVat.toLocaleString('ru-RU')} {sym}</span>
                   </div>
                   <div className="flex justify-between text-slate-500">
-                    <span>В том числе НДС 22%:</span>
+                    <span>В том числе НДС {defaultVat}%:</span>
                     <span className="font-mono font-bold text-blue-600">{vat.toLocaleString('ru-RU')} {sym}</span>
                   </div>
                   <div className="flex justify-between font-bold text-gray-900 border-t border-slate-200 pt-1">
-                    <span>ИТОГО с учетом НДС 22%:</span>
+                    <span>ИТОГО с учетом НДС {defaultVat}%:</span>
                     <span className="font-mono font-black text-emerald-800">{num.toLocaleString('ru-RU')} {sym}</span>
                   </div>
                 </div>

@@ -121,7 +121,7 @@ export const CrmAttachDocModal: React.FC<CrmAttachDocModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+    <div className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
       <div className="bg-white rounded-lg max-w-lg w-full shadow-sm border border-gray-200 overflow-hidden flex flex-col my-auto">
         
         {/* Modal Header */}

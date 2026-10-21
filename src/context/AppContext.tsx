@@ -39,11 +39,14 @@ import {
   INITIAL_LICENSES, INITIAL_SUPPORT_TICKETS,
   INITIAL_CONTRACTS,
   INITIAL_PROPOSALS,
-  INITIAL_COMPANY_FLEET
+  INITIAL_COMPANY_FLEET,
+  CrmTaxSettings,
+  DEFAULT_CRM_TAX_SETTINGS
 } from '../data/mockCrmData';
 import { apiService } from '../services/apiService';
 import { fetchWithCsrf } from '../services/csrfService';
 import { parseCurrentLocation, updateBrowserUrl, getRoutePath } from '../utils/routes';
+import { useTheme } from './ThemeContext';
 
 export interface ContactModalConfig {
   isOpen: boolean;
@@ -51,6 +54,7 @@ export interface ContactModalConfig {
   subtitle?: string;
   defaultProduct?: string;
   defaultService?: string;
+  customMessage?: string;
   formType: 'consultation' | 'demo' | 'quote' | 'service' | 'postprocessor' | 'general' | 'question' | 'request' | 'trial' | 'brochure' | 'consult' | 'measurement';
   camSystem?: string;
   isLicensedCam?: boolean;
@@ -117,6 +121,7 @@ interface AppContextType {
   exportAllDataJSON: () => string;
   importDataJSON: (jsonString: string) => boolean;
   resetToDefaultData: () => void;
+  resetCrmDatabase: () => Promise<boolean>;
 
   // 3D WebGL Inspection Models Management
   models3D: Model3DItem[];
@@ -172,6 +177,18 @@ interface AppContextType {
   openCallbackModal: (initialData?: { topic?: string; phone?: string; name?: string }) => void;
   closeCallbackModal: () => void;
 
+  // Metrology Equipment Configurator Modal
+  isConfiguratorModalOpen: boolean;
+  setIsConfiguratorModalOpen: (open: boolean) => void;
+  openConfiguratorModal: () => void;
+  closeConfiguratorModal: () => void;
+
+  // B2B ROI Calculator Modal (Test Access / Beta)
+  isRoiCalculatorModalOpen: boolean;
+  setIsRoiCalculatorModalOpen: (open: boolean) => void;
+  openRoiCalculatorModal: () => void;
+  closeRoiCalculatorModal: () => void;
+
   // Auth & Roles
   currentUser: UserProfile | null;
   authUsers: AuthAccount[];
@@ -208,10 +225,16 @@ interface AppContextType {
   addCommercialProposal: (proposal: CommercialProposal) => void;
   updateCommercialProposal: (id: string, updates: Partial<CommercialProposal>) => void;
   deleteCommercialProposal: (id: string) => void;
+  documentDetailLevel: 'express' | 'standard' | 'complex_project' | 'engineering_opk';
+  setDocumentDetailLevel: (level: 'express' | 'standard' | 'complex_project' | 'engineering_opk') => void;
 
-  // Deals
+  // Deals & Funnels
   funnels: any[];
   setFunnels: React.Dispatch<React.SetStateAction<any[]>>;
+  updateFunnelStages: (funnelId: string, stages: any[]) => Promise<void>;
+  resetFunnelsToDefault: () => Promise<void>;
+  crmSettings: CrmTaxSettings;
+  updateCrmSettings: (updates: Partial<CrmTaxSettings>) => Promise<void>;
   deals: ExtendedDeal[];
   setDeals: React.Dispatch<React.SetStateAction<ExtendedDeal[]>>;
   addDeal: (deal: ExtendedDeal) => void;
@@ -243,19 +266,24 @@ interface AppContextType {
 
   // Toast notifications
   toastMessage: string | null;
-  showToast: (msg: string) => void;
+  showToast: (msg: string, type?: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  console.log('[APP_BOOT] [AppProvider] AppProvider component initializing...');
   const [authUsers, setAuthUsers] = useState<AuthAccount[]>([]);
 
   useEffect(() => {
+    console.log('[APP_BOOT] [AppProvider] Mounted. Fetching auth users...');
     apiService.getUsers().then(res => {
+      console.log('[APP_BOOT] [AppProvider] Users API response received:', res.success ? 'SUCCESS' : 'FAILED');
       if (res.success && res.data) {
         setAuthUsers(res.data);
       }
+    }).catch(err => {
+      console.warn('[APP_BOOT] [AppProvider] Users API fetch error (non-fatal fallback active):', err);
     });
   }, []);
 
@@ -461,48 +489,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch {}
   }, []);
 
-  // Theme state with localStorage persistence and system color-scheme detection
-  const [theme, setThemeState] = useState<'light' | 'dark'>(() => {
-    try {
-      const savedTheme = localStorage.getItem('ds_theme');
-      if (savedTheme === 'light' || savedTheme === 'dark') {
-        return savedTheme;
-      }
-      if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        return 'dark';
-      }
-    } catch {}
-    return 'light';
-  });
-
-  const setTheme = (newTheme: 'light' | 'dark') => {
-    setThemeState(newTheme);
-    try {
-      localStorage.setItem('ds_theme', newTheme);
-    } catch {}
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
-  };
-
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-  };
-
-  // Sync class on documentElement
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
-  }, [theme]);
+  // Unified Theme state from ThemeContext
+  const { theme, setTheme, toggleTheme } = useTheme();
 
   // Dynamic CMS state from localStorage or mockData
   const [customPages, setCustomPages] = useState<CustomPage[]>(() => {
@@ -555,9 +543,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const saved = localStorage.getItem('ds_cms_services');
       if (saved) {
         const parsed: ServiceItem[] = JSON.parse(saved);
-        const standardIds = new Set(SERVICES_DATA.map((s) => s.id));
-        const customItems = parsed.filter((s) => !standardIds.has(s.id));
-        return [...SERVICES_DATA, ...customItems];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // If stored cache has outdated equipment-supply or old cmm-service id, sanitize and reset to canonical standard
+          const hasStaleOrInvalidData = 
+            parsed.some(s => s.id === 'equipment-supply' || s.id === 'cmm-service') ||
+            parsed.length !== SERVICES_DATA.length;
+          if (hasStaleOrInvalidData) {
+            localStorage.setItem('ds_cms_services', JSON.stringify(SERVICES_DATA));
+            return SERVICES_DATA;
+          }
+          const parsedMap = new Map(parsed.map((s) => [s.id, s]));
+          const merged = SERVICES_DATA.map((s) => parsedMap.get(s.id) || s);
+          return merged;
+        }
       }
       return SERVICES_DATA;
     } catch {
@@ -1033,20 +1031,139 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [commercialProposals]);
 
-  // Deals
-  const [funnels, setFunnels] = useState<any[]>([]);
+  // Document Detail Level for TKP & TZ Generator ('express' | 'standard' | 'complex_project')
+  const [documentDetailLevel, setDocumentDetailLevelState] = useState<'express' | 'standard' | 'complex_project' | 'engineering_opk'>(() => {
+    try {
+      const saved = localStorage.getItem('ds_crm_doc_detail_level') as any;
+      if (saved === 'express' || saved === 'standard' || saved === 'complex_project' || saved === 'engineering_opk') {
+        return saved === 'engineering_opk' ? 'complex_project' : saved;
+      }
+    } catch {}
+    return 'standard';
+  });
+
+  const setDocumentDetailLevel = (level: 'express' | 'standard' | 'complex_project' | 'engineering_opk') => {
+    const normalized = level === 'engineering_opk' ? 'complex_project' : level;
+    setDocumentDetailLevelState(normalized);
+    try {
+      localStorage.setItem('ds_crm_doc_detail_level', normalized);
+    } catch {}
+  };
+
+  // Deals & Funnels
+  const [funnels, setFunnels] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('ds_crm_funnels');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [];
+  });
+
   useEffect(() => {
     apiService.getCrmFunnels().then(res => {
       if (res.success && res.data && res.data.length > 0) {
         setFunnels(res.data);
+        try {
+          localStorage.setItem('ds_crm_funnels', JSON.stringify(res.data));
+        } catch (e) {}
       }
     });
   }, []);
 
+  const updateFunnelStages = async (funnelId: string, stages: any[]) => {
+    const targetFunnel = funnels.find(f => f.id === funnelId) || { id: funnelId, name: funnelId };
+    const updatedFunnel = { ...targetFunnel, stages };
+
+    setFunnels(prev => {
+      const exists = prev.some(f => f.id === funnelId);
+      const nextList = exists
+        ? prev.map(f => f.id === funnelId ? updatedFunnel : f)
+        : [...prev, updatedFunnel];
+      try {
+        localStorage.setItem('ds_crm_funnels', JSON.stringify(nextList));
+      } catch (e) {}
+      return nextList;
+    });
+
+    await apiService.saveCrmFunnel(updatedFunnel);
+  };
+
+  const resetFunnelsToDefault = async () => {
+    const res = await apiService.resetCrmFunnels();
+    if (res.success && res.data) {
+      setFunnels(res.data);
+      try {
+        localStorage.setItem('ds_crm_funnels', JSON.stringify(res.data));
+      } catch (e) {}
+    }
+  };
+
+  // CRM Global VAT & Tax Settings
+  const [crmSettings, setCrmSettings] = useState<CrmTaxSettings>(() => {
+    try {
+      const saved = localStorage.getItem('ds_crm_settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...DEFAULT_CRM_TAX_SETTINGS,
+          ...parsed,
+          countryOverrides: Array.isArray(parsed?.countryOverrides) && parsed.countryOverrides.length > 0 
+            ? parsed.countryOverrides 
+            : DEFAULT_CRM_TAX_SETTINGS.countryOverrides,
+          categoryOverrides: Array.isArray(parsed?.categoryOverrides) && parsed.categoryOverrides.length > 0 
+            ? parsed.categoryOverrides 
+            : DEFAULT_CRM_TAX_SETTINGS.categoryOverrides
+        };
+      }
+    } catch (e) {}
+    return { ...DEFAULT_CRM_TAX_SETTINGS };
+  });
+
+  useEffect(() => {
+    apiService.getCrmSettings().then(res => {
+      if (res.success && res.data) {
+        setCrmSettings(prev => ({
+          ...prev,
+          ...res.data,
+          countryOverrides: Array.isArray(res.data?.countryOverrides) && res.data.countryOverrides.length > 0
+            ? res.data.countryOverrides
+            : prev.countryOverrides || DEFAULT_CRM_TAX_SETTINGS.countryOverrides,
+          categoryOverrides: Array.isArray(res.data?.categoryOverrides) && res.data.categoryOverrides.length > 0
+            ? res.data.categoryOverrides
+            : prev.categoryOverrides || DEFAULT_CRM_TAX_SETTINGS.categoryOverrides
+        }));
+      }
+    });
+  }, []);
+
+  const updateCrmSettings = async (updates: Partial<CrmTaxSettings>) => {
+    const next: CrmTaxSettings = { 
+      ...crmSettings, 
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+    setCrmSettings(next);
+    try {
+      localStorage.setItem('ds_crm_settings', JSON.stringify(next));
+    } catch (e) {}
+    await apiService.saveCrmSettings(next);
+  };
+
   const [deals, setDeals] = useState<ExtendedDeal[]>(() => {
     try {
       const saved = localStorage.getItem('ds_crm_deals');
-      return saved ? JSON.parse(saved) : INITIAL_CRM_DEALS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const seen = new Set<string>();
+          return parsed.filter((d: ExtendedDeal) => {
+            if (!d?.id || seen.has(d.id)) return false;
+            seen.add(d.id);
+            return true;
+          });
+        }
+      }
+      return INITIAL_CRM_DEALS;
     } catch {
       return INITIAL_CRM_DEALS;
     }
@@ -1054,7 +1171,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     apiService.getCrmDeals().then(res => {
       if (res.success && res.data && res.data.length > 0) {
-        setDeals(res.data);
+        setDeals(prev => {
+          const seen = new Set<string>();
+          const combined = [...res.data, ...prev];
+          return combined.filter((d: ExtendedDeal) => {
+            if (!d?.id || seen.has(d.id)) return false;
+            seen.add(d.id);
+            return true;
+          });
+        });
       }
     });
   }, []);
@@ -1062,12 +1187,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     try {
       if (deals.length > 0) {
-        localStorage.setItem('ds_crm_deals', JSON.stringify(deals));
+        const seen = new Set<string>();
+        const unique = deals.filter(d => {
+          if (!d?.id || seen.has(d.id)) return false;
+          seen.add(d.id);
+          return true;
+        });
+        localStorage.setItem('ds_crm_deals', JSON.stringify(unique));
       }
     } catch (e) {}
   }, [deals]);
 
-  const addDeal = (deal: ExtendedDeal) => { apiService.saveCrmDeal(deal); setDeals(prev => [deal, ...prev]); };
+  const addDeal = (deal: ExtendedDeal) => { 
+    apiService.saveCrmDeal(deal); 
+    setDeals(prev => {
+      if (prev.some(d => d.id === deal.id)) {
+        return prev.map(d => d.id === deal.id ? { ...d, ...deal } : d);
+      }
+      return [deal, ...prev];
+    }); 
+  };
   const updateDeal = (id: string, updates: Partial<ExtendedDeal>) => { apiService.updateCrmDeal(id, updates); setDeals(prev => prev.map(d => d.id === id ? { ...d, ...updates } : d)); };
   const deleteDeal = (id: string) => { apiService.deleteCrmDeal(id); setDeals(prev => prev.filter(d => d.id !== id)); };
 
@@ -1077,7 +1216,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!currentUser) return;
     apiService.getCrmTickets(currentUser.role, currentUser.company).then(res => {
       if (res.success && res.data) {
-        setSupportTickets(res.data);
+        const seen = new Set<string>();
+        const unique = (res.data as SupportTicketItem[]).filter(t => {
+          if (!t?.id || seen.has(t.id)) return false;
+          seen.add(t.id);
+          return true;
+        });
+        setSupportTickets(unique);
       }
     });
   }, [currentUser]);
@@ -1089,7 +1234,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) {}
   }, [supportTickets]);
 
-  const addSupportTicket = (ticket: SupportTicketItem) => { apiService.saveCrmTicket(ticket); setSupportTickets(prev => [ticket, ...prev]); };
+  const addSupportTicket = (ticket: SupportTicketItem) => { 
+    apiService.saveCrmTicket(ticket); 
+    setSupportTickets(prev => {
+      if (prev.some(t => t.id === ticket.id)) {
+        return prev.map(t => t.id === ticket.id ? { ...t, ...ticket } : t);
+      }
+      return [ticket, ...prev];
+    }); 
+  };
   const updateSupportTicket = (id: string, updates: Partial<SupportTicketItem>) => { apiService.updateCrmTicket(id, updates); setSupportTickets(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t)); };
   const deleteSupportTicket = (id: string) => { apiService.deleteCrmTicket(id); setSupportTickets(prev => prev.filter(t => t.id !== id)); };
 
@@ -1099,7 +1252,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!currentUser) return;
     apiService.getCrmLicenses(currentUser.role, currentUser.company).then(res => {
       if (res.success && res.data) {
-        setLicenses(res.data);
+        const seen = new Set<string>();
+        const unique = (res.data as LicenseItem[]).filter(l => {
+          if (!l?.id || seen.has(l.id)) return false;
+          seen.add(l.id);
+          return true;
+        });
+        setLicenses(unique);
       }
     });
   }, [currentUser]);
@@ -1111,7 +1270,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) {}
   }, [licenses]);
 
-  const addLicense = (license: LicenseItem) => { apiService.saveCrmLicense(license); setLicenses(prev => [license, ...prev]); };
+  const addLicense = (license: LicenseItem) => { 
+    apiService.saveCrmLicense(license); 
+    setLicenses(prev => {
+      if (prev.some(l => l.id === license.id)) {
+        return prev.map(l => l.id === license.id ? { ...l, ...license } : l);
+      }
+      return [license, ...prev];
+    }); 
+  };
   const updateLicense = (id: string, updates: Partial<LicenseItem>) => { apiService.updateCrmLicense(id, updates); setLicenses(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l)); };
   const deleteLicense = (id: string) => { apiService.deleteCrmLicense(id); setLicenses(prev => prev.filter(l => l.id !== id)); };
 
@@ -1420,7 +1587,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [contactModal, setContactModal] = useState<ContactModalConfig>({
     isOpen: false,
     title: 'Запросить консультацию',
-    subtitle: 'Наши ведущие инженеры свяжутся с вами в течение 15 минут',
+    subtitle: 'Инженеры компании свяжутся с вами для квалифицированной консультации и расчета',
     formType: 'consultation',
   });
 
@@ -1436,6 +1603,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsCallbackModalOpen(false);
     setCallbackInitialData(undefined);
   };
+
+  const [isConfiguratorModalOpen, setIsConfiguratorModalOpen] = useState(false);
+  const openConfiguratorModal = () => setIsConfiguratorModalOpen(true);
+  const closeConfiguratorModal = () => setIsConfiguratorModalOpen(false);
+
+  const [isRoiCalculatorModalOpen, setIsRoiCalculatorModalOpen] = useState(false);
+  const openRoiCalculatorModal = () => setIsRoiCalculatorModalOpen(true);
+  const closeRoiCalculatorModal = () => setIsRoiCalculatorModalOpen(false);
 
   const isCmsHydratedRef = useRef(false);
 
@@ -1553,7 +1728,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch {}
   }, [favorites]);
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, _type?: string) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage((curr) => (curr === msg ? null : curr));
@@ -2082,19 +2257,67 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Все данные сброшены к начальным значениям');
   };
 
+  const resetCrmDatabase = async (): Promise<boolean> => {
+    try {
+      const res = await apiService.resetCrmDatabase();
+      
+      // Clear client-side cached CRM / Account data from localStorage
+      localStorage.removeItem('ds_crm_deals');
+      localStorage.removeItem('ds_crm_contracts');
+      localStorage.removeItem('ds_crm_proposals');
+      localStorage.removeItem('ds_crm_companies');
+      localStorage.removeItem('ds_crm_contacts');
+      localStorage.removeItem('ds_crm_tickets');
+      localStorage.removeItem('ds_crm_licenses');
+      localStorage.removeItem('ds_crm_fleet');
+      localStorage.removeItem('ds_user_tasks');
+      localStorage.removeItem('ds_account_contracts');
+      localStorage.removeItem('ds_account_orders');
+      localStorage.removeItem('ds_account_tickets');
+
+      // Re-populate state from response data or initial fallbacks
+      if (res?.data?.contracts) setContracts(res.data.contracts);
+      else setContracts(INITIAL_CONTRACTS);
+
+      if (res?.data?.deals) setDeals(res.data.deals);
+      else setDeals(INITIAL_CRM_DEALS);
+
+      if (res?.data?.proposals) setCommercialProposals(res.data.proposals);
+      else setCommercialProposals(INITIAL_PROPOSALS);
+
+      if (res?.data?.tickets) setSupportTickets(res.data.tickets);
+      else setSupportTickets(INITIAL_SUPPORT_TICKETS);
+
+      if (res?.data?.licenses) setLicenses(res.data.licenses);
+      else setLicenses(INITIAL_LICENSES);
+
+      if (res?.data?.fleet) setFleetDevices(res.data.fleet);
+      else setFleetDevices(INITIAL_COMPANY_FLEET);
+
+      window.dispatchEvent(new CustomEvent('crm-database-reset'));
+
+      showToast('База данных CRM и Личного кабинета успешно сброшена к начальному состоянию');
+      return true;
+    } catch (e) {
+      console.error('Failed to reset CRM database:', e);
+      showToast('Ошибка при сбросе базы данных CRM');
+      return false;
+    }
+  };
+
   const addToCompare = (product: Product) => {
     if (compareList.some((p) => p.id === product.id)) {
       setCompareList(compareList.filter((p) => p.id !== product.id));
       showToast(`«${product.name}» удален из сравнения`);
       return;
     }
-    if (compareList.length >= 3) {
-      showToast('В сравнение можно добавить максимум 3 товара одновременно');
+    if (compareList.length >= 4) {
+      showToast('В сравнение можно добавить максимум 4 товара одновременно');
       setIsCompareDrawerOpen(true);
       return;
     }
     setCompareList([...compareList, product]);
-    showToast(`«${product.name}» добавлен в список сравнения (${compareList.length + 1} из 3)`);
+    showToast(`«${product.name}» добавлен в список сравнения (${compareList.length + 1} из 4)`);
   };
 
   const removeFromCompare = (productId: string) => {
@@ -2129,7 +2352,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setContactModal({
       isOpen: true,
       title: config?.title || 'Запросить консультацию',
-      subtitle: config?.subtitle || 'Наши ведущие инженеры свяжутся с вами в течение 15 минут',
+      subtitle: config?.subtitle || 'Инженеры компании свяжутся с вами для квалифицированной консультации и расчета',
       defaultProduct: config?.defaultProduct,
       defaultService: config?.defaultService,
       formType: config?.formType || 'consultation',
@@ -2186,6 +2409,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         exportAllDataJSON,
         importDataJSON,
         resetToDefaultData,
+        resetCrmDatabase,
         models3D,
         setModels3D,
         addModel3D,
@@ -2224,6 +2448,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         callbackInitialData,
         openCallbackModal,
         closeCallbackModal,
+        isConfiguratorModalOpen,
+        setIsConfiguratorModalOpen,
+        openConfiguratorModal,
+        closeConfiguratorModal,
+        isRoiCalculatorModalOpen,
+        setIsRoiCalculatorModalOpen,
+        openRoiCalculatorModal,
+        closeRoiCalculatorModal,
         currentUser,
         authUsers,
         login,
@@ -2252,13 +2484,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addContract,
         updateContract,
         deleteContract,
-commercialProposals,
+        commercialProposals,
         setCommercialProposals,
         addCommercialProposal,
         updateCommercialProposal,
         deleteCommercialProposal,
+        documentDetailLevel,
+        setDocumentDetailLevel,
         funnels,
         setFunnels,
+        updateFunnelStages,
+        resetFunnelsToDefault,
+        crmSettings,
+        updateCrmSettings,
         deals,
         setDeals,
         addDeal,

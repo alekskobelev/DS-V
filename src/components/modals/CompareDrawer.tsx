@@ -253,14 +253,24 @@ export const CompareDrawer: React.FC = () => {
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setIsCompareDrawerOpen(true)}
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap"
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap cursor-pointer"
             >
               <SlidersHorizontal className="w-4 h-4" />
               <span>Сравнить ({activeCount})</span>
             </button>
             <button
+              onClick={() => {
+                setIsCompareDrawerOpen(false);
+                navigateTo('compare');
+              }}
+              className="p-2 text-blue-200 hover:text-white transition-colors rounded-lg hover:bg-white/10 hidden sm:flex items-center gap-1 text-xs cursor-pointer"
+              title="Открыть полную страницу сравнения"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </button>
+            <button
               onClick={clearCompare}
-              className="p-2 text-blue-200 hover:text-red-300 transition-colors rounded-lg hover:bg-white/10"
+              className="p-2 text-blue-200 hover:text-red-300 transition-colors rounded-lg hover:bg-white/10 cursor-pointer"
               title="Очистить список сравнения"
             >
               <Trash2 className="w-4 h-4" />
@@ -273,13 +283,13 @@ export const CompareDrawer: React.FC = () => {
       {isCompareDrawerOpen && (
         <div
           onClick={() => setIsCompareDrawerOpen(false)}
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-0 sm:p-4 lg:p-6 animate-in fade-in duration-200"
+          className="fixed inset-0 z-[300] bg-black/70 backdrop-blur-xs flex items-center justify-center p-0 sm:p-4 lg:p-6 animate-in fade-in duration-200"
         >
           <div
             onClick={(e) => e.stopPropagation()}
             className={`bg-white dark:bg-slate-900 shadow-sm flex flex-col overflow-hidden transition-all duration-300 ${
               isFullscreen
-                ? 'fixed inset-0 rounded-none w-full h-full z-50'
+                ? 'fixed inset-0 rounded-none w-full h-full z-[301]'
                 : 'w-full max-w-[1440px] h-full sm:max-h-[95vh] sm:rounded-xl border border-gray-200 dark:border-slate-800'
             }`}
           >
@@ -358,6 +368,19 @@ export const CompareDrawer: React.FC = () => {
                   title={isFullscreen ? 'Свернуть в окно' : 'Развернуть на весь экран'}
                 >
                   {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+
+                {/* Open dedicated compare page */}
+                <button
+                  onClick={() => {
+                    setIsCompareDrawerOpen(false);
+                    navigateTo('compare');
+                  }}
+                  className="p-2 rounded-xl text-blue-200 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-1 text-xs cursor-pointer"
+                  title="Открыть сравнительную таблицу на отдельной странице"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span className="hidden xl:inline">На страницу</span>
                 </button>
 
                 {/* Close Button */}

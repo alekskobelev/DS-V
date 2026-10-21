@@ -6,7 +6,7 @@ import {
   Check,
   Copy,
   MessageSquare,
-  Sparkles,
+  Info,
   ShieldCheck,
   Cpu,
   Layers,
@@ -14,6 +14,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { Product, ProductFaqItem } from '../../types';
+import { getFaqByCategory, FAQ_ITEMS } from '../../data/knowledgeBase';
 
 interface ProductFaqSectionProps {
   product?: Product | null;
@@ -40,13 +41,51 @@ export const ProductFaqSection: React.FC<ProductFaqSectionProps> = ({
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
   const items: ProductFaqItem[] = useMemo(() => {
-    if (customFaqs && customFaqs.length > 0) {
-      return customFaqs;
+    const list: ProductFaqItem[] = [];
+
+    // 1. Специфичные вопросы из канонической базы знаний по идентификатору или наименованию продукта
+    if (product) {
+      const prodName = product.name.toLowerCase();
+      const directMatches = FAQ_ITEMS.filter(
+        (f) =>
+          f.actionTargetId === product.id ||
+          (prodName.length > 3 && f.question.toLowerCase().includes(prodName.split(' ')[0]))
+      );
+      directMatches.forEach(f => {
+        list.push({
+          question: f.question,
+          answer: f.answer,
+          highlight: f.highlight,
+          categoryTag: f.categoryLabel,
+        });
+      });
     }
-    if (product?.faq && product.faq.length > 0) {
-      return product.faq;
+
+    // 2. Пользовательские или индивидуальные FAQ из карточки продукта
+    const explicitFaqs = (customFaqs && customFaqs.length > 0) ? customFaqs : (product?.faq || []);
+    explicitFaqs.forEach(ef => {
+      if (!list.some(existing => existing.question.toLowerCase() === ef.question.toLowerCase())) {
+        list.push(ef);
+      }
+    });
+
+    // 3. Если вопросов мало (< 3) или нет, дополняем из базы знаний по типу оборудования / ПО
+    if (list.length < 3 && product?.type) {
+      const kbCategory = product.type === 'software' ? 'software' : 'hardware';
+      const categoryFaqs = getFaqByCategory(kbCategory);
+      categoryFaqs.forEach(cf => {
+        if (!list.some(existing => existing.question.toLowerCase() === cf.question.toLowerCase())) {
+          list.push({
+            question: cf.question,
+            answer: cf.answer,
+            highlight: cf.highlight,
+            categoryTag: cf.categoryLabel,
+          });
+        }
+      });
     }
-    return [];
+
+    return list;
   }, [customFaqs, product]);
 
   // Extract unique category tags
@@ -380,7 +419,7 @@ export const ProductFaqSection: React.FC<ProductFaqSectionProps> = ({
                             : 'bg-amber-950/30 border-amber-600/40 text-amber-200'
                         }`}
                       >
-                        <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                        <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0 leading-relaxed font-medium">
                           <strong>Важно:</strong> {faq.highlight}
                         </div>

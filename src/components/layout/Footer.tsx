@@ -6,7 +6,7 @@ import { DEFAULT_SITE_TEXTS } from '../../data/defaultSiteTexts';
 import { DsLogo } from '../common/DsLogo';
 
 export const Footer: React.FC = () => {
-  const { navigateTo, openContactModal, companyInfo, customPages, setIsPrivacyModalOpen, siteTexts } = useApp();
+  const { navigateTo, openContactModal, companyInfo, customPages, setIsPrivacyModalOpen, siteTexts, isAdmin } = useApp();
   const footerTexts = siteTexts?.footer || DEFAULT_SITE_TEXTS.footer;
   const contactTexts = siteTexts?.contacts || DEFAULT_SITE_TEXTS.contacts;
 
@@ -30,30 +30,30 @@ export const Footer: React.FC = () => {
   const footerCustomPages = customPages.filter((p) => p.showInFooter && !SYSTEM_PAGE_IDS.has(p.id));
 
   return (
-    <footer className="relative z-10 bg-[#1E3A8A] text-gray-200 border-t border-blue-950 mt-auto">
-      {/* Top Banner / Call to Action in Footer */}
-      <div className="border-b border-blue-800/60 bg-gradient-to-r from-blue-900 via-[#1E3A8A] to-blue-950 py-6 sm:py-8 ">
-        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+    <footer className="relative z-10 bg-[#1E3A8A] text-gray-200 border-t-2 border-blue-800/90 shadow-2xl mt-auto overflow-hidden">
+      {/* Top Banner / Call to Action in Footer (Compact) */}
+      <div className="border-b border-blue-800/80 bg-gradient-to-r from-blue-950 via-[#1E3A8A] to-blue-950 py-3.5 sm:py-4">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4">
+          <div className="text-center md:text-left">
+            <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
               {footerTexts.topBannerTitle}
             </h3>
-            <p className="text-blue-200 text-sm mt-1 max-w-2xl">
+            <p className="text-blue-200 text-xs mt-0.5 max-w-2xl hidden sm:block">
               {footerTexts.topBannerSubtitle}
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto shrink-0">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 justify-center">
             <button
               onClick={() => openContactModal({ title: 'Запросить консультацию инженера' })}
-              className="px-5 py-3 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-bold rounded-lg shadow-md hover:shadow-amber-500/20 transition-all duration-200 text-center cursor-pointer"
+              className="px-4 py-2 sm:px-5 sm:py-2.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-bold rounded-lg shadow-sm transition-all text-xs sm:text-sm text-center cursor-pointer"
             >
               Запросить консультацию
             </button>
             <a
               href={`tel:${(contactTexts.phoneMain || companyInfo.phone).replace(/\D/g, '')}`}
-              className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-medium rounded-lg transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+              className="px-3 py-2 sm:px-4 sm:py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm whitespace-nowrap"
             >
-              <Phone className="w-4 h-4 text-amber-400 shrink-0" />
+              <Phone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               <span>{contactTexts.phoneMain || companyInfo.phone}</span>
             </a>
           </div>
@@ -61,8 +61,8 @@ export const Footer: React.FC = () => {
       </div>
 
       {/* Main Footer Links */}
-      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-3 sm:pb-3 ">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-5 lg:gap-4">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3.5 sm:pt-4 pb-1.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4 lg:gap-4">
           
           {/* Col 1: About & Info (span 3) */}
           <div className="xl:col-span-3 space-y-4">
@@ -170,6 +170,7 @@ export const Footer: React.FC = () => {
                 <li><button onClick={() => handleNav('services', 'postprocessors-dev')} className="hover:text-white flex items-start gap-1.5 text-left"><ChevronRight className="w-3 h-3 text-blue-400 shrink-0 mt-0.5" /><span>Разработка постпроцессоров ЧПУ</span></button></li>
                 <li><button onClick={() => handleNav('services', 'cmm-maintenance')} className="hover:text-white flex items-start gap-1.5 text-left"><ChevronRight className="w-3 h-3 text-blue-400 shrink-0 mt-0.5" /><span>Сервис и поверка КИМ</span></button></li>
                 <li><button onClick={() => handleNav('services', 'tooling-design')} className="hover:text-white flex items-start gap-1.5 text-left"><ChevronRight className="w-3 h-3 text-blue-400 shrink-0 mt-0.5" /><span>Проектирование оснастки</span></button></li>
+                <li><button onClick={() => handleNav('glossary')} className="hover:text-white flex items-start gap-1.5 text-left text-amber-300 font-semibold"><ChevronRight className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" /><span>Технический глоссарий (GD&T, ЧПУ)</span></button></li>
               </ul>
               <button onClick={() => handleNav('services')} className="mt-4 text-xs font-medium text-amber-400 hover:text-amber-300 flex items-center gap-1">
                 Все инженерные услуги &rarr;
@@ -248,74 +249,57 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        {/* Legal & Compliance Disclosure Block (152-FZ, 242-FZ, 168-FZ, ESIA .RU Verification) */}
-        <div className="mt-4 pt-3 pb-2 border-t border-blue-900/80 bg-blue-950/40 rounded-xl p-3 text-[11px] text-blue-200/90 leading-relaxed">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-left">
-            <div className="space-y-1">
-              <div className="font-bold text-white flex items-center gap-1.5 text-xs">
-                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Защита данных и серверы в РФ (152-ФЗ / 242-ФЗ)</span>
+        {/* Legal & Compliance Disclosure Block (152-ФЗ, 242-ФЗ, 168-ФЗ, ЕСИА .RU) - Ultra-Compact & Elegant */}
+        <div className="mt-2.5 pt-2 pb-1.5 border-t border-blue-900/70 bg-blue-950/30 rounded-lg p-2 sm:p-2.5 text-[10.5px] text-blue-200/90 leading-snug">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3 text-left">
+            <div className="space-y-0.5">
+              <div className="font-bold text-white flex items-center gap-1.5 text-[11px] sm:text-xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Защита данных (152-ФЗ / 242-ФЗ)</span>
               </div>
-              <p className="text-[10px] text-blue-200/80">
-                Все базы данных, личные кабинеты и серверное оборудование сайта физически размещены на территории Российской Федерации. Согласие на обработку персональных данных оформляется строго отдельно в соответствии с актуальными требованиями 152-ФЗ.
-              </p>
-              <div className="pt-0.5">
+              <p className="text-[10px] text-blue-200/80 leading-tight">
+                Базы данных физически размещены в РФ. 
                 <button
                   type="button"
                   onClick={() => setIsPrivacyModalOpen(true)}
-                  className="text-[10px] text-emerald-300 hover:text-emerald-200 underline underline-offset-2 font-semibold cursor-pointer transition-colors inline-flex items-center gap-1"
+                  className="ml-1 text-[10px] text-emerald-300 hover:text-emerald-200 underline underline-offset-2 font-semibold cursor-pointer"
                 >
-                  Политика конфиденциальности (152-ФЗ)
+                  Политика конфиденциальности
                 </button>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <div className="font-bold text-white flex items-center gap-1.5 text-xs">
-                <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
-                <span>Идентификация домена через ЕСИА (Госуслуги)</span>
-              </div>
-              <p className="text-[10px] text-blue-200/80">
-                Администратор доменного имени <code>ds-enginering.ru</code> в национальной зоне .RU идентифицирован через ЕСИА («Госуслуги») в строгом соответствии с регламентом регистрации и администрирования доменов РФ.
               </p>
             </div>
 
-            <div className="space-y-1">
-              <div className="font-bold text-white flex items-center gap-1.5 text-xs">
-                <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Госреестр СИ и приоритет языка (168-ФЗ)</span>
+            <div className="space-y-0.5">
+              <div className="font-bold text-white flex items-center gap-1.5 text-[11px] sm:text-xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                <span>Идентификация через ЕСИА</span>
               </div>
-              <p className="text-[10px] text-blue-200/80">
-                Поставляемые КИМ и 3D-сканеры проходят поверку и калибровку в системе <a href="https://fgis.gost.ru/fundmetrology/registry/4" target="_blank" rel="noreferrer" className="text-amber-300 underline font-semibold">ФГИС «АРШИН» Росстандарта</a>. Публичная информация соответствует нормам 168-ФЗ о русском языке.
+              <p className="text-[10px] text-blue-200/80 leading-tight">
+                Администратор домена <code>ds-enginering.ru</code> верифицирован через ЕСИА («Госуслуги»).
+              </p>
+            </div>
+
+            <div className="space-y-0.5">
+              <div className="font-bold text-white flex items-center gap-1.5 text-[11px] sm:text-xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Госреестр СИ (168-ФЗ)</span>
+              </div>
+              <p className="text-[10px] text-blue-200/80 leading-tight">
+                Поверка в системе <a href="https://fgis.gost.ru/fundmetrology/registry/4" target="_blank" rel="noreferrer" className="text-amber-300 underline font-semibold">ФГИС «АРШИН» Росстандарта</a>.
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Dedicated Lower Bottom Bar */}
-      <div className="w-full border-t border-blue-950 bg-[#0c1a40] py-4 sm:py-5 pb-20 xl:pb-6 ">
-        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-          <p className="text-xs sm:text-sm font-semibold text-white tracking-wide">
-            {footerTexts.copyrightText || `© 1995 — 2026 ${companyInfo.legalName}.`}
+      {/* Dedicated Lower Bottom Bar - Ultra-Compact */}
+      <div className="w-full border-t border-blue-900/80 bg-[#0c1a40] py-2 sm:py-2.5 pb-10 sm:pb-12 xl:pb-2.5">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center text-center">
+          <p className="text-[11px] sm:text-xs font-medium text-blue-200/90 tracking-wide">
+            {(footerTexts.copyrightText || `© 1995 — 2026 ${companyInfo.legalName}`)
+              .replace(/\.?\s*Все\s+права\s+защищены\.?/gi, '')
+              .trim()}
           </p>
-          <div className="flex items-center gap-4 text-xs text-blue-300">
-            <button
-              onClick={() => handleNav('sitemap')}
-              className="hover:text-white underline underline-offset-2 transition-colors cursor-pointer"
-            >
-              Карта сайта (Sitemap)
-            </button>
-            <span>•</span>
-            <a
-              href="/sitemap.xml"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-white font-mono text-[11px] bg-blue-900/60 px-2 py-0.5 rounded border border-blue-800 transition-colors"
-            >
-              sitemap.xml
-            </a>
-          </div>
         </div>
       </div>
     </footer>

@@ -19,7 +19,7 @@ export const BottomNavigationActions: React.FC = () => {
       data-testid="bottom-navigation-actions"
       role="region"
       aria-label="Быстрые действия и связь с инженером"
-      className="fixed bottom-14 sm:bottom-16 xl:bottom-6 inset-x-0 z-40 pointer-events-none pb-[max(0.6rem,env(safe-area-inset-bottom,0px))] px-4 md:px-6 w-full flex items-end justify-between transition-all duration-300"
+      className="fixed bottom-[64px] sm:bottom-20 xl:bottom-6 inset-x-0 z-40 pointer-events-none pb-[env(safe-area-inset-bottom,0px)] px-3 sm:px-6 w-full flex items-end justify-between transition-all duration-300"
     >
       {/* Left Action: Callback Request */}
       <div className="pointer-events-auto flex items-end">

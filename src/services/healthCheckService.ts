@@ -129,3 +129,12 @@ export async function runSystemHealthCheck(): Promise<SystemHealthReport> {
     return report;
   }
 }
+
+export {
+  checkAllApiEndpoints,
+  checkSingleApiEndpoint,
+  checkThirdPartyServices,
+  type ApiEndpointCheckResult,
+  type ThirdPartyServiceCheckResult
+} from './apiEndpointChecker';
+

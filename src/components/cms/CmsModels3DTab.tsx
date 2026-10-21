@@ -35,6 +35,7 @@ export const CmsModels3DTab: React.FC = () => {
   const { models3D, addModel3D, updateModel3D, deleteModel3D, resetModels3D, showToast, currentUser } = useApp();
   const canManage3D = canUserManage3DModels(currentUser);
 
+  const [activeModalTab, setActiveModalTab] = useState<'general' | 'files' | 'points' | 'preview'>('general');
   const [selectedModelForPreview, setSelectedModelForPreview] = useState<string | null>(
     models3D[0]?.id || null
   );
@@ -492,6 +493,7 @@ export const CmsModels3DTab: React.FC = () => {
               <CadModel3DViewer
                 initialModel={selectedModelForPreview || models3D[0]?.id}
                 compactHeight={previewSize === 'standard'}
+                defaultCollapsedPanels={true}
                 showTitle={true}
                 className="h-full w-full"
               />
@@ -526,110 +528,143 @@ export const CmsModels3DTab: React.FC = () => {
               </button>
             </div>
 
+            {/* Modal Navigation Tabs */}
+            <div className="px-6 py-2.5 bg-slate-100 dark:bg-slate-950/80 border-b border-gray-200 dark:border-slate-800 flex items-center gap-1.5 flex-wrap text-xs font-bold">
+              {[
+                { id: 'general', label: '1. Параметры и допуски', icon: Sliders },
+                { id: 'files', label: '2. 3D-файлы и Сетки', icon: Layers },
+                { id: 'points', label: `3. Точки GD&T (${editingModel.inspectionPoints?.length || 0})`, icon: CheckCircle2 },
+                { id: 'preview', label: '4. Быстрый 3D просмотр', icon: Eye }
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeModalTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveModalTab(tab.id as any)}
+                    className={`px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Modal Body */}
             <form onSubmit={handleSaveModel} className="p-6 overflow-y-auto space-y-6 flex-1 text-xs sm:text-sm">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-300 mb-1">
-                    Название детали / узла *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editingModel.name || ''}
-                    onChange={(e) => setEditingModel({ ...editingModel, name: e.target.value })}
-                    placeholder="Например: Крыльчатка турбины (Блиск)"
-                    className="w-full px-4.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
+              {/* TAB 1: General Parameters */}
+              {activeModalTab === 'general' && (
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-300 mb-1">
+                        Название детали / узла *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editingModel.name || ''}
+                        onChange={(e) => setEditingModel({ ...editingModel, name: e.target.value })}
+                        placeholder="Например: Крыльчатка турбины (Блиск)"
+                        className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-300 mb-1">
+                        Категория / Отрасль
+                      </label>
+                      <input
+                        type="text"
+                        value={editingModel.category || ''}
+                        onChange={(e) => setEditingModel({ ...editingModel, category: e.target.value })}
+                        placeholder="Авиастроение / Пресс-формы / Двигатели"
+                        className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-300 mb-1">
+                        Тип процедурной 3D геометрии
+                      </label>
+                      <select
+                        value={editingModel.geometryType || 'procedural_impeller'}
+                        onChange={(e) => setEditingModel({ ...editingModel, geometryType: e.target.value as GeometryPresetType })}
+                        className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      >
+                        <option value="procedural_impeller">Крыльчатка / Блиск (5-осевой турбинный ротор)</option>
+                        <option value="procedural_mold">Пресс-форма (Плита матрицы с каналами охлаждения)</option>
+                        <option value="procedural_housing">Корпус редуктора (Литье, фланцы, подшипники)</option>
+                        <option value="procedural_bevel_gear">Вал-шестерня (Коническая спиральная гипоидная передача)</option>
+                        <option value="procedural_volute">Улитка насоса (Спиральный корпус центробежного компрессора)</option>
+                        <option value="custom_url">Пользовательский STL / Загрузка</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-300 mb-1">
+                        Материал заготовки
+                      </label>
+                      <input
+                        type="text"
+                        value={editingModel.material || ''}
+                        onChange={(e) => setEditingModel({ ...editingModel, material: e.target.value })}
+                        placeholder="Титан ВТ6 / Сталь 40Х / Алюминий АК7ч"
+                        className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-300 mb-1">
+                        Нижний предел допуска (мм)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.005"
+                        value={editingModel.minTolerance ?? -0.05}
+                        onChange={(e) => setEditingModel({ ...editingModel, minTolerance: parseFloat(e.target.value) })}
+                        className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-300 mb-1">
+                        Верхний предел допуска (мм)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.005"
+                        value={editingModel.maxTolerance ?? 0.05}
+                        onChange={(e) => setEditingModel({ ...editingModel, maxTolerance: parseFloat(e.target.value) })}
+                        className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-300 mb-1">
+                      Описание и технологические особенности
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={editingModel.description || ''}
+                      onChange={(e) => setEditingModel({ ...editingModel, description: e.target.value })}
+                      placeholder="Опишите назначение детали, методы контроля и особенности реверс-инжиниринга..."
+                      className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-300 mb-1">
-                    Категория / Отрасль
-                  </label>
-                  <input
-                    type="text"
-                    value={editingModel.category || ''}
-                    onChange={(e) => setEditingModel({ ...editingModel, category: e.target.value })}
-                    placeholder="Авиастроение / Пресс-формы / Двигатели"
-                    className="w-full px-4.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-300 mb-1">
-                    Тип процедурной 3D геометрии
-                  </label>
-                  <select
-                    value={editingModel.geometryType || 'procedural_impeller'}
-                    onChange={(e) => setEditingModel({ ...editingModel, geometryType: e.target.value as GeometryPresetType })}
-                    className="w-full px-4.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  >
-                    <option value="procedural_impeller">Крыльчатка / Блиск (5-осевой турбинный ротор)</option>
-                    <option value="procedural_mold">Пресс-форма (Плита матрицы с каналами охлаждения)</option>
-                    <option value="procedural_housing">Корпус редуктора (Литье, фланцы, подшипники)</option>
-                    <option value="procedural_bevel_gear">Вал-шестерня (Коническая спиральная гипоидная передача)</option>
-                    <option value="procedural_volute">Улитка насоса (Спиральный корпус центробежного компрессора)</option>
-                    <option value="custom_url">Пользовательский STL / Загрузка</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-300 mb-1">
-                    Материал заготовки
-                  </label>
-                  <input
-                    type="text"
-                    value={editingModel.material || ''}
-                    onChange={(e) => setEditingModel({ ...editingModel, material: e.target.value })}
-                    placeholder="Титан ВТ6 / Сталь 40Х / Алюминий АК7ч"
-                    className="w-full px-4.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-300 mb-1">
-                    Нижний предел допуска (мм)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.005"
-                    value={editingModel.minTolerance ?? -0.05}
-                    onChange={(e) => setEditingModel({ ...editingModel, minTolerance: parseFloat(e.target.value) })}
-                    className="w-full px-4.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-300 mb-1">
-                    Верхний предел допуска (мм)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.005"
-                    value={editingModel.maxTolerance ?? 0.05}
-                    onChange={(e) => setEditingModel({ ...editingModel, maxTolerance: parseFloat(e.target.value) })}
-                    className="w-full px-4.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-300 mb-1">
-                  Описание и технологические особенности
-                </label>
-                <textarea
-                  rows={2}
-                  value={editingModel.description || ''}
-                  onChange={(e) => setEditingModel({ ...editingModel, description: e.target.value })}
-                  placeholder="Опишите назначение детали, методы контроля и особенности реверс-инжиниринга..."
-                  className="w-full px-4.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
-              </div>
-
-              {/* 3D Files Upload Section for the 3 Representation Modes */}
-              <div className="pt-4 border-t border-gray-200 dark:border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
+              {/* TAB 2: 3D Files Upload Section */}
+              {activeModalTab === 'files' && (
+                <div className="space-y-4 animate-in fade-in duration-200">
                   <div>
                     <h4 className="font-extrabold text-sm text-gray-900 dark:text-white flex items-center gap-2">
                       <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -639,193 +674,229 @@ export const CmsModels3DTab: React.FC = () => {
                       Загрузите файлы для CAD-модели (.stp, .step), полигонального 3D-скана (.stl) и облака точек (.xyz, .pts, .txt)
                     </p>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {/* 1. CAD Solid Model (STP/STEP) */}
-                  <CadFileUploadCard
-                    id="cms-upload-cad-stp"
-                    title="1. CAD-модель (STP/STEP)"
-                    subtitle="Твердотельная мастер-модель"
-                    targetModeLabel="CAD-модель"
-                    icon={Box}
-                    formatPill=".STP / .STEP / .IGES"
-                    accept=".stp,.step,.iges,.igs,.obj"
-                    fileUrl={editingModel.cadFileUrl}
-                    fileName={editingModel.cadFileName}
-                    fileSize={editingModel.cadFileSize}
-                    onUploadSuccess={({ url, fileName, fileSize, detectedPoints, detectedTriangles }) => {
-                      setEditingModel(prev => prev ? {
-                        ...prev,
-                        cadFileUrl: url,
-                        cadFileName: fileName,
-                        cadFileSize: fileSize,
-                        pointCount: detectedPoints ? detectedPoints : prev.pointCount,
-                        triangleCount: detectedTriangles ? detectedTriangles : prev.triangleCount
-                      } : null);
-                    }}
-                    onRemove={() => {
-                      setEditingModel(prev => prev ? {
-                        ...prev,
-                        cadFileUrl: undefined,
-                        cadFileName: undefined,
-                        cadFileSize: undefined
-                      } : null);
-                    }}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {/* 1. CAD Solid Model (STP/STEP) */}
+                    <CadFileUploadCard
+                      id="cms-upload-cad-stp"
+                      title="1. CAD-модель (STP/STEP)"
+                      subtitle="Твердотельная мастер-модель"
+                      targetModeLabel="CAD-модель"
+                      icon={Box}
+                      formatPill=".STP / .STEP / .IGES"
+                      accept=".stp,.step,.iges,.igs,.obj"
+                      fileUrl={editingModel.cadFileUrl}
+                      fileName={editingModel.cadFileName}
+                      fileSize={editingModel.cadFileSize}
+                      onUploadSuccess={({ url, fileName, fileSize, detectedPoints, detectedTriangles }) => {
+                        setEditingModel(prev => prev ? {
+                          ...prev,
+                          cadFileUrl: url,
+                          cadFileName: fileName,
+                          cadFileSize: fileSize,
+                          pointCount: detectedPoints ? detectedPoints : prev.pointCount,
+                          triangleCount: detectedTriangles ? detectedTriangles : prev.triangleCount
+                        } : null);
+                      }}
+                      onRemove={() => {
+                        setEditingModel(prev => prev ? {
+                          ...prev,
+                          cadFileUrl: undefined,
+                          cadFileName: undefined,
+                          cadFileSize: undefined
+                        } : null);
+                      }}
+                    />
 
-                  {/* 2. 3D-Scan Mesh (STL) */}
-                  <CadFileUploadCard
-                    id="cms-upload-scan-stl"
-                    title="2. 3D-скан / Сетка (STL)"
-                    subtitle="Полигональная сетка скана"
-                    targetModeLabel="Сетка / Отклонения"
-                    icon={Layers}
-                    formatPill=".STL / .PLY"
-                    accept=".stl,.ply,.obj"
-                    fileUrl={editingModel.scanMeshUrl || editingModel.customMeshUrl}
-                    fileName={editingModel.scanMeshFileName}
-                    fileSize={editingModel.scanMeshFileSize}
-                    onUploadSuccess={({ url, fileName, fileSize, detectedPoints, detectedTriangles }) => {
-                      setEditingModel(prev => prev ? {
-                        ...prev,
-                        scanMeshUrl: url,
-                        customMeshUrl: url,
-                        scanMeshFileName: fileName,
-                        scanMeshFileSize: fileSize,
-                        pointCount: detectedPoints ? detectedPoints : prev.pointCount,
-                        triangleCount: detectedTriangles ? detectedTriangles : prev.triangleCount
-                      } : null);
-                    }}
-                    onRemove={() => {
-                      setEditingModel(prev => prev ? {
-                        ...prev,
-                        scanMeshUrl: undefined,
-                        customMeshUrl: undefined,
-                        scanMeshFileName: undefined,
-                        scanMeshFileSize: undefined
-                      } : null);
-                    }}
-                  />
+                    {/* 2. 3D-Scan Mesh (STL) */}
+                    <CadFileUploadCard
+                      id="cms-upload-scan-stl"
+                      title="2. 3D-скан / Сетка (STL)"
+                      subtitle="Полигональная сетка скана"
+                      targetModeLabel="Сетка / Отклонения"
+                      icon={Layers}
+                      formatPill=".STL / .PLY"
+                      accept=".stl,.ply,.obj"
+                      fileUrl={editingModel.scanMeshUrl || editingModel.customMeshUrl}
+                      fileName={editingModel.scanMeshFileName}
+                      fileSize={editingModel.scanMeshFileSize}
+                      onUploadSuccess={({ url, fileName, fileSize, detectedPoints, detectedTriangles }) => {
+                        setEditingModel(prev => prev ? {
+                          ...prev,
+                          scanMeshUrl: url,
+                          customMeshUrl: url,
+                          scanMeshFileName: fileName,
+                          scanMeshFileSize: fileSize,
+                          pointCount: detectedPoints ? detectedPoints : prev.pointCount,
+                          triangleCount: detectedTriangles ? detectedTriangles : prev.triangleCount
+                        } : null);
+                      }}
+                      onRemove={() => {
+                        setEditingModel(prev => prev ? {
+                          ...prev,
+                          scanMeshUrl: undefined,
+                          customMeshUrl: undefined,
+                          scanMeshFileName: undefined,
+                          scanMeshFileSize: undefined
+                        } : null);
+                      }}
+                    />
 
-                  {/* 3. Point Cloud (XYZ / PTS) */}
-                  <CadFileUploadCard
-                    id="cms-upload-points-cloud"
-                    title="3. Облако точек (XYZ)"
-                    subtitle="Координаты лазерного скана"
-                    targetModeLabel="Облако точек"
-                    icon={Activity}
-                    formatPill=".XYZ / .PTS / .TXT"
-                    accept=".xyz,.pts,.asc,.pcd,.txt,.csv"
-                    fileUrl={editingModel.pointCloudUrl}
-                    fileName={editingModel.pointCloudFileName}
-                    fileSize={editingModel.pointCloudFileSize}
-                    onUploadSuccess={({ url, fileName, fileSize, detectedPoints }) => {
-                      setEditingModel(prev => prev ? {
-                        ...prev,
-                        pointCloudUrl: url,
-                        pointCloudFileName: fileName,
-                        pointCloudFileSize: fileSize,
-                        pointCount: detectedPoints ? detectedPoints : prev.pointCount
-                      } : null);
-                    }}
-                    onRemove={() => {
-                      setEditingModel(prev => prev ? {
-                        ...prev,
-                        pointCloudUrl: undefined,
-                        pointCloudFileName: undefined,
-                        pointCloudFileSize: undefined
-                      } : null);
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Inspection Points Table Editor */}
-              <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-slate-800">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-extrabold text-sm text-gray-900 dark:text-white flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>Контрольные метрологические точки GD&T ({editingModel.inspectionPoints?.length || 0})</span>
-                    </h4>
-                    <p className="text-xs text-gray-500 dark:text-slate-400">
-                      Интерактивные маркеры с расчетом отклонений на 3D-модели
-                    </p>
+                    {/* 3. Point Cloud (XYZ / PTS) */}
+                    <CadFileUploadCard
+                      id="cms-upload-points-cloud"
+                      title="3. Облако точек (XYZ)"
+                      subtitle="Координаты лазерного скана"
+                      targetModeLabel="Облако точек"
+                      icon={Activity}
+                      formatPill=".XYZ / .PTS / .TXT"
+                      accept=".xyz,.pts,.asc,.pcd,.txt,.csv"
+                      fileUrl={editingModel.pointCloudUrl}
+                      fileName={editingModel.pointCloudFileName}
+                      fileSize={editingModel.pointCloudFileSize}
+                      onUploadSuccess={({ url, fileName, fileSize, detectedPoints }) => {
+                        setEditingModel(prev => prev ? {
+                          ...prev,
+                          pointCloudUrl: url,
+                          pointCloudFileName: fileName,
+                          pointCloudFileSize: fileSize,
+                          pointCount: detectedPoints ? detectedPoints : prev.pointCount
+                        } : null);
+                      }}
+                      onRemove={() => {
+                        setEditingModel(prev => prev ? {
+                          ...prev,
+                          pointCloudUrl: undefined,
+                          pointCloudFileName: undefined,
+                          pointCloudFileSize: undefined
+                        } : null);
+                      }}
+                    />
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleAddInspectionPoint}
-                    className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Добавить точку</span>
-                  </button>
                 </div>
+              )}
 
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                  {editingModel.inspectionPoints?.map((pt, idx) => (
-                    <div key={pt.id || idx} className="p-3 bg-gray-50 dark:bg-slate-950 rounded-xl border border-gray-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
-                      <div className="sm:col-span-3">
-                        <input
-                          type="text"
-                          value={pt.name}
-                          onChange={(e) => handleUpdateInspectionPoint(idx, { name: e.target.value })}
-                          placeholder="Название точки"
-                          className="w-full px-2 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-3">
-                        <input
-                          type="text"
-                          value={pt.surfaceName}
-                          onChange={(e) => handleUpdateInspectionPoint(idx, { surfaceName: e.target.value })}
-                          placeholder="Контролируемая грань"
-                          className="w-full px-2 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <input
-                          type="number"
-                          step="0.001"
-                          value={pt.deviation}
-                          onChange={(e) => {
-                            const dev = parseFloat(e.target.value);
-                            const status = Math.abs(dev) <= 0.02 ? 'nominal' : (Math.abs(dev) <= 0.04 ? 'warning' : 'critical');
-                            handleUpdateInspectionPoint(idx, { deviation: dev, status });
-                          }}
-                          placeholder="Отклонение Δ (мм)"
-                          className="w-full px-2 py-1.5 text-xs font-mono rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-3">
-                        <select
-                          value={pt.status}
-                          onChange={(e) => handleUpdateInspectionPoint(idx, { status: e.target.value as any })}
-                          className="w-full px-2 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
-                        >
-                          <option value="nominal">В допуске (Nominal)</option>
-                          <option value="warning">Предупреждение (Warning)</option>
-                          <option value="critical">Брак / Критично (Critical)</option>
-                        </select>
-                      </div>
-
-                      <div className="sm:col-span-1 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteInspectionPoint(idx)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-slate-800 cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+              {/* TAB 3: Inspection Points Table Editor */}
+              {activeModalTab === 'points' && (
+                <div className="space-y-3 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-extrabold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span>Контрольные метрологические точки GD&T ({editingModel.inspectionPoints?.length || 0})</span>
+                      </h4>
+                      <p className="text-xs text-gray-500 dark:text-slate-400">
+                        Интерактивные маркеры с расчетом отклонений на 3D-модели
+                      </p>
                     </div>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={handleAddInspectionPoint}
+                      className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Добавить точку</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {editingModel.inspectionPoints?.map((pt, idx) => (
+                      <div key={pt.id || idx} className="p-3 bg-gray-50 dark:bg-slate-950 rounded-xl border border-gray-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                        <div className="sm:col-span-3">
+                          <label className="block text-[10px] text-gray-400 mb-0.5 font-bold">Название точки</label>
+                          <input
+                            type="text"
+                            value={pt.name}
+                            onChange={(e) => handleUpdateInspectionPoint(idx, { name: e.target.value })}
+                            placeholder="Название точки"
+                            className="w-full px-2 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-3">
+                          <label className="block text-[10px] text-gray-400 mb-0.5 font-bold">Контрольная грань</label>
+                          <input
+                            type="text"
+                            value={pt.surfaceName}
+                            onChange={(e) => handleUpdateInspectionPoint(idx, { surfaceName: e.target.value })}
+                            placeholder="Контролируемая грань"
+                            className="w-full px-2 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-[10px] text-gray-400 mb-0.5 font-bold">Отклонение (мм)</label>
+                          <input
+                            type="number"
+                            step="0.001"
+                            value={pt.deviation}
+                            onChange={(e) => {
+                              const dev = parseFloat(e.target.value);
+                              const status = Math.abs(dev) <= 0.02 ? 'nominal' : (Math.abs(dev) <= 0.04 ? 'warning' : 'critical');
+                              handleUpdateInspectionPoint(idx, { deviation: dev, status });
+                            }}
+                            placeholder="Отклонение Δ (мм)"
+                            className="w-full px-2 py-1.5 text-xs font-mono rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-3">
+                          <label className="block text-[10px] text-gray-400 mb-0.5 font-bold">Статус допуска</label>
+                          <select
+                            value={pt.status}
+                            onChange={(e) => handleUpdateInspectionPoint(idx, { status: e.target.value as any })}
+                            className="w-full px-2 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                          >
+                            <option value="nominal">В допуске (Nominal)</option>
+                            <option value="warning">Предупреждение (Warning)</option>
+                            <option value="critical">Брак / Критично (Critical)</option>
+                          </select>
+                        </div>
+
+                        <div className="sm:col-span-1 flex justify-end items-end pt-4">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteInspectionPoint(idx)}
+                            className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-slate-800 cursor-pointer"
+                            title="Удалить точку"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* TAB 4: Live 3D Preview inside Modal */}
+              {activeModalTab === 'preview' && (
+                <div className="space-y-3 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-extrabold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                        <Eye className="w-4 h-4 text-emerald-600" />
+                        <span>Предпросмотр 3D-модели и GD&T анализа</span>
+                      </h4>
+                      <p className="text-xs text-gray-500 dark:text-slate-400">
+                        Отображение без перекрывающих панелей
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="h-80 bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
+                    <CadModel3DViewer
+                      initialModel={editingModel.id || 'impeller'}
+                      customModels={[editingModel as Model3DItem]}
+                      compactHeight={true}
+                      defaultCollapsedPanels={true}
+                      minimalOverlay={true}
+                      showTitle={false}
+                      className="h-full w-full"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Modal Footer Buttons */}
               <div className="pt-4 border-t border-gray-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
@@ -834,7 +905,7 @@ export const CmsModels3DTab: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleExportModelSpec(editingModel as Model3DItem)}
-                      className="px-4.5 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 rounded-xl transition-colors flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800 cursor-pointer"
+                      className="px-4 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 rounded-xl transition-colors flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800 cursor-pointer"
                     >
                       <Download className="w-3.5 h-3.5" />
                       <span>Выгрузить JSON спецификацию</span>

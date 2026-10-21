@@ -1,4 +1,4 @@
-import { ProjectContract, CommercialProposal, SupportTicketItem, LicenseItem, CurrencyCode } from '../types';
+import { ProjectContract, CommercialProposal, SupportTicketItem, LicenseItem, CurrencyCode, ProjectDocument } from '../types.ts';
 export interface DealItemSpec {
   id: string;
   name: string;
@@ -33,25 +33,25 @@ export interface UtmTags {
   term?: string;
 }
 
-export interface ProjectDocument {
-  id: string;
-  name: string;
-  type: 'proposal' | 'nda' | 'contract' | 'spec' | 'certificate' | 'drawing';
-  size: string;
-  date: string;
-  url?: string;
-  status?: string;
-  fileDataUrl?: string;
-  author?: string;
-  mimeType?: string;
-}
+export type { ProjectDocument };
 
 export interface ExtendedDeal {
   id: string;
   title?: string;
   customerName: string;
+  customerPost?: string;
   companyName: string;
+  company?: string;
+  companyId?: string;
+  contactId?: string;
+  contactName?: string;
+  contactPhone?: string;
+  contactEmail?: string;
   inn?: string;
+  kpp?: string;
+  address?: string;
+  ceoName?: string;
+  ceoPost?: string;
   phone: string;
   email: string;
   funnel: 'services' | 'equipment' | 'support';
@@ -59,7 +59,12 @@ export interface ExtendedDeal {
   serviceType: string;
   details: string;
   estimatedPrice: number;
+  amount?: number;
+  proposalSentDate?: string;
   currency?: CurrencyCode;
+  vatRate?: number; // Ставка НДС (по умолчанию 22%, 0% для экспорта / соседних стран)
+  vatMode?: 'standard' | 'export_zero' | 'no_vat' | 'custom';
+  customerCountry?: string; // Страна заказчика (например, Россия, Казахстан, Беларусь)
   cadFormat?: string;
   createdAt: string;
   updatedAt: string;
@@ -257,7 +262,7 @@ export const INITIAL_CRM_DEALS: ExtendedDeal[] = [
     funnel: 'services',
     stage: 'nda',
     serviceType: 'Реверс-инжиниринг лопаток газотурбинного двигателя и 3D-контроль в Geomagic Design X',
-    details: 'Оптическое сканирование 8 ступеней лопаточного венца с построением параметрической твердотельной модели (NURBS-поверхности, точность отклонения < 0.015 мм) в Geomagic Design X.',
+    details: 'Оптическое сканирование и замеры мобильной КИМ 8 ступеней лопаточного венца с построением точной твердотельной CAD-модели (NURBS-поверхности, точность отклонения < 0.015 мм) в Geomagic Design X.',
     estimatedPrice: 820000,
     cadFormat: 'Parasolid (.x_t) / STEP',
     createdAt: '2026-08-25T11:40:00Z',
@@ -270,8 +275,8 @@ export const INITIAL_CRM_DEALS: ExtendedDeal[] = [
       campaign: 'reverse_engineering_cases'
     },
     items: [
-      { id: 'i1', name: 'Метрологическое 3D-сканирование лопаток (8 шт)', category: 'Услуги', quantity: 1, price: 320000, paymentStatus: 'pending' },
-      { id: 'i2', name: 'Построение параметрической 3D-модели в САПР Geomagic', category: 'Услуги', quantity: 1, price: 500000, paymentStatus: 'pending' }
+      { id: 'i1', name: 'Метрологическое 3D-сканирование и обмер лопаток (8 шт)', category: 'Услуги', quantity: 1, price: 320000, paymentStatus: 'pending' },
+      { id: 'i2', name: 'Построение твердотельной CAD-модели (STEP/Parasolid) в САПР Geomagic', category: 'Услуги', quantity: 1, price: 500000, paymentStatus: 'pending' }
     ],
     timeline: [
       { id: 't1', date: '25.08.2026 11:40', title: 'Расчет трудоемкости в инженерном калькуляторе', author: 'Система', type: 'system' },
@@ -897,7 +902,7 @@ export const INITIAL_SUPPORT_TICKETS: SupportTicketItem[] = [
     priority: 'Низкий',
     description: 'Для прохождения аудита СМК требуется электронная копия заводского калибровочного сертификата ISO 10360-12 на измерительную руку Hexagon 7525SE.',
     assignedEngineer: 'Ярыш Иван Владимирович',
-    lastReply: 'Сертификат поверки и калибровочный протокол выгружены в карточку тикета.',
+    lastReply: 'Сертификат поверки и калибровочный протокол выгружены в карточку заявки.',
     messages: [
       {
         id: 'msg-3',
@@ -910,7 +915,7 @@ export const INITIAL_SUPPORT_TICKETS: SupportTicketItem[] = [
         id: 'msg-4',
         author: 'Ярыш Иван Владимирович',
         authorRole: 'engineer',
-        text: 'Файл сертификата поверки прикреплен к тикету. Вопрос закрыт.',
+        text: 'Файл сертификата поверки прикреплен к заявке. Вопрос закрыт.',
         date: '15.01.2026 11:45',
       },
     ],
@@ -1069,7 +1074,7 @@ export const INITIAL_COMPANY_FLEET = [
     accuracy: 'до 0.020 мм',
     measuringRange: 'Поле сканирования до 550 × 600 мм',
     currentLocation: 'Главный офис в Самаре (ул. Свободы, 198) / Метрологический зал',
-    responsiblePerson: 'Скобелев А.С. (Инженер по ПО, ЧПУ и CAD-моделированию)',
+    responsiblePerson: 'Скобелев А.С. (Инженер по внедрению CAD/CAM и постпроцессорам)',
     notes: 'Комплект: ручной сканер EasyScan Omni, калибровочная пластина, набор магнитных меток, транспортный защитный кейс Pelicase.',
     photoUrl: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&q=80&w=800'
   },
@@ -1128,10 +1133,232 @@ export const INITIAL_COMPANY_FLEET = [
     verificationValidUntil: '2027-01-10',
     accuracy: 'E0,MPE = (1.7 + 3L/1000) мкм',
     measuringRange: '900 × 1000 × 600 мм',
-    currentLocation: 'Метрологический зал (Тольятти, Южное шоссе, 165, корп. 3.2)',
+    currentLocation: 'Метрологический зал в технопарке «Жигулевская долина» (г. Тольятти, Южное шоссе, 165)',
     responsiblePerson: 'Ярыш И.В. (Инженер-метролог)',
-    notes: 'Стационарная мостовая КИМ на гранитном основании, ЧПУ контроллер, моторизованная головка Renishaw PH10MQ Plus с датчиком TP200, модуль динамической температурной компенсации.',
+    notes: 'Стационарная мостовая КИМ на гранитном основании в метро-зале технопарка «Жигулевская долина», ЧПУ контроллер, моторизованная головка Renishaw PH10MQ Plus с датчиком TP200, модуль динамической температурной компенсации.',
     photoUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800'
   }
 ];
+
+export interface VatCountryOverride {
+  id: string;
+  country: string;
+  code: string;
+  code_iso?: string;
+  vatRate: number;
+  isExport: boolean;
+  legalReason: string;
+  enabled: boolean;
+  currency?: string;
+  notes?: string;
+}
+
+export interface VatCategoryOverride {
+  id: string;
+  categoryName: string;
+  targetCategory: string; // 'equipment' | 'software' | 'services' | 'support' | 'training'
+  vatRate: number;
+  isExempt: boolean;
+  legalReason: string;
+  enabled: boolean;
+  notes?: string;
+}
+
+export interface CrmTaxSettings {
+  defaultVatRate: number; // Базовая ставка (22%)
+  allowVatOverride: boolean; // Разрешить ручное переопределение в сделках
+  neighboringCountriesVatZero: boolean; // 0% для ЕАЭС/СНГ
+  exportVatRate: number; // Ставка для экспорта (0%)
+  exportZeroRateEnabled: boolean; // Включен ли режим 0% для экспорта
+  autoDetectCountryRate: boolean; // Автоопределение ставки по стране
+  requireExportDocuments: boolean; // Требовать подтверждающие документы ВЭД
+  showVatBreakdownInProposals: boolean; // Показывать расшифровку в КП
+  countryOverrides: VatCountryOverride[];
+  categoryOverrides: VatCategoryOverride[];
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export const DEFAULT_COUNTRY_VAT_OVERRIDES: VatCountryOverride[] = [
+  {
+    id: 'vat-kz',
+    country: 'Казахстан',
+    code: 'KZ',
+    vatRate: 0,
+    isExport: true,
+    legalReason: 'ст. 164 НК РФ, Приложение № 18 к Договору о ЕАЭС (Протокол о взимании косвенных налогов)',
+    enabled: true,
+    currency: 'RUB / KZT',
+    notes: 'Государство-член ЕАЭС. Нулевая ставка НДС 0% при подтверждении вывоза в течение 180 дней.'
+  },
+  {
+    id: 'vat-by',
+    country: 'Беларусь',
+    code: 'BY',
+    code_iso: 'BY',
+    vatRate: 0,
+    isExport: true,
+    legalReason: 'ст. 164 НК РФ, Приложение № 18 к Договору о ЕАЭС (Протокол о взимании косвенных налогов)',
+    enabled: true,
+    currency: 'RUB / BYN',
+    notes: 'Государство-член ЕАЭС. Ставка 0% для оборудования и инжиниринговых услуг.'
+  },
+  {
+    id: 'vat-uz',
+    country: 'Узбекистан',
+    code: 'UZ',
+    vatRate: 0,
+    isExport: true,
+    legalReason: 'пп. 1 п. 1 ст. 164 НК РФ (Экспорт товаров и трансграничных услуг в страны СНГ)',
+    enabled: true,
+    currency: 'RUB / UZS',
+    notes: 'Страна СНГ. Экспортные поставки с таможенным декларированием по ставке 0%.'
+  },
+  {
+    id: 'vat-am',
+    country: 'Армения',
+    code: 'AM',
+    vatRate: 0,
+    isExport: true,
+    legalReason: 'ст. 164 НК РФ, Приложение № 18 к Договору о ЕАЭС',
+    enabled: true,
+    currency: 'RUB / AMD',
+    notes: 'Государство-член ЕАЭС. Ставка 0% при наличии заявления о ввозе товаров.'
+  },
+  {
+    id: 'vat-kg',
+    country: 'Кыргызстан',
+    code: 'KG',
+    vatRate: 0,
+    isExport: true,
+    legalReason: 'ст. 164 НК РФ, Приложение № 18 к Договору о ЕАЭС',
+    enabled: true,
+    currency: 'RUB / KGS',
+    notes: 'Государство-член ЕАЭС. Ставка 0% для метрологических приборов и инжиниринга.'
+  },
+  {
+    id: 'vat-tj',
+    country: 'Таджикистан',
+    code: 'TJ',
+    vatRate: 0,
+    isExport: true,
+    legalReason: 'пп. 1 п. 1 ст. 164 НК РФ (Экспорт товаров и услуг)',
+    enabled: true,
+    currency: 'RUB / TJS',
+    notes: 'Экспортные контракты в СНГ по ставке 0%.'
+  },
+  {
+    id: 'vat-az',
+    country: 'Азербайджан',
+    code: 'AZ',
+    vatRate: 0,
+    isExport: true,
+    legalReason: 'пп. 1 п. 1 ст. 164 НК РФ (ВЭД экспорт)',
+    enabled: true,
+    currency: 'RUB / AZN',
+    notes: 'Прямой экспорт из РФ по ставке 0%.'
+  },
+  {
+    id: 'vat-cn',
+    country: 'Китай',
+    code: 'CN',
+    vatRate: 0,
+    isExport: true,
+    legalReason: 'пп. 1 п. 1 ст. 164 НК РФ (Международный экспорт ВЭД)',
+    enabled: true,
+    currency: 'CNY / RUB',
+    notes: 'Внешнеторговые контракты поставки в КНР по ставке 0%.'
+  },
+  {
+    id: 'vat-ae',
+    country: 'ОАЭ',
+    code: 'AE',
+    vatRate: 0,
+    isExport: true,
+    legalReason: 'пп. 1 п. 1 ст. 164 НК РФ (Международный экспорт)',
+    enabled: true,
+    currency: 'AED / USD',
+    notes: 'Поставки оборудования и услуг в ОАЭ по ставке 0%.'
+  },
+  {
+    id: 'vat-ru',
+    country: 'Россия',
+    code: 'RU',
+    vatRate: 22,
+    isExport: false,
+    legalReason: 'п. 3 ст. 164 НК РФ (Базовая ставка НДС для операций на территории РФ)',
+    enabled: true,
+    currency: 'RUB',
+    notes: 'Основной внутренний рынок Российской Федерации. Стандартное налогообложение 22%.'
+  }
+];
+
+export const DEFAULT_CATEGORY_VAT_OVERRIDES: VatCategoryOverride[] = [
+  {
+    id: 'vat-cat-sw-reestr',
+    categoryName: 'Отечественное ПО из единого реестра программ РФ (CAD/Inspect)',
+    targetCategory: 'software',
+    vatRate: 0,
+    isExempt: true,
+    legalReason: 'пп. 26 п. 2 ст. 149 НК РФ (Освобождение от НДС передачи прав на программы из реестра Минцифры)',
+    enabled: true,
+    notes: 'Передача неисключительных лицензий на ПО PolyWorks / Shining 3D / отечественные модули.'
+  },
+  {
+    id: 'vat-cat-equipment',
+    categoryName: 'Контрольно-измерительные машины, 3D-сканеры и лазерные трекеры',
+    targetCategory: 'equipment',
+    vatRate: 22,
+    isExempt: false,
+    legalReason: 'п. 3 ст. 164 НК РФ (Реализация технологического оборудования)',
+    enabled: true,
+    notes: 'Поставки по РФ облагаются базовой ставкой 22%, экспорт переопределяется правилом страны.'
+  },
+  {
+    id: 'vat-cat-services',
+    categoryName: 'Услуги 3D-сканирования, контроля геометрии и реверс-инжиниринга',
+    targetCategory: 'services',
+    vatRate: 22,
+    isExempt: false,
+    legalReason: 'п. 3 ст. 164 НК РФ (Инжиниринговые и метрологические услуги в РФ)',
+    enabled: true,
+    notes: 'Базовые инжиниринговые работы в РФ.'
+  },
+  {
+    id: 'vat-cat-support',
+    categoryName: 'Сервисное ТО, калибровка КИМ и метрологическая аттестация',
+    targetCategory: 'support',
+    vatRate: 22,
+    isExempt: false,
+    legalReason: 'п. 3 ст. 164 НК РФ (Сервисно-техническое обслуживание)',
+    enabled: true,
+    notes: 'Техническая поддержка и калибровка оборудования.'
+  },
+  {
+    id: 'vat-cat-training',
+    categoryName: 'Курсы обучения операторов КИМ по образовательной лицензии',
+    targetCategory: 'training',
+    vatRate: 0,
+    isExempt: true,
+    legalReason: 'пп. 14 п. 2 ст. 149 НК РФ (Услуги в сфере образования)',
+    enabled: false,
+    notes: 'Применяется при наличии действующей государственной образовательной лицензии.'
+  }
+];
+
+export const DEFAULT_CRM_TAX_SETTINGS: CrmTaxSettings = {
+  defaultVatRate: 22,
+  allowVatOverride: true,
+  neighboringCountriesVatZero: true,
+  exportVatRate: 0,
+  exportZeroRateEnabled: true,
+  autoDetectCountryRate: true,
+  requireExportDocuments: false,
+  showVatBreakdownInProposals: true,
+  countryOverrides: DEFAULT_COUNTRY_VAT_OVERRIDES,
+  categoryOverrides: DEFAULT_CATEGORY_VAT_OVERRIDES,
+  updatedAt: new Date().toISOString(),
+  updatedBy: 'Администратор системы'
+};
+
 

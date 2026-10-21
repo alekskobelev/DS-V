@@ -28,7 +28,7 @@ export const PrivacyModal: React.FC = () => {
   return (
     <div 
       onClick={() => setIsPrivacyModalOpen(false)}
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex justify-center p-4 cursor-pointer"
+      className="fixed inset-0 z-[350] overflow-y-auto bg-black/60 backdrop-blur-xs flex justify-center p-4 cursor-pointer"
     >
       <div 
         onClick={(e) => e.stopPropagation()}

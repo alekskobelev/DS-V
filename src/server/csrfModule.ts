@@ -69,10 +69,16 @@ export function csrfProtectionMiddleware(req: Request, res: Response, next: Next
   const tokenHeader = req.headers['x-csrf-token'] || req.headers['x-xsrf-token'] || req.headers['csrf-token'];
   let currentToken = typeof tokenHeader === 'string' ? tokenHeader : undefined;
 
-  // Exempt safe read-only methods and dry-run sandbox validators from CSRF validation
+  // Exempt safe read-only methods and dry-run sandbox validators / search proxies from CSRF validation
   const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
-  const isSchemaValidateSandbox = req.method.toUpperCase() === 'POST' && req.path.startsWith('/schemas/validate');
-  if (safeMethods.includes(req.method.toUpperCase()) || isSchemaValidateSandbox) {
+  const fullPath = (req.originalUrl || req.url || req.path || '').split('?')[0];
+  const isExemptSearchOrSandbox = req.method.toUpperCase() === 'POST' && (
+    fullPath.includes('/schemas/validate') || 
+    fullPath.includes('/dadata') || 
+    fullPath.includes('/analytics/event') ||
+    fullPath.includes('/api/crm/price-items')
+  );
+  if (safeMethods.includes(req.method.toUpperCase()) || isExemptSearchOrSandbox) {
     if (!currentToken || !verifyCsrfToken(currentToken)) {
       currentToken = generateCsrfToken();
     }

@@ -18,6 +18,7 @@ import { useApp } from '../../context/AppContext';
 import { Article, KnowledgeItem } from '../../types';
 import { ArticleCodeEditor } from './ArticleCodeEditor';
 import { ArticleVisualPreview } from './ArticleVisualPreview';
+import { RichTextEditor } from './RichTextEditor';
 import { FileUploadField } from '../common/FileUploadField';
 import { AutoResizeTextarea } from '../common/AutoResizeTextarea';
 
@@ -90,7 +91,7 @@ export const CmsNewsEditor: React.FC = () => {
   };
 
   const handleCreateNewArticleInCodeEditor = (category: string = 'Статьи') => {
-    const defaultAuthor = currentUser?.fullName || 'Инженерный центр ДС‑Инжиниринг';
+    const defaultAuthor = currentUser?.fullName || 'Инжиниринговая компания «ДС‑Инжиниринг»';
     setArticleForCodeEditor({
       id: `art-${Date.now()}`,
       title: '',
@@ -119,16 +120,52 @@ export const CmsNewsEditor: React.FC = () => {
   };
 
   const handleSaveCodeArticle = (savedArt: Article) => {
-    const existingIndex = articles.findIndex((a) => a.id === savedArt.id);
-    if (existingIndex >= 0) {
-      updateArticle(savedArt.id, savedArt);
-      showToast(`Материал «${savedArt.title}» успешно обновлен!`);
+    if (savedArt.id.startsWith('kb-') || savedArt.category === 'База знаний' || editingKnowledgeId) {
+      const knowObj: KnowledgeItem = {
+        id: savedArt.id.startsWith('kb-') ? savedArt.id : `kb-${savedArt.id}`,
+        title: savedArt.title,
+        category: (savedArt.category === 'База знаний' ? knowCategory : savedArt.category) as any,
+        summary: savedArt.preview || 'Справочный материал',
+        content: Array.isArray(savedArt.content) ? savedArt.content.join('\n\n') : (savedArt.content || ''),
+        tags: savedArt.tags || ['База знаний'],
+        updatedAt: new Date().toLocaleDateString('ru-RU'),
+      };
+      if (editingKnowledgeId) {
+        deleteKnowledgeItem(editingKnowledgeId);
+      }
+      addKnowledgeItem(knowObj);
+      showToast(`Регламент «${savedArt.title}» успешно сохранен в Базу знаний!`);
     } else {
-      addArticle(savedArt);
-      showToast(`Материал «${savedArt.title}» успешно опубликован!`);
+      const existingIndex = articles.findIndex((a) => a.id === savedArt.id);
+      if (existingIndex >= 0) {
+        updateArticle(savedArt.id, savedArt);
+        showToast(`Материал «${savedArt.title}» успешно обновлен!`);
+      } else {
+        addArticle(savedArt);
+        showToast(`Материал «${savedArt.title}» успешно опубликован!`);
+      }
     }
     setIsArticleCodeEditorOpen(false);
     setArticleForCodeEditor(null);
+  };
+
+  const handleOpenKnowledgeInCodeEditor = () => {
+    const tempArt: Article = {
+      id: editingKnowledgeId || `kb-custom-${Date.now()}`,
+      title: knowTitle || 'Регламент / Техническая инструкция',
+      category: 'База знаний',
+      date: new Date().toLocaleDateString('ru-RU'),
+      author: currentUser?.fullName || 'Инженерный отдел ДС‑Инжиниринг',
+      readTime: '5 мин',
+      views: 100,
+      image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+      preview: knowSummary || 'Справочный материал и инженерные рекомендации.',
+      content: knowContent || '<p>Подробный текст регламента...</p>',
+      tags: knowTags ? knowTags.split(',').map((t) => t.trim()).filter(Boolean) : ['База знаний', 'ГОСТ', 'Регламент'],
+      isHtml: true,
+    };
+    setArticleForCodeEditor(tempArt);
+    setIsArticleCodeEditorOpen(true);
   };
 
   const handleResetArticleForm = () => {
@@ -819,16 +856,26 @@ export const CmsNewsEditor: React.FC = () => {
                   ) : (
                     /* KNOWLEDGE BASE FORM */
                     <form onSubmit={handleSaveKnowledge} className="space-y-4 text-xs">
-                      <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
                         <span className="font-bold text-gray-900 text-sm uppercase tracking-wide flex items-center gap-1.5">
                           <BookOpen className="w-4 h-4 text-blue-600" />
                           <span>{editingKnowledgeId ? 'Редактировать регламент' : 'Добавить регламент в базу знаний'}</span>
                         </span>
-                        {editingKnowledgeId && (
-                          <span className="text-[10px] text-amber-700 bg-amber-100 px-2 py-0.5 rounded font-mono font-medium">
-                            ID: {editingKnowledgeId}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleOpenKnowledgeInCodeEditor}
+                            className="px-3 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                          >
+                            <Code2 className="w-3.5 h-3.5" />
+                            <span>Открыть в HTML-коде</span>
+                          </button>
+                          {editingKnowledgeId && (
+                            <span className="text-[10px] text-amber-700 bg-amber-100 px-2 py-0.5 rounded font-mono font-medium">
+                              ID: {editingKnowledgeId}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div>
@@ -891,15 +938,12 @@ export const CmsNewsEditor: React.FC = () => {
 
                       <div>
                         <label className="block font-semibold text-slate-500 mb-1">
-                          Полное содержание регламента <span className="text-red-500">*</span>
+                          Полное содержание регламента <span className="text-red-500">*</span> (Визуальный / Markdown / HTML редактор)
                         </label>
-                        <textarea
-                          rows={6}
-                          value={knowContent}
-                          onChange={(e) => setKnowContent(e.target.value)}
-                          placeholder="Подробная техническая инструкция, формулы, ссылки на ГОСТ..."
-                          className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 font-mono text-[11px]"
-                          required
+                        <RichTextEditor
+                          content={knowContent}
+                          onChange={setKnowContent}
+                          minHeight="min-h-[220px]"
                         />
                       </div>
 

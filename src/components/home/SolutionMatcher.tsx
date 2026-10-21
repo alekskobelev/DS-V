@@ -7,7 +7,8 @@ import {
   ArrowRight, 
   CheckCircle2, 
   RotateCcw, 
-  Sparkles, 
+  SlidersHorizontal,
+  Target,
   FileCheck, 
   Award,
   ChevronRight,
@@ -99,7 +100,7 @@ const SIZE_OPTIONS: OptionItem[] = [
   },
   {
     id: 'sheet-metal',
-    icon: Sparkles,
+    icon: Target,
     title: 'Листовая штамповка и кузовные элементы',
     desc: 'Контроль пружинения, толщины стенок, вмятин, зазоров и перепадов (Flush & Gap)',
   },
@@ -175,11 +176,11 @@ export const SolutionMatcher: React.FC = () => {
       if (selectedSize === 'small-precision' || selectedSize === 'medium-parts') {
         return {
           title: 'Комплекс реверс-инжиниринга и прямого CAD-моделирования',
-          tagline: 'Быстрое воссоздание параметрических STEP моделей по физическим образцам',
+          tagline: 'Быстрое воссоздание точных твердотельных STEP моделей по физическим образцам',
           recommendedSoftware: {
             id: 'shining3d-exmodel',
             name: 'Shining 3D EXModel Pro ',
-            desc: 'Специализированное ПО для мгновенного извлечения аналитических примитивов, построения параметрических эскизов и свободных NURBS-поверхностей.',
+            desc: 'Специализированное ПО для мгновенного извлечения аналитических примитивов, построения эскизов сечений и свободных NURBS-поверхностей.',
             linkId: 'shining3d-exmodel',
           },
           recommendedHardware: {
@@ -189,7 +190,7 @@ export const SolutionMatcher: React.FC = () => {
             linkId: 'freescan-combo',
           },
           keyBenefits: [
-            'Создание 100% твердотельных параметрических CAD-моделей (STEP, Parasolid, IGES)',
+            'Создание точных твердотельных и поверхностных CAD-моделей (STEP, Parasolid, IGES)',
             'Точность сканирования до 0.02 мм на лазерном источнике',
             'Live Deviation Analyzer — постоянный контроль отклонений твердого тела от скана',
             'Возможность сканирования блестящих и черных металлических поверхностей',
@@ -214,7 +215,7 @@ export const SolutionMatcher: React.FC = () => {
             linkId: 'pmt-alpha-e',
           },
           keyBenefits: [
-            'Прямая передача дерева построения в вашу текущую CAD-систему',
+            'Построение твердотельных B-Rep моделей и экспорт в целевую CAD-систему (параметрическое дерево — по спецзаказу)',
             'Сканирование крупных литых и сварных рам с гарантированной точностью',
             'Сшивка сеток и автоматическое исправление дефектов геометрии',
           ],
@@ -288,10 +289,10 @@ export const SolutionMatcher: React.FC = () => {
         linkId: 'topsolid-7',
       },
       recommendedHardware: {
-        id: 'freescan-pmt',
-        name: 'PMT Arm + 3D-сканер Shining 3D FreeScan',
-        desc: 'Комбинированный метрологический пост: контактные измерения посадочных отверстий щупом + скоростная лазерная оцифровка сложных поверхностей.',
-        linkId: 'freescan-combo',
+        id: 'hexagon-arm-freescan',
+        name: 'Мобильная КИМ Hexagon Absolute Arm / PMT + 3D-сканер Shining 3D',
+        desc: 'Комбинированный метрологический пост: контактные измерения посадочных отверстий и базовых баз щупом КИМ + скоростная лазерная оцифровка свободных поверхностей.',
+        linkId: 'hexagon-absolute-arm-7axis',
       },
       keyBenefits: [
         'Единый цифровой поток без потери данных при конвертации форматов',
@@ -312,7 +313,7 @@ export const SolutionMatcher: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-4 py-1 bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded-full text-xs font-bold">
-              <Sparkles className="w-3.5 h-3.5" />
+              <SlidersHorizontal className="w-3.5 h-3.5" />
               <span>Инженерный онлайн-конфигуратор решений</span>
             </div>
             <h3 className="text-2xl sm:text-3xl font-extrabold text-white">
@@ -583,7 +584,7 @@ export const SolutionMatcher: React.FC = () => {
                 onClick={() => setCurrentStep(3)}
                 className="px-7 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-sm transition-all flex items-center gap-2 shadow-lg hover:shadow-emerald-500/20 hover:scale-105"
               >
-                <Sparkles className="w-4 h-4 text-amber-300" />
+                <SlidersHorizontal className="w-4 h-4 text-emerald-100" />
                 <span>Показать подобранный комплект</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
@@ -731,9 +732,9 @@ export const SolutionMatcher: React.FC = () => {
                       formType: 'consultation',
                     })
                   }
-                  className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs sm:text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs sm:text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Scan className="w-4 h-4" />
                   <span>Заказать тестовое сканирование детали</span>
                 </button>
               </div>

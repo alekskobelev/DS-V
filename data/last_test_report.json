@@ -1,0 +1,153 @@
+{
+  "timestamp": "2026-10-21T07:57:32.065Z",
+  "total": 24,
+  "passed": 24,
+  "failed": 0,
+  "durationMs": 63,
+  "results": [
+    {
+      "suite": "Smoke",
+      "name": "Корневой index.html существует и содержит валидную разметку SPA",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "suite": "Smoke",
+      "name": "Конфигурация metadata.json валидна и синхронизирована с проектом",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "suite": "Smoke",
+      "name": "Серверные модули и маршрутизатор API импортируются без синтаксических ошибок",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "suite": "Smoke",
+      "name": "Инициализация каталога оборудования и услуг в mockData",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "suite": "Smoke",
+      "name": "Наличие директории персистентности данных /data и /docs",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "suite": "Regression: Catalog",
+      "name": "Фильтрация видов 3D-сканеров: лазерные, ИК, оптические и гибридные",
+      "status": "passed",
+      "durationMs": 3
+    },
+    {
+      "suite": "Regression: CRM VAT",
+      "name": "Проверка отсутствия троекратного дублирования планки ставки НДС 22%",
+      "status": "passed",
+      "durationMs": 5
+    },
+    {
+      "suite": "Regression: Deal Duplicates",
+      "name": "Проверка алгоритма блокировки дубликатов сделок для одной компании",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "suite": "Regression: CRM Entities",
+      "name": "Структура сделок, коммерческих предложений, договоров и лицензий CRM",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "suite": "Regression: 3D & GD&T",
+      "name": "Проверка наличия и конфигурации 3D-модулей и Three.js компонентов",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "suite": "Regression: Vitest SEO & Routing Suite",
+      "name": "Набор модульных тестов утилит seo.ts и routes.ts (Vitest 44 теста)",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "suite": "Non-Functional: Security",
+      "name": "Защита от CSRF и генерация криптостойких токенов",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "suite": "Non-Functional: Security",
+      "name": "Валидация и санитизация XSS/инъекций в JSON схемах",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "suite": "Non-Functional: Performance",
+      "name": "Поддержка сжатия ответов (Compression gzip/deflate)",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "suite": "Non-Functional: Performance",
+      "name": "Оптимизация бандла Vite и асинхронная подгрузка",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "suite": "Non-Functional: Reliability",
+      "name": "Гибридный отказоустойчивый режим (PostgreSQL + In-Memory + Disk Fallback)",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "suite": "Non-Functional: SEO",
+      "name": "OpenGraph теги, Schema.org и семантический HTML в index.html",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "suite": "Non-Functional: SEO Metadata & OpenGraph Audit",
+      "name": "Комплексный аудит метаданных, canonical и OpenGraph/Twitter Cards (185 страниц, Index-Ready 100%)",
+      "status": "passed",
+      "durationMs": 42
+    },
+    {
+      "suite": "Non-Functional: Lighthouse & Core Web Vitals Audit",
+      "name": "Программный аудит Lighthouse, Core Web Vitals (FCP/LCP/CLS/TBT) и доступности WCAG 2.1 AA",
+      "status": "passed",
+      "durationMs": 5
+    },
+    {
+      "suite": "Non-Functional: Cleanliness",
+      "name": "Проверка чистоты корневой директории (ROOT CLEANLINESS по AGENTS.md)",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "suite": "Non-Functional: Documentation",
+      "name": "Актуальность всей документации (SITE_PASSPORT, USER_MANUAL, CHANGELOG, DATABASE_DEPLOYMENT)",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "suite": "E2E: Cypress Configuration & Test Suite",
+      "name": "Конфигурация Cypress, базовый E2E тест доступности главной страницы и формы обратной связи",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "suite": "E2E: Visual Regression & Layout Consistency",
+      "name": "Тест визуальной регрессии и консистентности верстки (навигация, модальные окна, форма заявки)",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "suite": "E2E: API Endpoints & Response Validation",
+      "name": "Тест доступности и корректности ответов основных API-эндпоинтов системы (GET/POST)",
+      "status": "passed",
+      "durationMs": 0
+    }
+  ]
+}

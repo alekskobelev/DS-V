@@ -538,7 +538,7 @@ export const NotificationSettingsView: React.FC<NotificationSettingsViewProps> =
 
                 <div className="p-2.5 bg-sky-50/70 rounded-xl border border-sky-200/60 text-[11px] text-sky-900 leading-relaxed space-y-1">
                   <div>
-                    ✈️ <strong>Telegram-бот:</strong> Принимает все входящие обращения (RFQ, обратный звонок, онлайн-чат, сервисные тикеты).
+                    ✈️ <strong>Telegram-бот:</strong> Принимает все входящие обращения (RFQ, обратный звонок, онлайн-чат, сервисные заявки).
                   </div>
                   <div>
                     💡 Переменные окружения: <code>TELEGRAM_BOT_TOKEN</code> и <code>TELEGRAM_CHAT_ID</code> имеют высший приоритет.
@@ -647,7 +647,7 @@ export const NotificationSettingsView: React.FC<NotificationSettingsViewProps> =
                       onChange={(e) => setSettings({ ...settings, notifyOnTicket: e.target.checked })}
                       className="rounded text-indigo-600 focus:ring-indigo-500"
                     />
-                    <span>Сервисный тикет</span>
+                    <span>Сервисная заявка</span>
                   </label>
                 </div>
               </div>

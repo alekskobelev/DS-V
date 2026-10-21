@@ -37,6 +37,95 @@ import {
 import { useApp } from '../context/AppContext';
 import { apiService } from '../services/apiService';
 import { DEFAULT_ADMIN_ACCOUNTS } from '../data/mockData';
+import { 
+  ServiceItem, 
+  validateServiceItem, 
+  validateEquipmentArray, 
+  validateContact,
+  getServicesHistory,
+  saveServicesVersion,
+  restoreServicesVersion,
+  rollbackToPreviousVersion,
+  clearServicesHistory,
+  ServiceVersionSnapshot
+} from '../data/services';
+import { useServiceFormValidation } from '../hooks/useServiceFormValidation';
+import { CmsDynamicServiceForm } from '../components/cms/CmsDynamicServiceForm';
+import { CmsServicesHistoryModal } from '../components/cms/CmsServicesHistoryModal';
+
+export { 
+  useServiceFormValidation, 
+  CmsDynamicServiceForm, 
+  CmsServicesHistoryModal,
+  getServicesHistory,
+  saveServicesVersion,
+  restoreServicesVersion,
+  rollbackToPreviousVersion,
+  clearServicesHistory
+};
+
+/**
+ * Функция валидации для CmsPage:
+ * Использует интерфейс ServiceItem из src/data/services.ts для проверки данных,
+ * вводимых администратором, перед их сохранением.
+ */
+export function validateCmsServiceItem(item: Partial<ServiceItem> | unknown): {
+  isValid: boolean;
+  errors: string[];
+  errorMap: Record<string, string>;
+} {
+  const result = validateServiceItem(item);
+  return {
+    isValid: result.isValid,
+    errors: result.errors.map((e) => `[${e.field}]: ${e.message}`),
+    errorMap: result.errorMap,
+  };
+}
+
+/**
+ * Валидация массива всех услуг перед сохранением состояния CMS в базе данных
+ */
+export function validateCmsServices(servicesList: unknown): {
+  isValid: boolean;
+  errors: string[];
+  invalidCount: number;
+} {
+  const errors: string[] = [];
+  if (!Array.isArray(servicesList)) {
+    return {
+      isValid: false,
+      errors: ['Список услуг должен быть массивом (Array<ServiceItem>)'],
+      invalidCount: 1,
+    };
+  }
+
+  if (servicesList.length === 0) {
+    return {
+      isValid: false,
+      errors: ['Список услуг не может быть пустым. Необходима хотя бы одна инжиниринговая услуга компании.'],
+      invalidCount: 1,
+    };
+  }
+
+  let invalidCount = 0;
+  servicesList.forEach((serv, idx) => {
+    const s = serv as Partial<ServiceItem>;
+    const res = validateServiceItem(s);
+    if (!res.isValid) {
+      invalidCount++;
+      const servTitle = s?.title || `Услуга #${idx + 1}`;
+      res.errors.forEach((err) => {
+        errors.push(`«${servTitle}» (${err.field}): ${err.message}`);
+      });
+    }
+  });
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    invalidCount,
+  };
+}
 
 // Modular CMS Tabs
 import { CmsPagesEditor, SYSTEM_SITE_PAGES } from '../components/cms/CmsPagesEditor';
@@ -52,15 +141,18 @@ import { CmsAnalyticsTab } from '../components/cms/CmsAnalyticsTab';
 import { CmsInfrastructureTab } from '../components/cms/CmsInfrastructureTab';
 import { CmsQaTab } from '../components/cms/CmsQaTab';
 import { CmsSchemasTab } from '../components/cms/CmsSchemasTab';
-import { NotificationSettingsView } from '../components/notifications/NotificationSettingsView';
+import { UnifiedCommunicationsHub } from '../components/common/UnifiedCommunicationsHub';
 import { CmsBackupTab } from '../components/cms/CmsBackupTab';
 import { CmsManualTab } from '../components/cms/CmsManualTab';
+import { ApiHealthDashboardTab } from '../components/cms/ApiHealthDashboardTab';
+import { CmsConfiguratorsTab } from '../components/cms/CmsConfiguratorsTab';
 import { CrmAdminView } from '../components/CrmAdminView';
 
 export type CmsTabId = 
   | 'pages' 
   | 'site_texts' 
   | 'models3d' 
+  | 'configurators'
   | 'news' 
   | 'contacts' 
   | 'software' 
@@ -72,6 +164,7 @@ export type CmsTabId =
   | 'qa_backend' 
   | 'schemas' 
   | 'notifications' 
+  | 'health_dashboard'
   | 'backup' 
   | 'manual' 
   | 'crm';
@@ -159,6 +252,15 @@ export const CMS_TABS: TabDefinition[] = [
     icon: Wrench,
     description: '3D-сканирование, контроль геометрии, реверс-инжиниринг, тарифы',
   },
+  {
+    id: 'configurators',
+    title: 'Конфигураторы и Калькуляторы',
+    shortTitle: 'Конфигураторы',
+    category: 'catalog',
+    icon: Sliders,
+    badge: 'СИ / ROI',
+    description: 'Параметры Метрологического конфигуратора СИ, B2B-калькулятора окупаемости (ROI) и смет Услуг',
+  },
 
   // Category: SEO & Analytics
   {
@@ -213,6 +315,15 @@ export const CMS_TABS: TabDefinition[] = [
     category: 'infra',
     icon: Bell,
     description: 'Telegram, бот МАКС, email-уведомления и SLA обработки заявок',
+  },
+  {
+    id: 'health_dashboard',
+    title: 'Мониторинг API и Внешних Сервисов',
+    shortTitle: 'API Health',
+    category: 'infra',
+    icon: Activity,
+    badge: 'Live Status',
+    description: 'Мониторинг состояния REST API, СУБД, DaData, Telegram Bot и МАКС в реальном времени',
   },
   {
     id: 'backup',
@@ -282,6 +393,17 @@ export const CmsPage: React.FC = () => {
   // Sync all CMS state to Backend and PostgreSQL
   const handleSyncDatabase = async () => {
     setIsSyncing(true);
+    showToast('Проверка целостности и валидация данных CMS перед сохранением...');
+
+    // Проверка услуг администратора с использованием интерфейса ServiceItem
+    const servicesValidation = validateCmsServices(services);
+    if (!servicesValidation.isValid) {
+      const firstError = servicesValidation.errors[0] || 'Данные услуг не прошли валидацию';
+      showToast(`Ошибка сохранения: ${firstError}`);
+      setIsSyncing(false);
+      return;
+    }
+
     showToast('Синхронизация состояния CMS с базой данных PostgreSQL...');
     try {
       const fullContent = {
@@ -298,6 +420,16 @@ export const CmsPage: React.FC = () => {
       showToast('Данные сохранены локально (резервный fallback активен)');
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  // Manual services integrity check using ServiceItem
+  const handleValidateServices = () => {
+    const validation = validateCmsServices(services);
+    if (validation.isValid) {
+      showToast(`Валидация успешна: все ${services.length} услуг строго соответствуют интерфейсу ServiceItem`);
+    } else {
+      showToast(`Найдено ${validation.invalidCount} ошибок в услугах: ${validation.errors[0]}`);
     }
   };
 
@@ -406,14 +538,14 @@ export const CmsPage: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 w-full bg-slate-50/70 pb-24">
-      <div className="w-full min-w-0 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+    <div className="flex-1 w-full bg-slate-100 dark:bg-slate-950 min-h-screen pb-24 transition-colors">
+      <div className="w-full min-w-0 max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-4 sm:space-y-6">
         {/* ================= TOP PANEL: CMS BRANDING, USER INFO & LIVE DB STATUS ================= */}
-        <div className="bg-white rounded-xl p-6 shadow-xs border border-gray-200 space-y-5">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4 sm:space-y-5">
           {/* User Bar */}
           {currentUser && (
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-gray-100 text-xs">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-slate-200 dark:border-slate-800 text-xs">
+              <div className="flex items-center gap-2.5 sm:gap-3">
                 {currentUser.avatar ? (
                   <img
                     src={currentUser.avatar}
@@ -421,17 +553,17 @@ export const CmsPage: React.FC = () => {
                     className="w-8 h-8 rounded-full object-cover ring-2 ring-blue-500/20 shrink-0"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-bold flex items-center justify-center text-xs">
+                  <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-bold flex items-center justify-center text-xs shrink-0">
                     {currentUser.fullName[0]}
                   </div>
                 )}
-                <div>
-                  <span className="text-gray-500">
-                    {isAdmin ? 'Администратор системы: ' : 'Оператор CMS: '}
+                <div className="truncate max-w-[200px] sm:max-w-none">
+                  <span className="text-gray-500 hidden sm:inline">
+                    {isAdmin ? 'Администратор: ' : 'Оператор CMS: '}
                   </span>
-                  <strong className="text-gray-900 font-bold ml-1">{currentUser.fullName}</strong>
+                  <strong className="text-gray-900 font-bold ml-0.5">{currentUser.fullName}</strong>
                   {currentUser.position && (
-                    <span className="text-blue-600 ml-1.5 hidden sm:inline">({currentUser.position})</span>
+                    <span className="text-blue-600 ml-1.5 hidden md:inline">({currentUser.position})</span>
                   )}
                 </div>
               </div>
@@ -439,16 +571,17 @@ export const CmsPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => navigateTo('account')}
-                  className="px-4 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-500 border border-gray-200 rounded-xl text-xs font-semibold transition-colors"
+                  className="min-h-[36px] px-3 sm:px-4 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-gray-200 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 active:scale-95"
                 >
-                  Личный кабинет
+                  <User className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Кабинет</span>
                 </button>
                 <button
                   onClick={() => logout()}
-                  className="px-4 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
+                  className="min-h-[36px] px-3 sm:px-4 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 active:scale-95"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>Выйти</span>
+                  <span className="hidden sm:inline">Выйти</span>
                 </button>
               </div>
             </div>
@@ -456,112 +589,140 @@ export const CmsPage: React.FC = () => {
 
           {/* CMS Main Title & Action Buttons */}
           <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-100 text-amber-900 font-bold text-[11px] rounded-lg uppercase tracking-wider">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-100 text-amber-900 font-bold text-[10px] sm:text-[11px] rounded-lg uppercase tracking-wider">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                   <span>Инженерная CMS «ДС‑Инжиниринг»</span>
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 font-medium text-[11px] rounded-lg border border-emerald-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 font-medium text-[10px] sm:text-[11px] rounded-lg border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                   <span>{dbStatus.mode}</span>
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 font-medium text-[11px] rounded-lg border border-blue-200">
-                  <Server className="w-3 h-3" />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 font-medium text-[10px] sm:text-[11px] rounded-lg border border-blue-200 hidden sm:inline-flex">
+                  <Server className="w-3 h-3 shrink-0" />
                   <span>MinIO S3 Vault (ONLINE)</span>
                 </span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-gray-900">
                 Панель управления сайтом, каталогами и БД
               </h1>
-              <p className="text-xs sm:text-sm text-gray-500 max-w-3xl">
+              <p className="text-xs sm:text-sm text-gray-500 max-w-3xl line-clamp-2 sm:line-clamp-none">
                 Управление 16 модулями: визуальные страницы, текстовые константы PostgreSQL, 3D WebGL модели, каталоги САПР/КИМ, статьи базы знаний и интеграции.
               </p>
             </div>
 
-            {/* Quick Global Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {/* Quick Global Action Buttons (responsive grid) */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 xl:flex xl:flex-wrap items-center gap-2 shrink-0 w-full xl:w-auto">
+              <button
+                onClick={handleValidateServices}
+                className="min-h-[42px] px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                title="Проверить соответствие всех услуг интерфейсу ServiceItem перед сохранением"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-amber-300" />
+                <span>Валидация услуг</span>
+              </button>
+
               <button
                 onClick={handleSyncDatabase}
                 disabled={isSyncing}
-                className="px-4.5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-xs rounded-xl shadow-xs flex items-center gap-2 transition-all active:scale-95"
+                className="min-h-[42px] px-4.5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all active:scale-95"
                 title="Принудительная запись всех состояний в PostgreSQL"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isSyncing ? 'animate-spin' : ''}`} />
                 <span>{isSyncing ? 'Синхронизация...' : 'Синхронизировать с БД'}</span>
               </button>
 
               <button
                 onClick={handleDownloadBackup}
-                className="px-4.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-xs flex items-center gap-2 transition-colors"
+                className="min-h-[42px] px-4.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-colors active:scale-95"
                 title="Экспорт полного дампа .json"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-3.5 h-3.5 shrink-0" />
                 <span>Бэкап (.json)</span>
               </button>
 
               <button
                 onClick={() => navigateTo('home')}
-                className="px-4.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl border border-slate-200 flex items-center gap-1.5 transition-colors"
+                className="min-h-[42px] px-4.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 transition-colors active:scale-95"
               >
-                <Eye className="w-3.5 h-3.5 text-blue-600" />
+                <Eye className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                 <span>На сайт</span>
               </button>
             </div>
           </div>
 
-          {/* Quick Metrics Live Bar */}
+          {/* Quick Metrics Live Bar (responsive grid with distinct contrast) */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-2 text-xs">
-            <div className="p-2.5 rounded-xl bg-slate-50 border border-gray-200 flex items-center justify-between">
-              <span className="text-gray-500 text-[11px]">Страниц сайта:</span>
-              <strong className="font-bold text-gray-900">{SYSTEM_SITE_PAGES.length + customPages.length}</strong>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 flex items-center justify-between">
+              <span className="text-slate-600 dark:text-slate-400 text-[10px] sm:text-[11px] font-medium">Страниц сайта:</span>
+              <strong className="font-bold text-slate-900 dark:text-white font-mono">{SYSTEM_SITE_PAGES.length + customPages.length}</strong>
             </div>
-            <div className="p-2.5 rounded-xl bg-slate-50 border border-gray-200 flex items-center justify-between">
-              <span className="text-gray-500 text-[11px]">Каталог КИМ:</span>
-              <strong className="font-bold text-gray-900">{products.length} ед.</strong>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 flex items-center justify-between">
+              <span className="text-slate-600 dark:text-slate-400 text-[10px] sm:text-[11px] font-medium">Каталог КИМ:</span>
+              <strong className="font-bold text-slate-900 dark:text-white font-mono">{products.length} ед.</strong>
             </div>
-            <div className="p-2.5 rounded-xl bg-slate-50 border border-gray-200 flex items-center justify-between">
-              <span className="text-gray-500 text-[11px]">Услуг:</span>
-              <strong className="font-bold text-gray-900">{services.length} напр.</strong>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 flex items-center justify-between">
+              <span className="text-slate-600 dark:text-slate-400 text-[10px] sm:text-[11px] font-medium">Услуг:</span>
+              <strong className="font-bold text-slate-900 dark:text-white font-mono">{services.length} напр.</strong>
             </div>
-            <div className="p-2.5 rounded-xl bg-slate-50 border border-gray-200 flex items-center justify-between">
-              <span className="text-gray-500 text-[11px]">База знаний ГОСТ:</span>
-              <strong className="font-bold text-gray-900">{knowledgeBase.length} регл.</strong>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 flex items-center justify-between">
+              <span className="text-slate-600 dark:text-slate-400 text-[10px] sm:text-[11px] font-medium">База знаний ГОСТ:</span>
+              <strong className="font-bold text-slate-900 dark:text-white font-mono">{knowledgeBase.length} регл.</strong>
             </div>
-            <div className="p-2.5 rounded-xl bg-slate-50 border border-gray-200 flex items-center justify-between col-span-2 sm:col-span-1">
-              <span className="text-gray-500 text-[11px]">Констант БД:</span>
-              <strong className="font-bold text-amber-600">18 записей</strong>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 flex items-center justify-between col-span-2 sm:col-span-1">
+              <span className="text-slate-600 dark:text-slate-400 text-[10px] sm:text-[11px] font-medium">Констант БД:</span>
+              <strong className="font-bold text-amber-600 dark:text-amber-400 font-mono">18 записей</strong>
             </div>
           </div>
         </div>
 
         {/* ================= UNIFIED NAVIGATION & SEARCH CONTROLS ================= */}
-        <div className="bg-white rounded-xl p-5 shadow-xs border border-gray-200 space-y-4">
-          {/* Top Tier: Category Selector + Tab Search */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-            {/* Category Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold no-scrollbar">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 dark:border-slate-800 space-y-3 sm:space-y-4">
+          
+          {/* Mobile Direct Module Selector (< lg screens) */}
+          <div className="lg:hidden space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400 shrink-0">Раздел CMS:</span>
+              <select
+                value={activeTab}
+                onChange={(e) => setActiveTab(e.target.value as CmsTabId)}
+                className="w-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {CMS_TABS.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.title} ({t.badge})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Top Tier: Category Selector + Tab Search with clean responsive wrap */}
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+            {/* Category Filter Pills (horizontal scroll on mobile) */}
+            <div className="flex items-center lg:flex-wrap gap-1.5 overflow-x-auto no-scrollbar touch-pan-x -mx-1 px-1 py-1 text-xs font-semibold">
               {[
-                { id: 'all', label: 'Все разделы', count: 16 },
-                { id: 'content', label: '📁 Контент и страницы', count: 5 },
-                { id: 'catalog', label: '📦 Каталог и номенклатура', count: 3 },
-                { id: 'analytics', label: '📈 SEO и Аналитика', count: 2 },
-                { id: 'infra', label: '⚙️ Инфраструктура и БД', count: 5 },
-                { id: 'manual', label: '📚 Документация', count: 1 },
+                { id: 'all', label: 'Все разделы', count: CMS_TABS.length },
+                { id: 'content', label: '📁 Контент', count: CMS_TABS.filter(t => t.category === 'content').length },
+                { id: 'catalog', label: '📦 Каталог', count: CMS_TABS.filter(t => t.category === 'catalog').length },
+                { id: 'analytics', label: '📈 SEO & Аналитика', count: CMS_TABS.filter(t => t.category === 'analytics').length },
+                { id: 'infra', label: '⚙️ Инфраструктура', count: CMS_TABS.filter(t => t.category === 'infra').length },
+                { id: 'manual', label: '📚 Документация', count: CMS_TABS.filter(t => t.category === 'manual').length },
               ].map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id as CmsCategory)}
-                  className={`px-4 py-1.5 rounded-xl whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                  className={`min-h-[36px] px-3.5 py-1.5 rounded-xl whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                     selectedCategory === cat.id
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-500'
+                      ? 'bg-blue-600 text-white shadow-xs ring-2 ring-blue-500/20'
+                      : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
                   }`}
                 >
                   <span>{cat.label}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    selectedCategory === cat.id ? 'bg-blue-700 text-blue-100' : 'bg-white text-gray-500'
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                    selectedCategory === cat.id ? 'bg-blue-700 text-blue-100' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                   }`}>
                     {cat.count}
                   </span>
@@ -570,20 +731,28 @@ export const CmsPage: React.FC = () => {
             </div>
 
             {/* Live Search input */}
-            <div className="relative min-w-[240px]">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <div className="relative w-full lg:w-72 shrink-0">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={tabSearchQuery}
                 onChange={(e) => setTabSearchQuery(e.target.value)}
-                placeholder="Быстрый поиск раздела CMS..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="Поиск по разделам CMS..."
+                className="w-full pl-8 pr-8 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 dark:bg-slate-800"
               />
+              {tabSearchQuery && (
+                <button
+                  onClick={() => setTabSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs p-1"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           </div>
 
           {/* Bottom Tier: Tabs within Selected Category */}
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100">
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
             {visibleTabs.map((t) => {
               const Icon = t.icon;
               const isActive = activeTab === t.id;
@@ -591,17 +760,17 @@ export const CmsPage: React.FC = () => {
                 <button
                   key={t.id}
                   onClick={() => setActiveTab(t.id)}
-                  className={`px-4.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+                  className={`min-h-[38px] px-3.5 sm:px-4.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer ${
                     isActive
-                      ? 'bg-blue-900 border-blue-900 text-white shadow-sm ring-2 ring-blue-500/20'
-                      : 'bg-white hover:bg-slate-50 border-gray-200 text-slate-500 hover:border-blue-300'
+                      ? 'bg-blue-900 dark:bg-blue-900 border-blue-800 text-white shadow-sm ring-2 ring-blue-500/20'
+                      : 'bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-750 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-400'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-amber-400' : 'text-blue-600'}`} />
-                  <span>{t.title}</span>
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-amber-400' : 'text-blue-600 dark:text-blue-400'}`} />
+                  <span className="truncate">{t.title}</span>
                   {t.badge && (
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-medium ${
-                      isActive ? 'bg-blue-800 text-amber-300' : 'bg-blue-50 text-blue-700'
+                      isActive ? 'bg-blue-800 text-amber-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                     }`}>
                       {t.badge}
                     </span>
@@ -661,6 +830,9 @@ export const CmsPage: React.FC = () => {
           {/* TAB 8: Services & Geometry Calculator */}
           {activeTab === 'services' && <CmsServicesEditor />}
 
+          {/* TAB 8.5: Configurators & ROI Calculators Settings */}
+          {activeTab === 'configurators' && <CmsConfiguratorsTab />}
+
           {/* TAB 9: SEO & Smart Banners */}
           {activeTab === 'seo' && <CmsSeoTab />}
 
@@ -676,12 +848,15 @@ export const CmsPage: React.FC = () => {
           {/* TAB 13: JSON Schema & API Runtime Validation */}
           {activeTab === 'schemas' && <CmsSchemasTab />}
 
-          {/* TAB 14: Notification Channels (Telegram, MAX bot) */}
+          {/* TAB 14: Notification Channels (Telegram, MAX bot, SMTP) */}
           {activeTab === 'notifications' && (
-            <NotificationSettingsView contextMode="cms" />
+            <UnifiedCommunicationsHub contextMode="cms" initialTab="messengers" />
           )}
 
-          {/* TAB 15: Backup & Disaster Recovery */}
+          {/* TAB 15: Real-time API & Third-Party Health Dashboard */}
+          {activeTab === 'health_dashboard' && <ApiHealthDashboardTab />}
+
+          {/* TAB 16: Backup & Disaster Recovery */}
           {activeTab === 'backup' && <CmsBackupTab />}
 
           {/* TAB 16: Operator Manual & Markdown Documents */}
@@ -696,3 +871,6 @@ export const CmsPage: React.FC = () => {
     </div>
   );
 };
+
+export default CmsPage;
+

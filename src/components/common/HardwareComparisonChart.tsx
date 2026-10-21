@@ -24,10 +24,10 @@ import {
   CheckCircle2,
   Info,
   Layers,
-  Sparkles,
   BarChart3,
   HelpCircle,
-  Plus
+  Plus,
+  Award
 } from 'lucide-react';
 import { Product } from '../../types';
 import {
@@ -78,6 +78,14 @@ const PRODUCT_THEME: ProductColorConfig[] = [
     badgeBg: 'bg-amber-600',
     textColor: 'text-amber-700',
     borderColor: 'border-amber-400',
+  },
+  {
+    stroke: '#7C3AED', // Purple
+    fill: '#8B5CF6',
+    lightBg: 'bg-purple-50',
+    badgeBg: 'bg-purple-600',
+    textColor: 'text-purple-700',
+    borderColor: 'border-purple-400',
   },
 ];
 
@@ -517,7 +525,7 @@ export const HardwareComparisonChart: React.FC<HardwareComparisonChartProps> = (
             {/* Radar Interpretation Sidebar */}
             <div className="xl:col-span-4 bg-slate-50 rounded-xl p-4 sm:p-5 border border-gray-200 space-y-3.5">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-500" />
+                <BarChart3 className="w-4 h-4 text-blue-600" />
                 <h4 className="font-bold text-gray-900 text-xs sm:text-sm">
                   Инженерная интерпретация профилей
                 </h4>
@@ -646,7 +654,7 @@ export const HardwareComparisonChart: React.FC<HardwareComparisonChartProps> = (
                       <span className="font-bold text-gray-500">{item.slotLabel}</span>
                       {isLeader && (
                         <span className="text-[10px] font-extrabold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <Sparkles className="w-2.5 h-2.5" /> Лидер параметра
+                          <Award className="w-2.5 h-2.5" /> Лидер параметра
                         </span>
                       )}
                     </div>

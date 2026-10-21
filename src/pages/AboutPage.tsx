@@ -22,7 +22,6 @@ import {
   Scan,
   Compass,
   Check,
-  Sparkles,
   Truck,
   Globe2,
   Navigation,
@@ -35,11 +34,12 @@ import { COMPANY_INFO, PARTNERS_DATA, ENGINEERING_SERVICES_EQUIPMENT, COMPANY_LO
 import { DEFAULT_SITE_TEXTS } from '../data/defaultSiteTexts';
 import { DsLogo } from '../components/common/DsLogo';
 import { ManufacturersLogosSection } from '../components/home/ManufacturersLogosSection';
+import { IndustrialClientsSection } from '../components/about/IndustrialClientsSection';
 import { InteractiveCompanyTimeline } from '../components/about/InteractiveCompanyTimeline';
 import { useSEO } from '../hooks/useSEO';
 
 interface AboutPageProps {
-  initialTab?: 'overview' | 'equipment' | 'partners' | 'history';
+  initialTab?: 'overview' | 'equipment' | 'clients' | 'vendors' | 'partners' | 'history';
 }
 
 export const AboutPage: React.FC<AboutPageProps> = ({ initialTab = 'overview' }) => {
@@ -49,17 +49,19 @@ export const AboutPage: React.FC<AboutPageProps> = ({ initialTab = 'overview' })
     
   useSEO({
     title: cmsPage?.metaTitle || cmsPage?.title || 'О компании ООО «ДС‑Инжиниринг» | История, компетенции, оснащение',
-    description: cmsPage?.metaDescription || cmsPage?.description || 'Официальный инженерно-технический центр ДС‑Инжиниринг (с 1995 г.): 30+ лет опыта, поставка оборудования, внедрение TopSolid, разработка постпроцессоров, метрологический зал в Тольятти, офис в Самаре.',
+    description: cmsPage?.metaDescription || cmsPage?.description || 'Официальная инжиниринговая компания «ДС‑Инжиниринг» (с 1995 г.): 30+ лет опыта, поставка оборудования, внедрение TopSolid, разработка постпроцессоров, метрологический зал в Тольятти, офис в Самаре.',
     keywords: cmsPage?.metaKeywords?.join(', ') || 'ДС‑Инжиниринг, о компании, поставка оборудования, TopSolid, Shining 3D, PMT, PolyWorks, Geomagic, постпроцессоры, КИМ, Тольятти Жигулевская долина, Самара'
   });
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'equipment' | 'partners' | 'history'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'overview' | 'equipment' | 'clients' | 'vendors' | 'history'>(
+    initialTab === 'partners' ? 'clients' : (initialTab as any) || 'overview'
+  );
 
   const keyDirections = [
     {
       icon: <Package className="w-6 h-6 text-blue-600" />,
       title: 'Поставка измерительного и 3D-оборудования',
-      desc: 'Официальные поставки координатно-измерительных машин (PMT, Mitutoyo, Hexagon), портативных КИМ типа «рука», лазерных 3D-сканеров Shining 3D / ScanLine с заводской гарантией, пусконаладкой и шеф-монтажом.',
+      desc: 'Официальные поставки координатно-измерительных машин (PMT, Hexagon), портативных КИМ типа «рука», лазерных 3D-сканеров Shining 3D / ScanLine с заводской гарантией, пусконаладкой и шеф-монтажом.',
       linkText: 'Каталог оборудования',
       linkPage: 'hardware',
     },
@@ -80,19 +82,19 @@ export const AboutPage: React.FC<AboutPageProps> = ({ initialTab = 'overview' })
     {
       icon: <Wrench className="w-6 h-6 text-emerald-600" />,
       title: '3D-метрология и контроль геометрии (GD&T)',
-      desc: 'Высокоточные измерения в Метрологическом зале в Тольятти (корп. 3.2) и на выезде по всей России. Протоколы отклонений и GD&T-анализ в PolyWorks|Inspector™ и Geomagic Control X.',
+      desc: 'Высокоточные контактные и оптические измерения в Метрологическом зале в Тольятти и оперативные выезды по всей России с мобильными КИМ Hexagon Absolute Arm и 3D-сканерами. Протоколы отклонений и GD&T-анализ в PolyWorks|Inspector™.',
       linkText: 'Услуги 3D-метрологии',
       linkPage: 'services',
     },
     {
-      icon: <Target className="w-6 h-6 text-rose-600" />,
+      icon: <Target className="w-6 h-6 text-blue-600" />,
       title: 'Реверс-инжиниринг деталей и оснастки',
-      desc: 'Воссоздание параметрических CAD-моделей (STEP, Parasolid, native TopSolid) изношенных, импортных или уникальных деталей по полигональным сеткам 3D-сканирования в Geomagic Design X и EXModel Pro.',
+      desc: 'Воссоздание точных твердотельных и поверхностных CAD-моделей (STEP, Parasolid x_t, IGES) изношенных, импортных деталей или оснастки по контактным замерам КИМ Hexagon и полигональным сеткам 3D-сканирования в Geomagic Design X и TopSolid.',
       linkText: 'Услуги реверс-инжиниринга',
       linkPage: 'services',
     },
     {
-      icon: <Users className="w-6 h-6 text-purple-600" />,
+      icon: <Users className="w-6 h-6 text-amber-600" />,
       title: 'Технический инструктаж и консультации технологов',
       desc: 'Практический технический инструктаж и инженерные консультации для технологов, программистов ЧПУ и контролеров ОТК на базе реальных производственных деталей вашего предприятия.',
       linkText: 'Программы инструктажа',
@@ -105,7 +107,6 @@ export const AboutPage: React.FC<AboutPageProps> = ({ initialTab = 'overview' })
     { id: 'about-tabs', label: 'Вкладки и разделы' },
     { id: 'about-metrics', label: 'Ключевые показатели' },
     { id: 'about-directions', label: 'Направления работы' },
-    { id: 'about-locations', label: 'Филиалы и залы' },
   ];
 
   return (
@@ -137,13 +138,13 @@ export const AboutPage: React.FC<AboutPageProps> = ({ initialTab = 'overview' })
               onClick={() => navigateTo('contacts')}
               className="px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/30 text-white font-semibold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
             >
-              <span>Контакты отделов и реквизиты</span>
+              <span>Контакты и реквизиты</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        {/* Enlarged Logo Card (At least 2x larger) */}
+        {/* Enlarged Logo Card */}
         <div className="shrink-0 w-full sm:w-80 md:w-96 bg-white/10 p-6 sm:p-8 rounded-xl border border-white/20 backdrop-blur-md shadow-sm flex flex-col items-center justify-center text-center relative z-10 transition-transform hover:scale-[1.02]">
           <div className="p-3 bg-white/15 rounded-full shadow-inner border border-white/25 mb-3">
             <DsLogo size={160} />
@@ -159,21 +160,21 @@ export const AboutPage: React.FC<AboutPageProps> = ({ initialTab = 'overview' })
       </div>
 
       {/* 2. Navigation Tabs */}
-      <div id="about-tabs" className="flex flex-wrap border-b border-gray-200 dark:border-slate-800 gap-2 sm:gap-4 text-xs sm:text-sm font-medium">
+      <div id="about-tabs" className="flex flex-wrap border-b border-gray-200 dark:border-slate-800 gap-1 sm:gap-3 text-xs sm:text-sm font-medium">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`pb-3 px-4 sm:px-4 flex items-center gap-2 border-b-2 font-bold transition-all whitespace-nowrap cursor-pointer ${
+          className={`pb-3 px-3 sm:px-4 flex items-center gap-1.5 sm:gap-2 border-b-2 font-bold transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'overview'
               ? 'border-blue-600 text-blue-600 dark:text-blue-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <Building2 className="w-4 h-4" />
-          <span>О компании и направления</span>
+          <span>О компании</span>
         </button>
         <button
           onClick={() => setActiveTab('equipment')}
-          className={`pb-3 px-4 sm:px-4 flex items-center gap-2 border-b-2 font-bold transition-all whitespace-nowrap cursor-pointer ${
+          className={`pb-3 px-3 sm:px-4 flex items-center gap-1.5 sm:gap-2 border-b-2 font-bold transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'equipment'
               ? 'border-blue-600 text-blue-600 dark:text-blue-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -183,19 +184,30 @@ export const AboutPage: React.FC<AboutPageProps> = ({ initialTab = 'overview' })
           <span>Техническое оснащение</span>
         </button>
         <button
-          onClick={() => setActiveTab('partners')}
-          className={`pb-3 px-4 sm:px-4 flex items-center gap-2 border-b-2 font-bold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === 'partners'
+          onClick={() => setActiveTab('clients')}
+          className={`pb-3 px-3 sm:px-4 flex items-center gap-1.5 sm:gap-2 border-b-2 font-bold transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'clients'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Промышленные заказчики</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('vendors')}
+          className={`pb-3 px-3 sm:px-4 flex items-center gap-1.5 sm:gap-2 border-b-2 font-bold transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'vendors'
               ? 'border-blue-600 text-blue-600 dark:text-blue-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <Award className="w-4 h-4" />
-          <span>Партнеры и вендоры</span>
+          <span>Вендоры и бренды</span>
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`pb-3 px-4 sm:px-4 flex items-center gap-2 border-b-2 font-bold transition-all whitespace-nowrap cursor-pointer ${
+          className={`pb-3 px-3 sm:px-4 flex items-center gap-1.5 sm:gap-2 border-b-2 font-bold transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'history'
               ? 'border-blue-600 text-blue-600 dark:text-blue-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -240,32 +252,29 @@ export const AboutPage: React.FC<AboutPageProps> = ({ initialTab = 'overview' })
               <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                 <ShieldCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Инженерный подход</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">{aboutTexts.pillar1Title || 'Точность по ГОСТ и ISO'}</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Мы не просто поставляем оборудование и лицензии, а решаем конкретные производственные задачи: 
-                создаем технологические процессы, отрабатываем управляющие программы на станках заказчика и гарантируем результат.
+                {aboutTexts.pillar1Desc || 'Работаем с поверенными средствами измерений из реестра ФГИС «АРШИН».'}
               </p>
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-gray-200 dark:border-slate-800 shadow-xs space-y-3">
               <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                <Award className="w-6 h-6" />
+                <Cpu className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Стандарты метрологии</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">{aboutTexts.pillar2Title || 'Сквозная цифровизация'}</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Все измерения, протоколы GD&T и калибровки выполняются в соответствии с ГОСТ Р ИСО 10360 и ISO 1101 
-                на поверенном измерительном оборудовании высшего класса точности.
+                {aboutTexts.pillar2Desc || 'От сканирования детали до готовой управляющей программы для станков с ЧПУ без потери точности геометрии.'}
               </p>
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-gray-200 dark:border-slate-800 shadow-xs space-y-3">
               <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                <Boxes className="w-6 h-6" />
+                <CheckCircle2 className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Сквозные поставки</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">{aboutTexts.pillar3Title || 'Ответственность за результат'}</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Осуществляем прямые поставки координатно-измерительных машин, 3D-сканеров и профессионального программного обеспечения 
-                с заводской гарантией, шеф-монтажом и практическим инструктажем персонала.
+                {aboutTexts.pillar3Desc || 'Выезжаем на производство заказчика, проводим пусконаладку, обучаем персонал и сопровождаем проекты после сдачи.'}
               </p>
             </div>
           </div>
@@ -328,7 +337,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ initialTab = 'overview' })
                 Интерактивная временная шкала развития «ДС-Инжиниринг»
               </h3>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                Познакомьтесь со всеми технологическими вехами: от первых CAD/CAM в 1995 году и статуса дилера Hexagon до дистрибьюции TopSolid 7, ввода КИМ субмикронной точности и расширения в Технопарк «Жигулевская долина».
+                Познакомьтесь со всеми технологическими вехами: от первых CAD/CAM в 1995 году до внедрения TopSolid 7, мобильного 3D-сканирования со статусом СИ в ФГИС «АРШИН» и регионального представительства в Тольятти.
               </p>
             </div>
 
@@ -342,129 +351,73 @@ export const AboutPage: React.FC<AboutPageProps> = ({ initialTab = 'overview' })
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
-
-          {/* Company Structure / Location Card with redirect to Contacts */}
-          <div id="about-locations" className="bg-slate-100/90 dark:bg-slate-900/90 text-slate-900 dark:text-white rounded-2xl p-6 sm:p-8 border border-slate-300 dark:border-slate-800 shadow-xs relative overflow-hidden">
-            <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06] bg-[radial-gradient(#0f172a_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
-            <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-8">
-              <div className="space-y-4 max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800 rounded-full text-xs font-semibold">
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>Структура подразделений компании</span>
-                </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-                  Офисы в Самаре и Тольятти, Метрологический зал в технопарке «Жигулевская долина»
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-600 dark:text-slate-300 pt-2">
-                  <div className="bg-white dark:bg-slate-800/80 p-4.5 rounded-xl border border-slate-300 dark:border-slate-700/80 space-y-1.5 shadow-2xs">
-                    <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span>Главный офис (Самара)</span>
-                    </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-[11px] font-mono">ул. Свободы, д. 198</p>
-                    <p className="text-slate-600 dark:text-slate-300 text-[11px]">Инженерный центр CAD/CAM, учебный класс, разработка постпроцессоров.</p>
-                  </div>
-
-                  <div className="bg-white dark:bg-slate-800/80 p-4.5 rounded-xl border border-slate-300 dark:border-slate-700/80 space-y-1.5 shadow-2xs">
-                    <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <Wrench className="w-4 h-4 text-amber-500 dark:text-amber-400" />
-                      <span>Тольятти («Жигулевская долина»)</span>
-                    </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-[11px] font-mono">Южное шоссе, 165 (корп. 2.3 и 3.2)</p>
-                    <p className="text-slate-600 dark:text-slate-300 text-[11px]">Офис по работе с клиентами (корп. 2.3) и демонстрационно-метрологический зал КИМ (корп. 3.2).</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="shrink-0 flex flex-col gap-3 w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={() => navigateTo('contacts')}
-                  className="px-6 py-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-xl text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <span>Контакты, схема проезда и реквизиты</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openContactModal({ title: 'Запрос коммерческого предложения', formType: 'consultation' })}
-                  className="px-6 py-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
-                >
-                  <span>Запросить коммерческое предложение</span>
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
       {/* TAB 2: EQUIPMENT */}
       {activeTab === 'equipment' && (
-        <div className="space-y-8">
-          <div className="text-center max-w-2xl mx-auto mb-6">
+        <div className="space-y-6">
+          <div className="text-center max-w-2xl mx-auto mb-4">
             <div className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">
               Парк измерительной техники
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Собственное метрологическое оснащение
             </h2>
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-              Оборудование Метрологического зала в технопарке «Жигулевская долина» (Тольятти), офиса в Самаре и мобильного измерительного комплекса
+              Мобильные метрологические 3D-комплексы со статусом СИ в ФГИС «АРШИН», рабочие станции PolyWorks|Inspector™ и CAD/CAM среда TopSolid 7
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
             {ENGINEERING_SERVICES_EQUIPMENT.map((item) => (
               <div
                 key={item.id}
                 className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs hover:border-blue-400 dark:hover:border-blue-600 transition-all flex flex-col justify-between overflow-hidden"
               >
                 <div>
-                  <div className="relative h-48 bg-slate-900 overflow-hidden">
+                  <div className="relative h-24 sm:h-28 bg-slate-900 overflow-hidden">
                     <img
                       src={item.image}
                       alt={item.name}
                       referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
+                      className="w-full h-full object-cover opacity-85 hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
-                    <div className="absolute top-3 left-3 bg-blue-900/90 text-white text-[11px] font-bold px-3.5 py-1 rounded-md backdrop-blur-xs">
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent"></div>
+                    <div className="absolute top-2 left-2 bg-blue-900/90 text-white text-[9.5px] font-bold px-2 py-0.5 rounded backdrop-blur-xs">
                       {item.categoryLabel}
                     </div>
-                    <div className="absolute bottom-3 left-3 right-3 bg-slate-950/80 backdrop-blur-xs text-white p-2 rounded-lg text-xs flex items-center justify-between">
-                      <span className="text-blue-300 font-mono">Точность: {item.accuracy}</span>
-                      <span className="text-amber-400 font-semibold">{item.mobility}</span>
+                    <div className="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-[10.5px] text-white">
+                      <span className="text-blue-300 font-mono font-medium">Точность: {item.accuracy}</span>
+                      <span className="text-amber-300 font-semibold bg-black/50 px-2 py-0.2 rounded text-[10px]">{item.mobility}</span>
                     </div>
                   </div>
 
-                  <div className="p-6 space-y-4">
+                  <div className="p-3.5 sm:p-4 space-y-2.5">
                     <div>
-                      <div className="text-xs text-blue-600 dark:text-blue-400 font-semibold">{item.typeLabel}</div>
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-1 leading-snug">{item.name}</h3>
+                      <div className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wider">{item.typeLabel}</div>
+                      <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug">{item.name}</h3>
                     </div>
 
-                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <p className="text-[11.5px] text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
                       {item.description}
                     </p>
 
-                    <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                      <div className="text-xs font-bold text-slate-800 dark:text-slate-200">Ключевые преимущества:</div>
-                      <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
-                        {item.features.map((f, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                            <span>{f}</span>
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                      {item.features.slice(0, 4).map((f, idx) => (
+                        <div key={idx} className="flex items-center gap-1.5 text-[10.5px] text-slate-600 dark:text-slate-300">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="truncate leading-tight">{f}</span>
+                        </div>
+                      ))}
                     </div>
 
                     {item.specs && (
-                      <div className="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-3 space-y-1.5 text-xs border border-slate-200 dark:border-slate-700/80">
-                        {Object.entries(item.specs).map(([key, val]) => (
-                          <div key={key} className="flex justify-between">
-                            <span className="text-slate-500 dark:text-slate-400">{key}:</span>
-                            <span className="text-slate-900 dark:text-white font-medium text-right ml-2">{val}</span>
+                      <div className="bg-slate-50 dark:bg-slate-800/60 rounded-lg p-2 grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-0.5 text-[10.5px] border border-slate-200/80 dark:border-slate-700/60">
+                        {Object.entries(item.specs).slice(0, 4).map(([key, val]) => (
+                          <div key={key} className="flex justify-between gap-1">
+                            <span className="text-slate-500 dark:text-slate-400 truncate text-[10px]">{key}:</span>
+                            <span className="text-slate-900 dark:text-white font-medium text-right truncate text-[10.5px]">{val}</span>
                           </div>
                         ))}
                       </div>
@@ -472,11 +425,11 @@ export const AboutPage: React.FC<AboutPageProps> = ({ initialTab = 'overview' })
                   </div>
                 </div>
 
-                <div className="p-6 pt-0 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">В Самаре, Тольятти и на выезде</span>
+                <div className="p-3.5 sm:p-4 pt-0 border-t border-slate-100 dark:border-slate-800 mt-1 flex items-center justify-between">
+                  <span className="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">Самара, Тольятти и выезд по РФ</span>
                   <button
                     onClick={() => openContactModal({ title: `Заказ измерений на ${item.name}`, formType: 'measurement' })}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                    className="px-3 py-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
                   >
                     Заказать замер
                   </button>
@@ -486,24 +439,23 @@ export const AboutPage: React.FC<AboutPageProps> = ({ initialTab = 'overview' })
           </div>
 
           {/* Software banner */}
-          <div className="bg-slate-100/90 dark:bg-slate-900/90 text-slate-900 dark:text-white p-6 sm:p-8 rounded-2xl border border-slate-300 dark:border-slate-800 shadow-xs flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="space-y-2 max-w-2xl">
-              <div className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-blue-50 dark:bg-blue-950/60 rounded-full text-xs font-bold text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          <div className="bg-slate-100/90 dark:bg-slate-900/90 text-slate-900 dark:text-white p-5 sm:p-6 rounded-xl border border-slate-300 dark:border-slate-800 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="space-y-1.5 max-w-2xl">
+              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 bg-blue-50 dark:bg-blue-950/60 rounded-full text-xs font-bold text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 <span>Метрологический программный стек</span>
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                 100% достоверность и совместимость отчетов
               </h3>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Мы формируем официальные протоколы контроля геометрии (GD&T) и карты отклонений в эталонных программных пакетах 
-                <strong className="text-slate-900 dark:text-white"> PolyWorks|Inspector™</strong> и <strong className="text-slate-900 dark:text-white">Geomagic Control X</strong>, 
-                полностью соответствующие ГОСТ Р ИСО 1101 и международным стандартам.
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Мы формируем официальные протоколы контроля геометрии (GD&T) и карты отклонений в эталонных пакетах 
+                <strong className="text-slate-900 dark:text-white"> PolyWorks|Inspector™</strong> и <strong className="text-slate-900 dark:text-white">Geomagic Control X</strong> по ГОСТ Р ИСО 1101.
               </p>
             </div>
             <button
               onClick={() => openContactModal({ title: 'Запрос примера метрологического отчета', formType: 'consultation' })}
-              className="px-5 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-xl text-xs sm:text-sm shrink-0 transition-colors cursor-pointer"
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-xl text-xs shrink-0 transition-colors cursor-pointer"
             >
               Запросить образец отчета
             </button>
@@ -511,17 +463,27 @@ export const AboutPage: React.FC<AboutPageProps> = ({ initialTab = 'overview' })
         </div>
       )}
 
-      {/* TAB 3: PARTNERS */}
-      {activeTab === 'partners' && (
-        <div className="space-y-8">
+      {/* TAB 3: INDUSTRIAL CLIENTS */}
+      {activeTab === 'clients' && (
+        <div className="space-y-6">
+          <IndustrialClientsSection />
+        </div>
+      )}
+
+      {/* TAB 4: VENDORS & BRANDS */}
+      {activeTab === 'vendors' && (
+        <div className="space-y-6">
           <ManufacturersLogosSection />
         </div>
       )}
 
-      {/* TAB 4: HISTORY & MILESTONES (INTERACTIVE ANIMATED TIMELINE) */}
+      {/* TAB 5: HISTORY & MILESTONES (INTERACTIVE ANIMATED TIMELINE) */}
       {activeTab === 'history' && (
         <InteractiveCompanyTimeline />
       )}
     </div>
   );
 };
+
+export default AboutPage;
+

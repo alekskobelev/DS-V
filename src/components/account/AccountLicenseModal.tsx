@@ -131,7 +131,7 @@ export const AccountLicenseModal: React.FC<AccountLicenseModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-white rounded-xl max-w-3xl w-full shadow-sm border border-gray-200 overflow-hidden flex flex-col my-auto max-h-[92vh]">
         
         {/* Header */}

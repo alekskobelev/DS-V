@@ -1,6 +1,7 @@
 import { ServerRFQ, ServerB2BTicket, BoundaryValidationResult, NASStorageInfo, SmtpSettings, EmailOutboxItem, ManagerSmtpAccount, OnlineEngineerSession, OnlineEngineerMessage, NotificationSettings, ManagerNotificationItem, ContactFormSubmission, Model3DItem, TextConstantItem, TextConstantsApiResponse } from '../types';
 import { SiteTextsData } from '../data/defaultSiteTexts';
 import { fetchWithCsrf, getCsrfToken, refreshCsrfToken } from './csrfService';
+import { searchRussianEnterprises } from '../data/russianEnterprises';
 
 // Module-level alias so all internal fetch calls automatically utilize CSRF protection
 const fetch = fetchWithCsrf;
@@ -37,7 +38,7 @@ export const apiService = {
   async getUsers(): Promise<{ success: boolean; data?: any[] }> {
     try {
       const res = await fetch('/api/users');
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get users', e);
@@ -101,7 +102,7 @@ export const apiService = {
   async getEmailSettings(): Promise<{ success: boolean; data?: SmtpSettings & { passMasked?: string } }> {
     try {
       const res = await fetch('/api/email/settings');
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get email settings', e);
@@ -126,7 +127,7 @@ export const apiService = {
   async getManagerEmailAccounts(): Promise<{ success: boolean; count?: number; data?: ManagerSmtpAccount[] }> {
     try {
       const res = await fetch('/api/email/manager-accounts');
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get manager email accounts', e);
@@ -194,7 +195,7 @@ export const apiService = {
   async getEmailOutbox(): Promise<{ success: boolean; count?: number; data?: EmailOutboxItem[] }> {
     try {
       const res = await fetch('/api/email/outbox');
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get email outbox', e);
@@ -211,9 +212,15 @@ export const apiService = {
       
       const url = `/api/service-requests${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return [];
       const json = await res.json();
-      return json.data || [];
+      const raw = Array.isArray(json.data) ? json.data : [];
+      const seen = new Set<string>();
+      return raw.filter((r: any) => {
+        if (!r?.id || seen.has(r.id)) return false;
+        seen.add(r.id);
+        return true;
+      });
     } catch (e) {
       console.warn('Failed to fetch service requests', e);
       return [];
@@ -387,7 +394,7 @@ export const apiService = {
   async getCorporateEmailTemplates(): Promise<any[]> {
     try {
       const res = await fetch('/api/email/templates');
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return [];
       const json = await res.json();
       return json.data || [];
     } catch (e) {
@@ -465,7 +472,7 @@ export const apiService = {
       });
       const result = await res.json();
       if (!res.ok) {
-        return { success: false, error: result.error || 'Ошибка создания тикета' };
+        return { success: false, error: result.error || 'Ошибка создания сервисной заявки' };
       }
       return result;
     } catch (err) {
@@ -559,7 +566,7 @@ export const apiService = {
   async getKnowledgeBaseArticles(): Promise<any[]> {
     try {
       const res = await fetch('/api/knowledge-base');
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return [];
       const json = await res.json();
       return json.data || [];
     } catch (e) {
@@ -586,7 +593,7 @@ export const apiService = {
   async getEquipmentCatalog(): Promise<any[]> {
     try {
       const res = await fetch('/api/equipment');
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return [];
       const json = await res.json();
       return json.data || [];
     } catch (e) {
@@ -598,7 +605,7 @@ export const apiService = {
   async getCmsPages(): Promise<any[]> {
     try {
       const res = await fetch('/api/cms/pages');
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return [];
       const json = await res.json();
       return json.data || [];
     } catch (e) {
@@ -642,12 +649,22 @@ export const apiService = {
     }
   },
 
+  async resetCrmDatabase(): Promise<{ success: boolean; data?: any; message?: string; error?: string }> {
+    try {
+      const res = await fetch('/api/crm/reset', { method: 'POST' });
+      return await res.json();
+    } catch (err) {
+      console.error('Error in resetCrmDatabase:', err);
+      return { success: false, error: 'Failed to communicate with server' };
+    }
+  },
+
   // --- Online Engineer Live Chat & Manager Handover API ---
   
   async getBotTopics() {
     try {
       const res = await fetch('/api/chat/topics');
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.error(e);
@@ -672,7 +689,7 @@ export const apiService = {
   async getEngineerChatSessions(): Promise<{ success: boolean; count?: number; unreadCount?: number; data?: OnlineEngineerSession[] }> {
     try {
       const res = await fetch('/api/chat/sessions');
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get engineer chat sessions', e);
@@ -683,7 +700,7 @@ export const apiService = {
   async getEngineerChatSession(id: string): Promise<{ success: boolean; data?: OnlineEngineerSession }> {
     try {
       const res = await fetch(`/api/chat/session/${id}`);
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get engineer chat session', e);
@@ -767,7 +784,7 @@ export const apiService = {
       if (params?.priority) query.append('priority', params.priority);
       if (params?.targetType) query.append('targetType', params.targetType);
       const res = await fetch(`/api/crm/tasks?${query.toString()}`);
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get CRM tasks', e);
@@ -827,7 +844,7 @@ export const apiService = {
       if (params?.startDate) query.append('startDate', params.startDate);
       if (params?.endDate) query.append('endDate', params.endDate);
       const res = await fetch(`/api/crm/calendar?${query.toString()}`);
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get calendar events', e);
@@ -869,7 +886,7 @@ export const apiService = {
       if (params?.status) query.append('status', params.status);
       if (params?.industry) query.append('industry', params.industry);
       const res = await fetch(`/api/crm/companies?${query.toString()}`);
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get CRM companies', e);
@@ -910,7 +927,7 @@ export const apiService = {
       if (params?.companyId) query.append('companyId', params.companyId);
       if (params?.isDecisionMaker !== undefined) query.append('isDecisionMaker', String(params.isDecisionMaker));
       const res = await fetch(`/api/crm/contacts?${query.toString()}`);
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get CRM contacts', e);
@@ -969,8 +986,8 @@ export const apiService = {
     );
   },
 
-  async saveCrmFunnel(funnel: any): Promise<{ success: boolean }> {
-    return safeFetchJson<{ success: boolean }>(
+  async saveCrmFunnel(funnel: any): Promise<{ success: boolean; data?: any }> {
+    return safeFetchJson<{ success: boolean; data?: any }>(
       '/api/crm/funnels',
       {
         method: 'POST',
@@ -981,12 +998,52 @@ export const apiService = {
     );
   },
 
+  async resetCrmFunnels(): Promise<{ success: boolean; data?: any[] }> {
+    return safeFetchJson<{ success: boolean; data?: any[] }>(
+      '/api/crm/funnels/reset',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      },
+      { success: false, data: [] }
+    );
+  },
+
+  async getCrmSettings(): Promise<{ success: boolean; data: any }> {
+    return safeFetchJson<{ success: boolean; data: any }>(
+      '/api/crm/settings',
+      undefined,
+      { success: false, data: { defaultVatRate: 22, allowVatOverride: true, neighboringCountriesVatZero: true } }
+    );
+  },
+
+  async saveCrmSettings(settings: any): Promise<{ success: boolean; data?: any }> {
+    return safeFetchJson<{ success: boolean; data?: any }>(
+      '/api/crm/settings',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      },
+      { success: false }
+    );
+  },
+
   async getCrmDeals(): Promise<{ success: boolean; data: any[] }> {
-    return safeFetchJson<{ success: boolean; data: any[] }>(
+    const res = await safeFetchJson<{ success: boolean; data: any[] }>(
       '/api/crm/deals',
       undefined,
       { success: false, data: [] }
     );
+    if (res.success && Array.isArray(res.data)) {
+      const seen = new Set<string>();
+      res.data = res.data.filter((d: any) => {
+        if (!d?.id || seen.has(d.id)) return false;
+        seen.add(d.id);
+        return true;
+      });
+    }
+    return res;
   },
 
   async requestQuickCallback(data: {
@@ -1074,7 +1131,7 @@ export const apiService = {
   async getCrmProposals(): Promise<{ success: boolean; data: any[] }> {
     try {
       const res = await fetch('/api/crm/proposals');
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get CRM proposals', e);
@@ -1132,7 +1189,7 @@ export const apiService = {
       
       const url = `/api/crm/contracts${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get CRM contracts', e);
@@ -1190,7 +1247,7 @@ export const apiService = {
       
       const url = `/api/crm/certificates${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get CRM certificates', e);
@@ -1199,21 +1256,121 @@ export const apiService = {
   },
 
   // --- DADATA INTEGRATION ---
-  async searchCompanyByDadata(query: string): Promise<{ success: boolean; data: any[]; error?: string }> {
+  async searchCompanyByDadata(query: string): Promise<{ success: boolean; data: any[]; error?: string; source?: string }> {
+    let serverError: string | undefined;
     try {
       const res = await fetch('/api/dadata/company', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query })
       });
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, data: [], error: data.error || 'Ошибка Dadata' };
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          return { success: true, data: data.data, source: data.source || 'dadata_api' };
+        }
+        if (data.error) {
+          serverError = data.error;
+        }
+      } else {
+        serverError = `HTTP ${res.status}: Ошибка обращения к сервису DaData`;
       }
-      return { success: true, data: data.data || [] };
     } catch (e: any) {
-      console.warn('Failed to search company in Dadata', e);
-      return { success: false, data: [], error: e.message || 'Сетевая ошибка' };
+      console.warn('[apiService] API searchCompanyByDadata network error:', e);
+      serverError = e?.message || 'Сетевая ошибка при обращении к серверному шлюзу DaData';
+    }
+
+    // Only fallback to local offline verified registry of real partner enterprises (no fake synthesis!)
+    const localMatches = searchRussianEnterprises(query);
+    if (localMatches.length > 0) {
+      const converted = localMatches.map(ent => ({
+        value: ent.name,
+        unrestricted_value: ent.address,
+        data: {
+          inn: ent.inn,
+          kpp: ent.kpp,
+          ogrn: ent.ogrn,
+          name: {
+            full_with_opf: ent.fullName,
+            short_with_opf: ent.name
+          },
+          address: {
+            value: ent.address,
+            unrestricted_value: ent.address,
+            data: { city: ent.city }
+          },
+          management: {
+            name: ent.ceoName,
+            post: ent.ceoPost,
+            formatted: {
+              ceoDative: ent.ceoName,
+              postDative: ent.ceoPost
+            }
+          },
+          phones: ent.phone ? [{ value: ent.phone }] : [],
+          emails: ent.email ? [{ value: ent.email }] : []
+        }
+      }));
+
+      return { success: true, data: converted, source: 'local_official_registry' };
+    }
+
+    return { 
+      success: !serverError, 
+      data: [], 
+      error: serverError || 'Организация с указанным ИНН не найдена в ЕГРЮЛ' 
+    };
+  },
+
+  async verifyDadataKey(apiKey?: string, secretKey?: string): Promise<{ success: boolean; valid: boolean; message?: string; error?: string }> {
+    try {
+      const res = await fetch('/api/dadata/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey, secretKey })
+      });
+      return await res.json();
+    } catch (e: any) {
+      return { success: false, valid: false, error: e?.message || 'Сетевая ошибка проверки токена' };
+    }
+  },
+
+  async saveDadataSettings(apiKey?: string, secretKey?: string): Promise<{ success: boolean; message?: string; isConfigured?: boolean }> {
+    try {
+      const res = await fetch('/api/dadata/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey, secretKey })
+      });
+      return await res.json();
+    } catch (e: any) {
+      return { success: false, message: e?.message };
+    }
+  },
+
+  async cleanNameByDadata(name: string): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      const res = await fetch('/api/dadata/clean/name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      return await res.json();
+    } catch (e: any) {
+      return { success: false, error: e?.message };
+    }
+  },
+
+  async formatLeaderByDadata(name: string, post?: string): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      const res = await fetch('/api/dadata/format-leader', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, post })
+      });
+      return await res.json();
+    } catch (e: any) {
+      return { success: false, error: e?.message };
     }
   },
   async saveCrmCertificate(cert: any): Promise<{ success: boolean; data?: any }> {
@@ -1261,7 +1418,7 @@ export const apiService = {
       
       const url = `/api/crm/metrology-reports${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get CRM metrology reports', e);
@@ -1308,7 +1465,7 @@ export const apiService = {
   async getCrmFleetDevices(): Promise<{ success: boolean; data: any[] }> {
     try {
       const res = await fetch('/api/crm/fleet');
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get CRM fleet devices', e);
@@ -1361,7 +1518,7 @@ export const apiService = {
       
       const url = `/api/crm/tickets${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get CRM tickets', e);
@@ -1413,7 +1570,7 @@ export const apiService = {
       
       const url = `/api/crm/licenses${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get CRM licenses', e);
@@ -1459,7 +1616,7 @@ export const apiService = {
   async getCrmClientLists(): Promise<{ success: boolean; data: any[] }> {
     try {
       const res = await fetch('/api/crm/client-lists');
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) return { success: false, data: [] };
       return await res.json();
     } catch (e) {
       console.warn('Failed to get CRM client lists', e);
@@ -1513,7 +1670,7 @@ export const apiService = {
   async getNotificationSettings(): Promise<{ success: boolean; settings?: NotificationSettings }> {
     try {
       const res = await fetch('/api/notifications/settings');
-      if (!res.ok) throw new Error('API error');
+      if (!res.ok) return { success: false };
       return await res.json();
     } catch (e) {
       console.warn('Failed to fetch notification settings', e);
@@ -1543,7 +1700,7 @@ export const apiService = {
   }> {
     try {
       const res = await fetch('/api/notifications/live');
-      if (!res.ok) throw new Error('API error');
+      if (!res.ok) return { success: false, unreadCount: 0, notifications: [] };
       return await res.json();
     } catch (e) {
       return { success: false, unreadCount: 0, notifications: [] };
@@ -1635,7 +1792,7 @@ export const apiService = {
       if (category) queryParams.set('category', category);
       queryParams.set('limit', String(limit));
       const res = await fetch(`/api/crm/realtime-logs?${queryParams.toString()}`);
-      if (!res.ok) throw new Error('API error');
+      if (!res.ok) return { success: false, count: 0, data: [] };
       return await res.json();
     } catch (e) {
       return { success: false, count: 0, data: [] };
@@ -1655,7 +1812,7 @@ export const apiService = {
   async get3DModels(): Promise<Model3DItem[]> {
     try {
       const res = await fetch('/api/models3d');
-      if (!res.ok) throw new Error('Failed to fetch 3D models');
+      if (!res.ok) return [];
       const json = await res.json();
       return json.data || [];
     } catch (e) {
@@ -1803,7 +1960,7 @@ export const apiService = {
     }
   },
 
-  async getAssets(): Promise<{ success: boolean; data?: { custom: any[]; presets: any[] }; error?: string }> {
+  async getAssets(): Promise<{ success: boolean; data?: { custom: any[]; presets: any[]; total?: number }; error?: string }> {
     try {
       const res = await fetch('/api/assets');
       return await res.json();
@@ -1812,10 +1969,13 @@ export const apiService = {
     }
   },
 
-  async uploadAsset(file: File): Promise<{ success: boolean; url?: string; filename?: string; error?: string }> {
+  async uploadAsset(file: File, metadata?: { title?: string; category?: string; description?: string }): Promise<{ success: boolean; url?: string; filename?: string; title?: string; category?: string; error?: string }> {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      if (metadata?.title) formData.append('title', metadata.title);
+      if (metadata?.category) formData.append('category', metadata.category);
+      if (metadata?.description) formData.append('description', metadata.description);
       
       const res = await fetch('/api/assets/upload', {
         method: 'POST',
@@ -1825,6 +1985,55 @@ export const apiService = {
       return await res.json();
     } catch (e: any) {
       return { success: false, error: e?.message || 'Ошибка загрузки файла' };
+    }
+  },
+
+  async updateAsset(filename: string, updates: { title?: string; category?: string; description?: string; isActive?: boolean }): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      const res = await fetch(`/api/assets/${encodeURIComponent(filename)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      return await res.json();
+    } catch (e: any) {
+      return { success: false, error: e?.message || 'Ошибка обновления ассета' };
+    }
+  },
+
+  async replaceAssetFile(filename: string, file: File, metadata?: { title?: string; category?: string; description?: string }): Promise<{ success: boolean; url?: string; filename?: string; message?: string; error?: string }> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (metadata?.title) formData.append('title', metadata.title);
+      if (metadata?.category) formData.append('category', metadata.category);
+      if (metadata?.description) formData.append('description', metadata.description);
+
+      const res = await fetch(`/api/assets/${encodeURIComponent(filename)}/replace`, {
+        method: 'POST',
+        body: formData
+      });
+      return await res.json();
+    } catch (e: any) {
+      return { success: false, error: e?.message || 'Ошибка замены файла ассета' };
+    }
+  },
+
+  async importPresetAsset(presetName: string, metadata?: { title?: string; category?: string; description?: string }): Promise<{ success: boolean; filename?: string; url?: string; data?: any; error?: string }> {
+    try {
+      const res = await fetch('/api/assets/preset-to-custom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          presetName,
+          title: metadata?.title,
+          category: metadata?.category,
+          description: metadata?.description
+        })
+      });
+      return await res.json();
+    } catch (e: any) {
+      return { success: false, error: e?.message || 'Ошибка импорта системного пресета' };
     }
   },
 

@@ -24,9 +24,17 @@ import {
   Layers,
   ArrowUpDown,
   RefreshCw,
-  Sparkles
+  Sparkles,
+  Edit3,
+  Trash2,
+  Save,
+  User,
+  MapPin,
+  FileSpreadsheet,
+  BookOpen
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { CrmDocumentationModal } from './CrmDocumentationModal';
 import { 
   getAllMonitoredEquipment, 
   ArshinEquipmentItem, 
@@ -46,7 +54,7 @@ interface ArshinVerificationScheduleProps {
 export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProps> = ({
   onBackToCrm
 }) => {
-  const { fleetDevices, deals, addFleetDevice, addDeal, showToast } = useApp();
+  const { currentUser, fleetDevices, deals, addFleetDevice, updateFleetDevice, deleteFleetDevice, addDeal, showToast } = useApp();
 
   const [parkFilter, setParkFilter] = useState<'all' | 'company' | 'client'>('all');
   const [urgencyFilter, setUrgencyFilter] = useState<'all' | 'critical_only' | 'expired_only' | 'warning' | 'valid'>('all');
@@ -55,6 +63,13 @@ export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProp
   const [selectedItem, setSelectedItem] = useState<ArshinEquipmentItem | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [docModalTab, setDocModalTab] = useState<'arshin' | 'intervals'>('arshin');
+
+  // Edit and Delete state
+  const [editingItem, setEditingItem] = useState<ArshinEquipmentItem | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [deleteConfirmItem, setDeleteConfirmItem] = useState<ArshinEquipmentItem | null>(null);
 
   // New item form state
   const [newDevice, setNewDevice] = useState({
@@ -225,6 +240,88 @@ export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProp
     setIsAddModalOpen(false);
   };
 
+  // Handle Open Edit Modal
+  const handleOpenEdit = (item: ArshinEquipmentItem) => {
+    setEditingItem(JSON.parse(JSON.stringify(item)));
+    setIsEditModalOpen(true);
+  };
+
+  // Handle Save Edited Device
+  const handleSaveEdit = async () => {
+    if (!editingItem) return;
+    if (!editingItem.modelName || !editingItem.serialNumber) {
+      showToast('Заполните наименование модели и заводской номер');
+      return;
+    }
+
+    const inFleet = fleetDevices.some(d => d.id === editingItem.sourceId || d.id === editingItem.id || d.serialNumber === editingItem.serialNumber);
+    if (inFleet) {
+      const targetId = fleetDevices.find(d => d.id === editingItem.sourceId || d.id === editingItem.id || d.serialNumber === editingItem.serialNumber)?.id;
+      if (targetId) {
+        await updateFleetDevice(targetId, {
+          modelName: editingItem.modelName,
+          brand: editingItem.brand,
+          category: editingItem.category,
+          serialNumber: editingItem.serialNumber,
+          inventoryNumber: editingItem.inventoryNumber,
+          verificationNumber: editingItem.verificationNumber,
+          verificationDate: editingItem.verificationDate,
+          verificationValidUntil: editingItem.verificationValidUntil,
+          accuracy: editingItem.accuracy,
+          currentLocation: editingItem.currentLocation,
+          responsiblePerson: editingItem.responsiblePerson,
+          notes: editingItem.notes
+        });
+      }
+    } else {
+      // Add or update to fleet devices so that it persists
+      const newFleetDev: CompanyFleetDevice = {
+        id: editingItem.sourceId || editingItem.id || `dev-${Date.now()}`,
+        modelName: editingItem.modelName,
+        brand: editingItem.brand || 'Изготовитель СИ',
+        category: editingItem.category,
+        serialNumber: editingItem.serialNumber,
+        inventoryNumber: editingItem.inventoryNumber || '',
+        status: 'in_office',
+        statusLabel: editingItem.ownerType === 'company' ? 'В парке компании' : 'На предприятии заказчика',
+        verificationNumber: editingItem.verificationNumber,
+        verificationDate: editingItem.verificationDate,
+        verificationValidUntil: editingItem.verificationValidUntil,
+        accuracy: editingItem.accuracy,
+        currentLocation: editingItem.currentLocation,
+        responsiblePerson: editingItem.responsiblePerson,
+        notes: editingItem.notes
+      };
+      await addFleetDevice(newFleetDev);
+    }
+
+    showToast(`Данные СИ «${editingItem.modelName}» успешно обновлены!`);
+    setIsEditModalOpen(false);
+
+    if (selectedItem && (selectedItem.id === editingItem.id || selectedItem.serialNumber === editingItem.serialNumber)) {
+      setSelectedItem({
+        ...selectedItem,
+        ...editingItem,
+        ...calculateVerificationStatus(editingItem.verificationValidUntil, REFERENCE_DATE),
+        arshinUrl: formatArshinUrl(editingItem.verificationNumber, editingItem.serialNumber)
+      });
+    }
+    setEditingItem(null);
+  };
+
+  // Handle Delete Device
+  const handleDeleteItem = async (item: ArshinEquipmentItem) => {
+    const target = fleetDevices.find(d => d.id === item.sourceId || d.id === item.id || d.serialNumber === item.serialNumber);
+    if (target) {
+      await deleteFleetDevice(target.id);
+    }
+    showToast(`СИ «${item.modelName}» удалено из метрологического графика`);
+    setDeleteConfirmItem(null);
+    if (selectedItem?.id === item.id) {
+      setSelectedItem(null);
+    }
+  };
+
   // Helper for Gantt bar positioning
   const getTimelineBarPosition = (validUntilStr: string) => {
     if (!validUntilStr) return { left: '0%', width: '10%' };
@@ -321,6 +418,19 @@ export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProp
 
         {/* Action Buttons Header */}
         <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => {
+              setDocModalTab('arshin');
+              setIsDocModalOpen(true);
+            }}
+            className="h-9 px-3.5 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-200 text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+            title="Открыть регламент работы с графиком поверок и МПИ"
+          >
+            <BookOpen className="w-4 h-4 text-amber-600" />
+            <span>Справка и Регламент</span>
+          </button>
+
           <button
             type="button"
             onClick={handleExportPdf}
@@ -861,11 +971,11 @@ export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProp
 
                         {/* Actions */}
                         <td className="px-4 py-3 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-1.5">
                             <button
                               type="button"
                               onClick={() => setSelectedItem(item)}
-                              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 text-slate-500 dark:text-slate-300 cursor-pointer"
+                              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                               title="Подробная карточка метрологического формуляра"
                             >
                               <Info className="w-4 h-4" />
@@ -873,16 +983,35 @@ export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProp
 
                             <button
                               type="button"
+                              onClick={() => handleOpenEdit(item)}
+                              className="p-1.5 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 transition-colors cursor-pointer flex items-center gap-1 font-bold text-xs"
+                              title="Редактировать параметры СИ и поверки (Супер-админ / Метролог)"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span className="hidden xl:inline">Редактировать</span>
+                            </button>
+
+                            <button
+                              type="button"
                               onClick={() => handleCreateVerificationDeal(item)}
-                              className={`h-8 px-4 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                              className={`h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                                 isCritical
                                   ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs active:scale-95'
-                                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                  : 'bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white'
                               }`}
                               title="Создать сервисную сделку на поверку в CRM"
                             >
                               <Wrench className="w-3.5 h-3.5" />
-                              <span>Сделка на ТО</span>
+                              <span className="hidden sm:inline">Сделка ТО</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setDeleteConfirmItem(item)}
+                              className="p-1.5 rounded-lg border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 transition-colors cursor-pointer"
+                              title="Удалить прибор из графика"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>
@@ -968,27 +1097,296 @@ export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProp
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
-              <a
-                href={selectedItem.arshinUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto h-9 px-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-blue-600 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <ExternalLink className="w-4 h-4 text-blue-600" />
-                <span>Открыть во ФГИС «АРШИН»</span>
-              </a>
+            <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleOpenEdit(selectedItem);
+                  }}
+                  className="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  <span>Редактировать</span>
+                </button>
 
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmItem(selectedItem)}
+                  className="h-9 px-3 rounded-lg border border-rose-200 hover:bg-rose-50 text-rose-600 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Удалить прибор"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Удалить</span>
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href={selectedItem.arshinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-9 px-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-blue-600 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4 text-blue-600" />
+                  <span>ФГИС «АРШИН»</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleCreateVerificationDeal(selectedItem);
+                    setSelectedItem(null);
+                  }}
+                  className="h-9 px-4 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                >
+                  <Wrench className="w-4 h-4" />
+                  <span>Сделка на ТО</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT DEVICE MODAL */}
+      {isEditModalOpen && editingItem && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-lg border-2 border-slate-200 dark:border-slate-800 shadow-sm max-w-xl w-full p-6 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-blue-600" />
+                <span>Редактирование параметров СИ и поверки</span>
+              </h3>
               <button
                 type="button"
                 onClick={() => {
-                  handleCreateVerificationDeal(selectedItem);
-                  setSelectedItem(null);
+                  setIsEditModalOpen(false);
+                  setEditingItem(null);
                 }}
-                className="w-full sm:w-auto h-9 px-4 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
               >
-                <Wrench className="w-4 h-4" />
-                <span>Создать сервисную сделку на поверку</span>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3.5 max-h-[70vh] overflow-y-auto pr-1 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-slate-500 font-bold mb-1">
+                    Наименование и модель средства измерений *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingItem.modelName}
+                    onChange={(e) => setEditingItem({ ...editingItem, modelName: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold"
+                    placeholder="Например: Hexagon Absolute Arm 8530-7"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Производитель / Бренд</label>
+                  <input
+                    type="text"
+                    value={editingItem.brand}
+                    onChange={(e) => setEditingItem({ ...editingItem, brand: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                    placeholder="Hexagon, Creaform, FARO..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Тип / Категория СИ</label>
+                  <select
+                    value={editingItem.category}
+                    onChange={(e) => setEditingItem({ ...editingItem, category: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                  >
+                    <option value="Измерительные руки">Измерительные руки (КР)</option>
+                    <option value="Координатно-измерительные машины">Стационарные КИМ</option>
+                    <option value="Лазерные трекеры">Лазерные трекеры</option>
+                    <option value="Оптические 3D-сканеры">Оптические 3D-сканеры</option>
+                    <option value="Калибры и эталоны">Эталоны и меры длины</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Заводской серийный номер *</label>
+                  <input
+                    type="text"
+                    value={editingItem.serialNumber}
+                    onChange={(e) => setEditingItem({ ...editingItem, serialNumber: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-mono font-bold"
+                    placeholder="SN-8530-8842"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Инвентарный номер</label>
+                  <input
+                    type="text"
+                    value={editingItem.inventoryNumber || ''}
+                    onChange={(e) => setEditingItem({ ...editingItem, inventoryNumber: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-mono"
+                    placeholder="ИНВ-0082"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Принадлежность парка</label>
+                  <select
+                    value={editingItem.ownerType}
+                    onChange={(e) => {
+                      const ot = e.target.value as 'company' | 'client';
+                      setEditingItem({
+                        ...editingItem,
+                        ownerType: ot,
+                        ownerName: ot === 'company' ? 'ООО «ДС-Инжиниринг»' : editingItem.ownerName
+                      });
+                    }}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                  >
+                    <option value="company">Собственный парк («ДС-Инжиниринг»)</option>
+                    <option value="client">Парк заказчика (Клиентский)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Владелец / Организация</label>
+                  <input
+                    type="text"
+                    value={editingItem.ownerName}
+                    onChange={(e) => setEditingItem({ ...editingItem, ownerName: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-semibold"
+                    placeholder="ПАО «ОДК-Кузнецов»"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Свидетельство ФГИС «АРШИН»</label>
+                  <input
+                    type="text"
+                    value={editingItem.verificationNumber}
+                    onChange={(e) => setEditingItem({ ...editingItem, verificationNumber: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-mono"
+                    placeholder="С-МА/12-09-2025/184920"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Срок действия поверки (до) *</label>
+                  <input
+                    type="date"
+                    value={editingItem.verificationValidUntil}
+                    onChange={(e) => setEditingItem({ ...editingItem, verificationValidUntil: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Точность измерений (MPE)</label>
+                  <input
+                    type="text"
+                    value={editingItem.accuracy || ''}
+                    onChange={(e) => setEditingItem({ ...editingItem, accuracy: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-mono"
+                    placeholder="±0.025 мм"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Ответственный специалист</label>
+                  <input
+                    type="text"
+                    value={editingItem.responsiblePerson}
+                    onChange={(e) => setEditingItem({ ...editingItem, responsiblePerson: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                    placeholder="Скобелев А.С."
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-slate-500 font-bold mb-1">Местонахождение / Участок</label>
+                  <input
+                    type="text"
+                    value={editingItem.currentLocation || ''}
+                    onChange={(e) => setEditingItem({ ...editingItem, currentLocation: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                    placeholder="Самара, Главный метрологический зал КИМ"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-slate-500 font-bold mb-1">Метрологические примечания / ТО</label>
+                  <textarea
+                    rows={2}
+                    value={editingItem.notes || ''}
+                    onChange={(e) => setEditingItem({ ...editingItem, notes: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                    placeholder="Особенности эксплуатации, калибровка оптических головок..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setEditingItem(null);
+                }}
+                className="px-4 py-2 text-slate-600 hover:text-slate-900 text-xs font-bold cursor-pointer"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>Сохранить изменения</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRM MODAL */}
+      {deleteConfirmItem && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-lg border-2 border-rose-200 dark:border-rose-900 shadow-sm max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="p-2.5 rounded-full bg-rose-100 dark:bg-rose-950/60">
+                <Trash2 className="w-6 h-6 text-rose-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">Удаление СИ из графика</h3>
+                <p className="text-xs text-slate-500">Действие невозможно будет отменить</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+              Вы уверены, что хотите удалить средство измерений <strong className="text-slate-900 dark:text-white">{deleteConfirmItem.modelName}</strong> (зав. № <span className="font-mono font-bold">{deleteConfirmItem.serialNumber}</span>) из реестра метрологического графика?
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmItem(null)}
+                className="px-4 py-2 text-slate-600 hover:text-slate-900 text-xs font-bold cursor-pointer"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteItem(deleteConfirmItem)}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Да, удалить СИ</span>
               </button>
             </div>
           </div>
@@ -1269,6 +1667,13 @@ export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProp
           </div>
         </div>
       )}
+
+      {/* CRM Interactive Documentation Modal */}
+      <CrmDocumentationModal
+        isOpen={isDocModalOpen}
+        onClose={() => setIsDocModalOpen(false)}
+        initialTab={docModalTab}
+      />
     </div>
   );
 };

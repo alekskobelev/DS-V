@@ -177,25 +177,43 @@ export const SupportRegistry: React.FC<{ supportTickets: any[], setEditingTicket
       )}
 
       {viewMode === 'list' && (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {filtered.map(t => (
-            <div key={t.id} onClick={() => { setEditingTicket(t); setTicketModalOpen(true); }} className="bg-white p-4 rounded-lg border border-gray-200 shadow-xs flex items-center justify-between gap-4 cursor-pointer hover:border-blue-300">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <div
+              key={t.id}
+              onClick={() => { setEditingTicket(t); setTicketModalOpen(true); }}
+              className="bg-white p-3.5 sm:p-4 rounded-lg border border-gray-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:border-blue-300 transition-colors group"
+            >
+              <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
                   <LifeBuoy className="w-5 h-5" />
                 </div>
-                <div>
-                  <h4 className="font-bold text-gray-900 text-sm group-hover:text-blue-600">{t.title}</h4>
-                  <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-1">
-                    <span className="font-mono">{t.id}</span>
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-bold text-gray-900 text-sm group-hover:text-blue-600 transition-colors break-words">{t.title}</h4>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-gray-500 mt-1">
+                    <span className="font-mono font-bold text-slate-700">{t.id}</span>
                     <span>•</span>
                     <span>{t.date}</span>
                     <span>•</span>
-                    <span>{t.product}</span>
+                    <span className="font-medium text-slate-600">{t.product}</span>
                   </div>
                 </div>
               </div>
-              <span className="px-2 py-1 bg-gray-100 text-slate-500 text-xs font-bold rounded-lg">{t.status}</span>
+              <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                <span className={`px-2.5 py-1 text-xs font-extrabold rounded-lg border ${
+                  t.status === 'Решена' || t.status === 'resolved'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : t.status === 'В работе' || t.status === 'in_progress'
+                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                }`}>
+                  {t.status === 'Решена' || t.status === 'resolved'
+                    ? 'Решена'
+                    : t.status === 'В работе' || t.status === 'in_progress'
+                    ? 'В работе'
+                    : 'Открыта'}
+                </span>
+              </div>
             </div>
           ))}
         </div>

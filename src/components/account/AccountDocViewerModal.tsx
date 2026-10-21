@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { AttachedDocument } from '../../types';
 import { DsLogo } from '../common/DsLogo';
+import { useModalStack } from '../../hooks/useModalStack';
 
 interface AccountDocViewerModalProps {
   document: AttachedDocument;
@@ -33,6 +34,13 @@ export const AccountDocViewerModal: React.FC<AccountDocViewerModalProps> = ({
   canDelete = false,
 }) => {
   const printableRef = useRef<HTMLDivElement>(null);
+
+  const { containerRef, zIndex } = useModalStack({
+    id: `account-doc-viewer-${doc.id}`,
+    isOpen: true,
+    onClose,
+    baseZIndex: 550
+  });
 
   const handlePrint = () => {
     window.print();
@@ -71,7 +79,7 @@ export const AccountDocViewerModal: React.FC<AccountDocViewerModalProps> = ({
     <img src="${window.location.origin}/logo.svg" width="48" height="48" alt="ДС‑Инжиниринг" style="vertical-align: middle; object-fit: contain;" />
     <div>
       <div class="title">ООО «ДС‑Инжиниринг» — Официальный документ</div>
-      <div class="meta">443013, г. Самара, Московское шоссе, д. 17 | ИНН 6316200000 / КПП 631601001 | Тел: +7 (846) 954-02-92</div>
+      <div class="meta">443051, Россия, г. Самара, ул. Свободы, д. 198 | ИНН 6312025587 / КПП 631201001 | Тел: +7 (846) 954-02-92</div>
     </div>
   </div>
   <h2>${doc.name}</h2>
@@ -103,8 +111,15 @@ export const AccountDocViewerModal: React.FC<AccountDocViewerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl max-w-3xl w-full shadow-sm border border-gray-200 overflow-hidden flex flex-col max-h-[92vh]">
+    <div 
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
+      style={{ zIndex }}
+    >
+      <div 
+        ref={containerRef}
+        tabIndex={-1}
+        className="bg-white rounded-xl max-w-3xl w-full shadow-sm border border-gray-200 overflow-hidden flex flex-col max-h-[92vh]"
+      >
         
         {/* Header */}
         <div className="p-4 sm:p-5 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white flex items-center justify-between border-b border-gray-800">
@@ -162,7 +177,7 @@ export const AccountDocViewerModal: React.FC<AccountDocViewerModalProps> = ({
                     Инжиниринговые решения, внедрение CAD/CAM и поставка метрологического оборудования
                   </div>
                   <div className="text-[10px] text-gray-400 mt-1">
-                    г. Самара, Московское шоссе, 17 • ИНН 6316200000 • Тел: +7 (846) 954-02-92
+                    443051, г. Самара, ул. Свободы, 198 (Главный офис) • ИНН 6312025587 • Тел: +7 (846) 954-02-92
                   </div>
                 </div>
               </div>

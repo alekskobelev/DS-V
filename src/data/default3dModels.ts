@@ -1,4 +1,4 @@
-import { Model3DItem } from '../types';
+import { Model3DItem } from '../types.ts';
 
 export const DEFAULT_3D_MODELS: Model3DItem[] = [
   {
@@ -17,46 +17,11 @@ export const DEFAULT_3D_MODELS: Model3DItem[] = [
     isDefault: true,
     createdAt: '2026-08-01T00:00:00.000Z',
     inspectionPoints: [
-      {
-        id: 'p1',
-        name: 'Входная кромка пера L1 (Leading Edge)',
-        coords: [1.6, 0.45, 1.25],
-        deviation: 0.028,
-        status: 'nominal',
-        surfaceName: 'Аэродинамический профиль NACA-65 R32'
-      },
-      {
-        id: 'p2',
-        name: 'Ступица Ø45H7 (Посадочная база А)',
-        coords: [0.0, -0.65, 0.0],
-        deviation: -0.015,
-        status: 'nominal',
-        surfaceName: 'Цилиндрическая база вала Ø45'
-      },
-      {
-        id: 'p3',
-        name: 'Межлопаточный канал C4 (Flow Channel)',
-        coords: [-1.15, 0.25, 1.35],
-        deviation: 0.018,
-        status: 'nominal',
-        surfaceName: 'CAD-модель: поверхность сопряжения канала'
-      },
-      {
-        id: 'p4',
-        name: 'Выходная кромка (Trailing Edge)',
-        coords: [2.05, 0.12, -0.75],
-        deviation: -0.024,
-        status: 'nominal',
-        surfaceName: 'Тонкостенное ребро 0.8 мм'
-      },
-      {
-        id: 'p5',
-        name: 'Наружный обод венца Ø160',
-        coords: [-1.85, 0.05, -1.1],
-        deviation: -0.042,
-        status: 'warning',
-        surfaceName: 'Торцевой балансировочный поясок'
-      }
+      { id: 'p1', name: 'Кромка пера лопатки (R32)', coords: [1.60, 0.45, 1.25], deviation: 0.012, status: 'nominal', surfaceName: 'Перо лопатки №1' },
+      { id: 'p2', name: 'Ступица входного вала Ø32H7', coords: [0.00, 1.25, 0.00], deviation: 0.005, status: 'nominal', surfaceName: 'Базовое отверстие H7' },
+      { id: 'p3', name: 'Выходной фланец диска Ø180', coords: [1.75, -0.65, 0.00], deviation: -0.018, status: 'nominal', surfaceName: 'Наружный диаметр диска' },
+      { id: 'p4', name: 'Корыто лопатки №3 (Давление)', coords: [0.85, 0.15, 0.85], deviation: 0.038, status: 'warning', surfaceName: 'Профиль пера (прогиб)' },
+      { id: 'p5', name: 'Привалочный торец ступицы', coords: [0.00, -1.18, 0.00], deviation: -0.008, status: 'nominal', surfaceName: 'Опорная база A' }
     ]
   },
   {
@@ -75,104 +40,34 @@ export const DEFAULT_3D_MODELS: Model3DItem[] = [
     isDefault: true,
     createdAt: '2026-08-05T00:00:00.000Z',
     inspectionPoints: [
-      {
-        id: 'p1',
-        name: 'Формообразующий пуансон M1',
-        coords: [0.0, 0.75, 0.0],
-        deviation: 0.024,
-        status: 'nominal',
-        surfaceName: 'Литьевая полость детали (Ra 0.2 мкм)'
-      },
-      {
-        id: 'p2',
-        name: 'Линия разъема (Партийный стык B)',
-        coords: [1.75, 0.0, 1.75],
-        deviation: 0.011,
-        status: 'nominal',
-        surfaceName: 'Базовая плоскость смыкания полуматриц'
-      },
-      {
-        id: 'p3',
-        name: 'Направляющая втулка Ø32H7 (DME)',
-        coords: [-1.45, -0.35, -1.45],
-        deviation: -0.014,
-        status: 'nominal',
-        surfaceName: 'Посадочное отверстие колонки'
-      },
-      {
-        id: 'p4',
-        name: 'Канал охлаждения Ø10 (Контур 1)',
-        coords: [1.65, -0.6, -1.2],
-        deviation: -0.015,
-        status: 'nominal',
-        surfaceName: 'Герметичный штуцер контура охлаждения'
-      },
-      {
-        id: 'p5',
-        name: 'Уклон боковой стенки 1.5°',
-        coords: [1.2, 0.55, -1.15],
-        deviation: -0.035,
-        status: 'warning',
-        surfaceName: 'Зона повышенного трения формовки'
-      }
+      { id: 'm1', name: 'Базовая направляющая колонка Ø25', coords: [1.80, 0.85, 1.30], deviation: 0.006, status: 'nominal', surfaceName: 'Колонка направляющая' },
+      { id: 'm2', name: 'Полость формообразующей матрицы', coords: [0.00, -0.40, 0.00], deviation: -0.015, status: 'nominal', surfaceName: 'Литьевая полость' },
+      { id: 'm3', name: 'Плоскость разъема пресс-формы', coords: [1.20, 0.50, -1.20], deviation: 0.028, status: 'warning', surfaceName: 'Плоскость PL' },
+      { id: 'm4', name: 'Втулка выталкивателя Ø12', coords: [-1.40, -0.20, 0.80], deviation: 0.008, status: 'nominal', surfaceName: 'Цилиндрическая расточка' },
+      { id: 'm5', name: 'Литниковый впускной канал', coords: [0.00, 0.20, 0.60], deviation: -0.032, status: 'warning', surfaceName: 'Канал впрыска' }
     ]
   },
   {
     id: 'housing',
-    name: 'Корпус двухступенчатого редуктора',
-    category: 'Корпусные детали и отливки',
+    name: 'Корпус редуктора привода (Литье + ЧПУ)',
+    category: 'Корпусные детали и литье',
     geometryType: 'procedural_housing',
-    description: 'Литой корпус промышленного редуктора с развитыми ребрами жесткости, ступенчатыми расточками под радиально-упорные подшипники, 8-точечным присоединительным фланцем и резьбовыми бобышками.',
-    material: 'Алюминиевый литейный сплав АК12М2 / Чугун СЧ20',
-    manufacturingProcess: 'Координатная расточка на ЧПУ ОЦ + Лазерный трекер и измерительная рука PMT Arm',
-    pointCount: 242800,
-    triangleCount: 485600,
-    minTolerance: -0.05,
-    maxTolerance: 0.05,
+    description: 'Силовой литой картер редуктора с точными расточками под подшипники валов, посадочными плоскостями разъема с уплотнительным лабиринтом и резьбовыми крепежными отверстиями.',
+    material: 'Алюминиевый литейный сплав АК12 (АЛ2) / Серый чугун СЧ20',
+    manufacturingProcess: 'Литье в кокиль + Точная фрезерная ЧПУ доработка + 3D-сканирование FreeScan UE Pro',
+    pointCount: 192800,
+    triangleCount: 385600,
+    minTolerance: -0.04,
+    maxTolerance: 0.04,
     orderIndex: 2,
     isDefault: true,
     createdAt: '2026-08-10T00:00:00.000Z',
     inspectionPoints: [
-      {
-        id: 'p1',
-        name: 'Посадочное место подшипника Ø80H7',
-        coords: [0.0, 0.0, 1.45],
-        deviation: -0.017,
-        status: 'nominal',
-        surfaceName: 'Главная расточная база вала A'
-      },
-      {
-        id: 'p2',
-        name: 'Привалочный фланец разъема',
-        coords: [1.75, -0.95, 0.0],
-        deviation: 0.012,
-        status: 'nominal',
-        surfaceName: 'Плоскость стыка полукорпусов'
-      },
-      {
-        id: 'p3',
-        name: 'Межосевое расстояние валов 140.00 мм',
-        coords: [0.0, 1.35, 0.0],
-        deviation: 0.027,
-        status: 'nominal',
-        surfaceName: 'Ось зубчатого зацепления 2-й ступени'
-      },
-      {
-        id: 'p4',
-        name: 'Монтажные лапы с пазами крепления',
-        coords: [-1.55, -0.85, 1.35],
-        deviation: 0.028,
-        status: 'nominal',
-        surfaceName: 'Опорная плоскость станины'
-      },
-      {
-        id: 'p5',
-        name: 'Резьбовые бобышки смотровой крышки М10',
-        coords: [-1.2, 0.95, -1.1],
-        deviation: -0.038,
-        status: 'warning',
-        surfaceName: 'Фланец сервисного люка'
-      }
+      { id: 'h1', name: 'Расточка подшипника Ø120H7', coords: [0.00, 0.00, 1.60], deviation: 0.008, status: 'nominal', surfaceName: 'Диаметр подшипника' },
+      { id: 'h2', name: 'Привалочный фланец крышки', coords: [1.50, 0.80, -0.50], deviation: -0.012, status: 'nominal', surfaceName: 'Плоскость разъема' },
+      { id: 'h3', name: 'Крепежная бобышка M12', coords: [-1.60, -1.20, 0.00], deviation: 0.035, status: 'warning', surfaceName: 'Крепежная плоскость' },
+      { id: 'h4', name: 'Масляный карман картера', coords: [-0.50, -0.80, -1.20], deviation: -0.022, status: 'warning', surfaceName: 'Литая стенка' },
+      { id: 'h5', name: 'Вторичная расточка вала Ø90', coords: [0.00, 0.00, -1.60], deviation: 0.005, status: 'nominal', surfaceName: 'База вала' }
     ]
   },
   {
@@ -191,38 +86,11 @@ export const DEFAULT_3D_MODELS: Model3DItem[] = [
     isDefault: true,
     createdAt: '2026-08-15T00:00:00.000Z',
     inspectionPoints: [
-      {
-        id: 'p1',
-        name: 'Рабочий профиль зуба №1 (Drive Face)',
-        coords: [1.2, 0.65, 0.45],
-        deviation: 0.023,
-        status: 'nominal',
-        surfaceName: 'Эвольвентная спиральная поверхность'
-      },
-      {
-        id: 'p2',
-        name: 'Шлицевой венец вала Z=24',
-        coords: [0.0, -1.3, 0.0],
-        deviation: -0.014,
-        status: 'nominal',
-        surfaceName: 'Эвольвентный шлиц DIN 5480'
-      },
-      {
-        id: 'p3',
-        name: 'Шейка под подшипник 305 Ø25js6',
-        coords: [0.0, -0.5, 0.0],
-        deviation: 0.021,
-        status: 'nominal',
-        surfaceName: 'Цилиндрическая шейка под запрессовку'
-      },
-      {
-        id: 'p4',
-        name: 'Впадина зуба (Root Fillet Radius)',
-        coords: [0.85, 0.35, -0.65],
-        deviation: -0.021,
-        status: 'warning',
-        surfaceName: 'Радиус переходной кривой галтели'
-      }
+      { id: 'g1', name: 'Эвольвентный профиль зуба', coords: [1.20, 0.40, 0.60], deviation: 0.014, status: 'nominal', surfaceName: 'Рабочая поверхность зуба' },
+      { id: 'g2', name: 'Посадочная шейка вала k6', coords: [0.00, 1.50, 0.00], deviation: 0.004, status: 'nominal', surfaceName: 'Диаметр вала k6' },
+      { id: 'g3', name: 'Базовый упорный торец венца', coords: [0.90, -0.20, -0.90], deviation: -0.009, status: 'nominal', surfaceName: 'Опорный торец' },
+      { id: 'g4', name: 'Впадина зуба венца (Корень)', coords: [0.70, 0.20, 1.10], deviation: 0.042, status: 'critical', surfaceName: 'Корень зуба (концентратор)' },
+      { id: 'g5', name: 'Шлицевой паз приводного вала', coords: [0.00, -1.20, 0.30], deviation: -0.018, status: 'nominal', surfaceName: 'Шлицевое соединение' }
     ]
   },
   {
@@ -241,38 +109,11 @@ export const DEFAULT_3D_MODELS: Model3DItem[] = [
     isDefault: true,
     createdAt: '2026-08-20T00:00:00.000Z',
     inspectionPoints: [
-      {
-        id: 'p1',
-        name: 'Напорный фланец Ду50 Ру16',
-        coords: [1.6, 1.15, 0.0],
-        deviation: 0.029,
-        status: 'nominal',
-        surfaceName: 'Присоединительный фланец ГОСТ 33259'
-      },
-      {
-        id: 'p2',
-        name: 'Входной всасывающий патрубок Ду80',
-        coords: [0.0, 0.0, 1.25],
-        deviation: -0.018,
-        status: 'nominal',
-        surfaceName: 'Входной направляющий конфузор'
-      },
-      {
-        id: 'p3',
-        name: 'Язык диффузора (Volute Cutwater)',
-        coords: [-0.65, 0.4, 0.0],
-        deviation: 0.022,
-        status: 'nominal',
-        surfaceName: 'Критическая гидравлическая кромка R3'
-      },
-      {
-        id: 'p4',
-        name: 'Спиральный канал (Volute Throat)',
-        coords: [-1.4, -0.6, 0.0],
-        deviation: -0.036,
-        status: 'warning',
-        surfaceName: 'Гидравлическое сечение канала'
-      }
+      { id: 'v1', name: 'Входной фланец улитки Ø150', coords: [0.00, 1.60, 0.00], deviation: 0.011, status: 'nominal', surfaceName: 'Входной патрубок' },
+      { id: 'v2', name: 'Напорный диффузор Ø100', coords: [1.80, 0.30, 0.50], deviation: -0.016, status: 'nominal', surfaceName: 'Выходной фланец' },
+      { id: 'v3', name: 'Спиральная камера улитки', coords: [0.80, -0.60, 1.20], deviation: 0.032, status: 'warning', surfaceName: 'Проточная часть' },
+      { id: 'v4', name: 'Язык диффузора (Клин)', coords: [-0.90, 0.40, 0.20], deviation: -0.038, status: 'warning', surfaceName: 'Разделительный клин' },
+      { id: 'v5', name: 'Привалочный фланец корпуса', coords: [0.00, -1.40, -0.50], deviation: 0.007, status: 'nominal', surfaceName: 'Базовый торец' }
     ]
   }
 ];

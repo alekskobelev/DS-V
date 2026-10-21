@@ -10,6 +10,7 @@ export interface LicensesRegistryProps {
   onEdit?: (lic: any, e: React.MouseEvent) => void;
   onDelete?: (licId: string, e: React.MouseEvent) => void;
   onAdd?: () => void;
+  onRequestSupportExtension?: (lic: any) => void;
   renderAdditionalDetails?: (lic: any) => React.ReactNode;
 }
 
@@ -19,6 +20,7 @@ export const LicensesRegistry: React.FC<LicensesRegistryProps> = ({
   onEdit,
   onDelete,
   onAdd,
+  onRequestSupportExtension,
   renderAdditionalDetails
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -395,20 +397,37 @@ export const LicensesRegistry: React.FC<LicensesRegistryProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="p-3.5 sm:p-4 bg-slate-50 border-t border-gray-200 flex items-center justify-between gap-3 shrink-0">
-              <button
-                type="button"
-                onClick={() => handleCopyHasp(selectedLicense.haspId)}
-                className="px-4 py-2 bg-white hover:bg-gray-100 text-slate-500 border border-gray-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
-              >
-                {copiedHasp ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedHasp ? 'Скопировано' : 'Копировать HASP ID'}</span>
-              </button>
+            <div className="p-3.5 sm:p-4 bg-slate-50 border-t border-gray-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleCopyHasp(selectedLicense.haspId)}
+                  className="px-3.5 py-2 bg-white hover:bg-gray-100 text-slate-700 border border-gray-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  {copiedHasp ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedHasp ? 'Скопировано' : 'Копировать HASP ID'}</span>
+                </button>
+
+                {onRequestSupportExtension && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const lic = selectedLicense;
+                      setSelectedLicense(null);
+                      onRequestSupportExtension(lic);
+                    }}
+                    className="px-3.5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95"
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Запросить продление ТП</span>
+                  </button>
+                )}
+              </div>
 
               <button
                 type="button"
                 onClick={() => setSelectedLicense(null)}
-                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg text-xs transition-colors cursor-pointer"
+                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg text-xs transition-colors cursor-pointer ml-auto"
               >
                 Закрыть
               </button>

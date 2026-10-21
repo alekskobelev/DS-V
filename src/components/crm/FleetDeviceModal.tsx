@@ -200,7 +200,7 @@ export const FleetDeviceModal: React.FC<FleetDeviceModalProps> = ({
   const isExpiringSoon = !isExpired && daysUntilExpiry <= 30 && daysUntilExpiry >= 0;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[500] flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
       <div 
         id="fleet-device-modal"
         className="bg-white w-full max-w-3xl rounded-lg shadow-sm overflow-hidden border border-gray-100 animate-in fade-in zoom-in-95 duration-200 my-8"
@@ -492,7 +492,7 @@ export const FleetDeviceModal: React.FC<FleetDeviceModalProps> = ({
                 >
                   <option value="Ярыш И.В. (Инженер-метролог)">Ярыш И.В. (Инженер-метролог)</option>
                   <option value="Некрасов С.Ю. (Генеральный директор)">Некрасов С.Ю. (Генеральный директор)</option>
-                  <option value="Скобелев А.С. (Инженер по ПО, ЧПУ и CAD-моделированию)">Скобелев А.С. (Инженер по ПО, ЧПУ и CAD-моделированию)</option>
+                  <option value="Скобелев А.С. (Инженер по внедрению CAD/CAM и постпроцессорам)">Скобелев А.С. (Инженер по внедрению CAD/CAM и постпроцессорам)</option>
                   <option value="Ярыш А.В. (Инженер по подбору оборудования и ПО)">Ярыш А.В. (Инженер по подбору оборудования и ПО)</option>
                   <option value="Морозов В.Г. (Руководитель КТО)">Морозов В.Г. (Руководитель КТО)</option>
                   {authUsers

@@ -1,0 +1,32 @@
+export * from './HomePage';
+export * from './SoftwarePage';
+export * from './HardwarePage';
+export * from './ServicesPage';
+export * from './AboutPage';
+export * from './KnowledgeBasePage';
+export * from './NewsPage';
+export * from './ContactsPage';
+export * from './CustomPageView';
+export * from './AccountPage';
+export * from './CmsPage';
+export * from './CrmPage';
+export * from './SitemapPage';
+export * from './ComparePage';
+export * from './NotFoundPage';
+
+// Default exports map for dynamic imports / router loaders
+export { default as HomePage } from './HomePage';
+export { default as SoftwarePage } from './SoftwarePage';
+export { default as HardwarePage } from './HardwarePage';
+export { default as ServicesPage } from './ServicesPage';
+export { default as AboutPage } from './AboutPage';
+export { default as KnowledgeBasePage } from './KnowledgeBasePage';
+export { default as NewsPage } from './NewsPage';
+export { default as ContactsPage } from './ContactsPage';
+export { default as CustomPageView } from './CustomPageView';
+export { default as AccountPage } from './AccountPage';
+export { default as CmsPage } from './CmsPage';
+export { default as CrmPage } from './CrmPage';
+export { default as SitemapPage } from './SitemapPage';
+export { default as ComparePage } from './ComparePage';
+export { default as NotFoundPage } from './NotFoundPage';

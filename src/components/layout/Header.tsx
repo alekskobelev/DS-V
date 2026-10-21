@@ -28,7 +28,9 @@ import {
   ShieldCheck,
   LogOut,
   LogIn,
-  FileText
+  FileText,
+  Headphones,
+  Briefcase
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { PageId, SYSTEM_PAGE_IDS } from '../../types';
@@ -39,6 +41,7 @@ import { RecentSearchesDropdown } from '../common/RecentSearchesDropdown';
 import { PRODUCTS_DATA, SERVICES_DATA } from '../../data/mockData';
 import { PWAInstallButton } from '../PWAInstallButton';
 import { formatUserInitials } from '../../utils/userFormatting';
+import { HeaderSearch } from './HeaderSearch';
 
 
 
@@ -81,27 +84,44 @@ const AccountButton: React.FC<AccountButtonProps> = ({
   
   if (isMobile) {
     return (
-      <button
-        onClick={() => handleNav('account')}
-        className="text-left px-4 py-2.5 rounded-lg hover:bg-blue-50 text-gray-800 hover:text-blue-600 flex items-center justify-between"
-      >
-        <div className="flex items-center gap-2">
-          <User className="w-4 h-4 text-blue-600" />
-          <span className="font-semibold text-xs text-gray-900">{formattedName}</span>
-        </div>
-        {isSuperUser && (
-          <span className="text-[10px] bg-amber-200 text-amber-950 px-1.5 py-0.5 rounded font-black border border-amber-300">SuperAdmin</span>
+      <div className="border-t border-gray-100 pt-2 space-y-1">
+        <button
+          onClick={() => handleNav('account')}
+          className="w-full text-left px-4 py-2.5 rounded-lg hover:bg-blue-50 text-gray-800 hover:text-blue-600 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-2">
+            <User className="w-4 h-4 text-blue-600" />
+            <span className="font-semibold text-xs text-gray-900">{formattedName}</span>
+          </div>
+          <span className="text-[10px] text-gray-400">Личный кабинет</span>
+        </button>
+
+        {(isAdmin || isManagerUser || isSuperUser) && (
+          <button
+            onClick={() => handleNav('crm')}
+            className="w-full text-left px-4 py-2.5 rounded-lg bg-amber-50/70 hover:bg-amber-100 text-amber-900 font-semibold flex items-center justify-between border border-amber-200/80"
+          >
+            <div className="flex items-center gap-2">
+              <Headphones className="w-4 h-4 text-amber-600" />
+              <span className="text-xs">CRM & Онлайн-инженер</span>
+            </div>
+            <span className="text-[9px] bg-amber-200 text-amber-900 font-bold px-1.5 py-0.5 rounded">CRM</span>
+          </button>
         )}
-        {!isSuperUser && isAdmin && (
-          <span className="text-[10px] bg-rose-200 text-rose-900 px-1.5 py-0.5 rounded font-bold">Admin</span>
+
+        {isAdmin && (
+          <button
+            onClick={() => handleNav('cms')}
+            className="w-full text-left px-4 py-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-900 font-semibold flex items-center justify-between border border-blue-200/80"
+          >
+            <div className="flex items-center gap-2">
+              <Settings className="w-4 h-4 text-blue-600" />
+              <span className="text-xs">Панель управления CMS</span>
+            </div>
+            <span className="text-[9px] bg-blue-200 text-blue-900 font-bold px-1.5 py-0.5 rounded">CMS</span>
+          </button>
         )}
-        {isModUser && (
-          <span className="text-[10px] bg-purple-200 text-purple-900 px-1.5 py-0.5 rounded font-bold">Модератор</span>
-        )}
-        {isManagerUser && (
-          <span className="text-[10px] bg-blue-200 text-blue-900 px-1.5 py-0.5 rounded font-bold">Manager</span>
-        )}
-      </button>
+      </div>
     );
   }
 
@@ -133,7 +153,7 @@ const AccountButton: React.FC<AccountButtonProps> = ({
       <button
         id="topbar-account-btn"
         onClick={() => setDropdownOpen?.(prev => !prev)}
-        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/15 hover:bg-white/25 active:bg-white/30 text-white rounded-lg transition-all border border-white/25 text-[11px] font-medium cursor-pointer shadow-2xs group"
+        className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 bg-white/15 hover:bg-white/25 active:bg-white/30 text-white rounded-lg transition-all border border-white/25 text-[11px] font-medium cursor-pointer shadow-2xs group shrink-0 max-w-[125px] sm:max-w-none"
         title={`Профиль: ${currentUser.fullName}`}
         aria-label="Личный кабинет и профиль"
       >
@@ -154,106 +174,115 @@ const AccountButton: React.FC<AccountButtonProps> = ({
           )}
         </div>
 
-        <span className="font-semibold tracking-tight text-white whitespace-nowrap">
+        <span className="font-semibold tracking-tight text-white truncate max-w-[65px] min-[390px]:max-w-[80px] sm:max-w-[140px]">
           {formattedName}
         </span>
 
-        {isSuperUser ? (
-          <span className="text-[9px] bg-amber-400 text-slate-950 px-1.5 py-0.2 rounded-xs font-black uppercase tracking-wider">Super</span>
-        ) : isAdmin ? (
-          <span className="text-[9px] bg-amber-400 text-slate-950 px-1.5 py-0.2 rounded-xs font-bold uppercase tracking-wider">Admin</span>
-        ) : isModUser ? (
-          <span className="text-[9px] bg-purple-300 text-purple-950 px-1.5 py-0.2 rounded-xs font-bold">Модератор</span>
-        ) : isManagerUser ? (
-          <span className="text-[9px] bg-blue-200 text-blue-950 px-1.5 py-0.2 rounded-xs font-bold">CRM</span>
-        ) : null}
-
-        <ChevronDown className={`w-3 h-3 text-blue-200 transition-transform duration-200 ${dropdownOpen ? 'rotate-180 text-white' : 'group-hover:text-white'}`} />
+        <ChevronDown className={`w-3 h-3 text-blue-200 shrink-0 transition-transform duration-200 ${dropdownOpen ? 'rotate-180 text-white' : 'group-hover:text-white'}`} />
       </button>
 
-      {/* Interactive Profile Dropdown from TopBar */}
-      <div 
-        className={`absolute right-0 top-full pt-1.5 w-64 z-50 transition-all duration-150 ${dropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
-        <div className="bg-white rounded-xl shadow-xl border border-slate-200 py-2 overflow-hidden ring-1 ring-black/5 text-slate-900">
-          <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50/60">
-            <div className="text-xs font-bold text-slate-900 truncate">{currentUser.fullName}</div>
-            <div className="text-[11px] text-blue-600 font-medium truncate">{currentUser.company || currentUser.email}</div>
-            <div className="mt-1 flex items-center gap-1.5">
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                isSuperUser ? 'bg-amber-100 text-amber-950 border border-amber-300' : isAdmin ? 'bg-amber-100 text-amber-900 border border-amber-200' : isManagerUser ? 'bg-blue-100 text-blue-900' : 'bg-slate-100 text-slate-800'
-              }`}>
-                {isSuperUser ? '⚡ Главный администратор' : isAdmin ? '🛡️ Администратор сайта' : isManagerUser ? '💼 Менеджер (Сотрудник)' : '👤 Корпоративный клиент'}
-              </span>
-            </div>
-          </div>
-
-          <div className="py-1">
-            <button
-              onClick={() => {
-                setDropdownOpen?.(false);
-                handleNav('account');
-              }}
-              className="w-full text-left px-4 py-2 text-xs text-slate-600 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2.5 font-medium transition-colors cursor-pointer"
-            >
-              <User className="w-4 h-4 text-blue-500 shrink-0" />
-              <div>
-                <div className="font-semibold text-slate-900">Личный кабинет</div>
-                <div className="text-[10px] text-slate-400">Заказы, КП, лицензии, тикеты</div>
+      {/* Interactive Profile Dropdown from TopBar with Framer Motion */}
+      <AnimatePresence>
+        {dropdownOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute right-0 top-full pt-1.5 w-64 z-[70] origin-top-right"
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+          >
+            <div className="bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden ring-1 ring-black/5 text-slate-900">
+              <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50/70">
+                <div className="text-xs font-bold text-slate-900 truncate">{currentUser.fullName}</div>
+                <div className="text-[11px] text-blue-600 font-medium truncate">{currentUser.company || currentUser.email}</div>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                    isSuperUser ? 'bg-amber-100 text-amber-950 border border-amber-300' : isAdmin ? 'bg-amber-100 text-amber-900 border border-amber-200' : isManagerUser ? 'bg-blue-100 text-blue-900' : 'bg-slate-100 text-slate-800'
+                  }`}>
+                    {isSuperUser ? '⚡ Главный администратор' : isAdmin ? '🛡️ Администратор сайта' : isManagerUser ? '💼 Менеджер (Сотрудник)' : '👤 Корпоративный клиент'}
+                  </span>
+                </div>
               </div>
-            </button>
 
-            {(isAdmin || isManagerUser) && (
-              <button
-                onClick={() => {
-                  setDropdownOpen?.(false);
-                  handleNav('account');
-                }}
-                className="w-full text-left px-4 py-2 text-xs text-slate-600 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2.5 font-medium transition-colors cursor-pointer"
-              >
-                <Layers className="w-4 h-4 text-amber-500 shrink-0" />
-                <div>
-                  <div className="font-semibold text-slate-900">CRM-система (Воронки)</div>
-                  <div className="text-[10px] text-slate-400">Сделки, лиды, аналитика</div>
+              <div className="py-1">
+                {(isAdmin || isManagerUser || isSuperUser) && (
+                  <button
+                    onClick={() => {
+                      setDropdownOpen?.(false);
+                      handleNav('crm');
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-xs text-blue-950 bg-blue-50/80 hover:bg-blue-100 flex items-center justify-between font-bold transition-colors cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Briefcase className="w-4 h-4 text-blue-600 shrink-0 group-hover:scale-110 transition-transform" />
+                      <div>
+                        <div className="font-bold text-blue-900">Единая панель CRM</div>
+                        <div className="text-[10px] text-blue-700/80 font-normal">Сделки, Канбан, Контрагенты, ТКП, АРШИН</div>
+                      </div>
+                    </div>
+                    <span className="text-[9px] bg-blue-600 text-white font-black px-1.5 py-0.5 rounded shadow-2xs">
+                      Сотрудник
+                    </span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => {
+                    setDropdownOpen?.(false);
+                    handleNav('account');
+                  }}
+                  className={`w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2.5 font-medium transition-colors cursor-pointer ${
+                    (isAdmin || isManagerUser || isSuperUser) ? 'border-t border-slate-100' : ''
+                  }`}
+                >
+                  <User className="w-4 h-4 text-blue-500 shrink-0" />
+                  <div>
+                    <div className="font-semibold text-slate-900">
+                      {(isAdmin || isManagerUser || isSuperUser) ? 'Личный кабинет сотрудника' : 'Личный кабинет заказчика'}
+                    </div>
+                    <div className="text-[10px] text-slate-400">
+                      {(isAdmin || isManagerUser || isSuperUser) ? 'Служебные реестры, лицензии и безопасность' : 'Договоры, лицензии ПО, сервисные заявки'}
+                    </div>
+                  </div>
+                </button>
+
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      setDropdownOpen?.(false);
+                      handleNav('cms');
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-xs text-amber-900 bg-amber-50/50 hover:bg-amber-100 flex items-center gap-2.5 font-medium transition-colors border-t border-slate-100 cursor-pointer"
+                  >
+                    <Settings className="w-4 h-4 text-amber-600 shrink-0" />
+                    <div>
+                      <div className="font-bold">Панель управления CMS</div>
+                      <div className="text-[10px] text-amber-700">Редактор каталога и страниц</div>
+                    </div>
+                  </button>
+                )}
+              </div>
+
+              {logout && (
+                <div className="pt-1 border-t border-slate-100 bg-slate-50/40">
+                  <button
+                    onClick={() => {
+                      setDropdownOpen?.(false);
+                      logout();
+                    }}
+                    className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 font-medium transition-colors cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4 text-red-500" />
+                    <span>Выйти из профиля</span>
+                  </button>
                 </div>
-              </button>
-            )}
-
-            {isAdmin && (
-              <button
-                onClick={() => {
-                  setDropdownOpen?.(false);
-                  handleNav('cms');
-                }}
-                className="w-full text-left px-4 py-2 text-xs text-amber-900 bg-amber-50/70 hover:bg-amber-100 flex items-center gap-2.5 font-medium transition-colors border-t border-amber-100 cursor-pointer"
-              >
-                <Settings className="w-4 h-4 text-amber-600 shrink-0" />
-                <div>
-                  <div className="font-bold">Панель управления CMS</div>
-                  <div className="text-[10px] text-amber-700">Редактор каталога и страниц</div>
-                </div>
-              </button>
-            )}
-          </div>
-
-          {logout && (
-            <div className="pt-1 border-t border-slate-100">
-              <button
-                onClick={() => {
-                  setDropdownOpen?.(false);
-                  logout();
-                }}
-                className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 font-medium transition-colors cursor-pointer"
-              >
-                <LogOut className="w-4 h-4 text-red-500" />
-                <span>Выйти из профиля</span>
-              </button>
+              )}
             </div>
-          )}
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -273,7 +302,8 @@ export const Header: React.FC = () => {
     userPermissions,
     isAdmin,
     logout,
-    setActiveCategory
+    setActiveCategory,
+    openConfiguratorModal
   } = useApp();
 
   const hasCmsAccess = isAdmin || !!userPermissions?.canAccessCms;
@@ -328,6 +358,9 @@ export const Header: React.FC = () => {
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 40);
+      if (window.scrollY > 15) {
+        setProfileDropdownOpen(false);
+      }
     };
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -372,11 +405,11 @@ export const Header: React.FC = () => {
   return (
     <>
       {/* Top Bar for desktop & mobile: in natural document flow, scrolls away smoothly without layout jumps */}
-      <div className="bg-[#1E3A8A] text-white text-xs font-normal border-b border-blue-900/40 w-full py-1.5 relative z-40">
-        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-y-1.5 gap-x-3">
+      <div className="bg-[#1E3A8A] text-white text-xs font-normal border-b border-blue-900/40 w-full py-1.5 relative z-[60]">
+        <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-y-1.5 gap-x-3">
           {/* TopBar Line 1 (on <xl) / Left group (on xl+) */}
           <div className="flex items-center justify-between xl:justify-start gap-2 sm:gap-4 text-[11px] sm:text-xs min-w-0">
-            <span className="flex items-center text-blue-200 shrink-0">
+            <span className="hidden sm:flex items-center text-blue-200 shrink-0">
               <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1.5 sm:mr-2 animate-pulse shrink-0"></span>
               <span className="whitespace-nowrap">Опыт: <strong className="ml-1 text-white font-semibold">более 30 лет</strong></span>
             </span>
@@ -473,11 +506,13 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Sticky Main Nav Bar: pins to top on scroll, invariant height prevents any trembling/jitter */}
-      <header className={`sticky top-0 z-50 w-full bg-white transition-shadow duration-200 border-b ${
-        isScrolled ? 'shadow-md border-gray-200' : 'shadow-xs border-gray-100'
+      <header className={`sticky top-0 z-40 w-full backdrop-blur-md transition-all duration-200 border-b ${
+        isScrolled 
+          ? 'bg-white/95 dark:bg-slate-900/95 shadow-md border-gray-200/90 dark:border-slate-800' 
+          : 'bg-white/90 dark:bg-slate-900/90 shadow-xs border-gray-100 dark:border-slate-800/60'
       }`}>
         {/* Main Nav Bar */}
-        <div className="relative z-40 bg-white w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-3.5">
+        <div className="relative z-40 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-3.5">
           <div className="flex items-center justify-between gap-4 sm:gap-6 xl:gap-8 w-full min-w-0">
           {/* Logo Brand Lockup */}
           <a 
@@ -537,32 +572,32 @@ export const Header: React.FC = () => {
 
               {hardwareDropdown && (
                 <div 
-                  className="absolute top-full left-1/2 -translate-x-1/3 xl:-translate-x-1/4 w-[960px] xl:w-[1020px] max-h-[65vh] flex flex-col bg-white rounded-xl shadow-sm border border-gray-100 p-4 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
+                  className="absolute top-full left-1/2 -translate-x-1/3 xl:-translate-x-1/4 w-[1040px] xl:w-[1160px] 2xl:w-[1260px] max-h-[82vh] h-[520px] flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-800 p-3.5 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
                   onMouseEnter={() => setHardwareDropdown(true)}
                 >
                   {/* Top Bar with Title, Search and Global Link */}
-                  <div className="flex items-center justify-between gap-4 pb-3 mb-3 border-b border-gray-100 shrink-0">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                  <div className="flex items-center justify-between gap-4 pb-2.5 mb-2 border-b border-gray-100 dark:border-slate-800 shrink-0">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                         <Box className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-gray-900 flex items-center gap-2">
-                          <span>Каталог оборудования</span>
-                          <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-full">
+                        <div className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                          <span>Каталог метрологического оборудования</span>
+                          <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 text-[10px] font-bold rounded-full border border-blue-200 dark:border-blue-700">
                             {PRODUCTS_DATA.filter(p => p.type === 'hardware').length} моделей
                           </span>
                         </div>
-                        <div className="text-[10px] text-gray-400">Прецизионные КИМ, 3D-сканеры, лазерные трекеры и оснастка</div>
+                        <div className="text-[10px] text-gray-400 dark:text-slate-400">Прецизионные КИМ, 3D-сканеры, лазерные трекеры и оснастка</div>
                       </div>
                     </div>
 
                     {/* Quick Search Bar inside Menu */}
-                    <div className="relative w-72">
+                    <div className="relative w-72 xl:w-80">
                       <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
-                        placeholder="Быстрый поиск модели..."
+                        placeholder="Поиск по названию или бренду..."
                         value={hardwareNavSearch}
                         onFocus={() => setIsHardwareSearchFocused(true)}
                         onBlur={() => setTimeout(() => setIsHardwareSearchFocused(false), 200)}
@@ -572,7 +607,7 @@ export const Header: React.FC = () => {
                           }
                         }}
                         onChange={(e) => setHardwareNavSearch(e.target.value)}
-                        className="w-full pl-8 pr-7 py-1.5 bg-slate-50 hover:bg-gray-100/80 focus:bg-white border border-gray-200 focus:border-blue-500 rounded-xl text-xs text-gray-800 placeholder-gray-400 outline-none transition-all"
+                        className="w-full pl-8 pr-7 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-gray-100/80 focus:bg-white dark:focus:bg-slate-700 border border-gray-200 dark:border-slate-700 focus:border-blue-500 rounded-xl text-xs text-gray-800 dark:text-gray-100 placeholder-gray-400 outline-none transition-all"
                       />
                       {hardwareNavSearch && (
                         <button
@@ -597,29 +632,44 @@ export const Header: React.FC = () => {
                       )}
                     </div>
 
-                    <button
-                      onClick={() => {
-                        setHardwareDropdown(false);
-                        handleNav('hardware');
-                      }}
-                      className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors shrink-0"
-                    >
-                      <span>Все {PRODUCTS_DATA.filter(p => p.type === 'hardware').length} моделей в каталоге</span>
-                      <span>→</span>
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHardwareDropdown(false);
+                          openConfiguratorModal();
+                        }}
+                        className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                        title="Интерактивный расчет СИ по ГОСТ Р ИСО 1101"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                        <span>Конфигуратор СИ</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setHardwareDropdown(false);
+                          handleNav('hardware');
+                        }}
+                        className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 transition-colors shrink-0 cursor-pointer"
+                      >
+                        <span>Все {PRODUCTS_DATA.filter(p => p.type === 'hardware').length} моделей</span>
+                        <span>→</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* 2-Panel Master-Detail Layout */}
                   {hardwareNavSearch.trim() ? (
                     /* Search results view */
-                    <div className="p-2 flex-1 min-h-0 flex flex-col">
-                      <div className="text-xs font-semibold text-gray-500 mb-2 flex items-center justify-between">
+                    <div className="p-1 flex-1 min-h-0 flex flex-col">
+                      <div className="text-xs font-semibold text-gray-500 dark:text-slate-400 mb-2 flex items-center justify-between">
                         <span>Результаты поиска «{hardwareNavSearch}»:</span>
-                        <span className="text-[11px] text-blue-600">
+                        <span className="text-[11px] text-blue-600 dark:text-blue-400 font-bold">
                           Найдено {PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.name.toLowerCase().includes(hardwareNavSearch.toLowerCase()) || p.brand.toLowerCase().includes(hardwareNavSearch.toLowerCase()) || p.shortDescription.toLowerCase().includes(hardwareNavSearch.toLowerCase()))).length} моделей
                         </span>
                       </div>
-                      <div className="grid grid-cols-3 gap-2.5 flex-1 overflow-y-auto pr-1">
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 flex-1 overflow-y-auto pr-1">
                         {PRODUCTS_DATA.filter(p => p.type === 'hardware' && (
                           p.name.toLowerCase().includes(hardwareNavSearch.toLowerCase()) || 
                           p.brand.toLowerCase().includes(hardwareNavSearch.toLowerCase()) ||
@@ -631,16 +681,16 @@ export const Header: React.FC = () => {
                               setHardwareDropdown(false);
                               handleNav('hardware', item.id);
                             }}
-                            className="text-left p-2.5 rounded-xl bg-slate-50/70 hover:bg-blue-50 border border-gray-100 hover:border-blue-200 transition-all group"
+                            className="text-left p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-700 border border-gray-100 dark:border-slate-700 hover:border-blue-200 transition-all group cursor-pointer"
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider truncate max-w-[130px]">{item.brand}</span>
-                              {item.badge && <span className="text-[8px] px-1 py-0.2 bg-blue-100 text-blue-800 rounded font-semibold shrink-0">{item.badge}</span>}
+                            <div className="flex items-center justify-between gap-1 mb-1">
+                              <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider truncate">{item.brand.split(' ')[0]}</span>
+                              {item.badge && <span className="text-[8px] px-1 py-0.2 bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 rounded font-semibold shrink-0 truncate max-w-[110px]">{item.badge}</span>}
                             </div>
-                            <div className="font-bold text-xs text-gray-900 group-hover:text-blue-600 mt-1 line-clamp-1">
+                            <div className="font-bold text-xs text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-1 leading-snug">
                               {item.name}
                             </div>
-                            <div className="text-[10px] text-gray-500 line-clamp-1 mt-0.5">
+                            <div className="text-[10px] text-gray-500 dark:text-slate-400 line-clamp-1 mt-0.5">
                               {item.shortDescription}
                             </div>
                           </button>
@@ -648,105 +698,118 @@ export const Header: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex gap-4 flex-1 min-h-0">
-                      {/* Left Rail: Categories Tabs */}
-                      <div className="w-64 shrink-0 space-y-4 bg-slate-50/70 p-2 rounded-xl border border-gray-100 overflow-y-auto min-h-0">
+                    <div className="flex gap-3 flex-1 min-h-0">
+                      {/* Left Rail: Categories & Brands Tabs */}
+                      <div className="w-56 xl:w-60 shrink-0 bg-slate-50/80 dark:bg-slate-800/60 p-1.5 rounded-xl border border-gray-100 dark:border-slate-800 flex flex-col justify-between overflow-y-auto min-h-0">
                         {[
                           {
                             groupName: 'ПО ТЕХНОЛОГИИ',
                             items: [
                               {
                                 id: 'tech-laser',
-                                title: '🔴 Лазерная технология',
+                                title: '🔴 Лазерные сканеры',
                                 count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.technology === 'laser' || (p.category.includes('scanner') && !p.id.includes('combo') && !p.id.includes('hx') && !p.id.includes('libre') && !p.id.includes('pronova') && (p.name.toLowerCase().includes('лазер') || p.name.toLowerCase().includes('freescan') || p.name.toLowerCase().includes('easyscan') || p.name.toLowerCase().includes('trio') || p.name.toLowerCase().includes('as1'))))).length,
                                 icon: Zap,
-                                badgeColor: 'bg-red-50 text-red-700 border-red-200'
+                                badgeColor: 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
                               },
                               {
                                 id: 'tech-optical',
-                                title: '🔵 Оптический подсвет (LED)',
+                                title: '🔵 Оптический свет (LED)',
                                 count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.technology === 'optical' || (p.category.includes('scanner') && (p.name.toLowerCase().includes('pro hd') || p.name.toLowerCase().includes('pro 2x') || p.name.toLowerCase().includes('se v2') || p.name.toLowerCase().includes('sp v2') || p.name.toLowerCase().includes('transcan') || p.name.toLowerCase().includes('optimscan') || p.name.toLowerCase().includes('smartscan') || p.name.toLowerCase().includes('stereoscan') || p.name.toLowerCase().includes('primescan') || p.name.toLowerCase().includes('autoscan'))))).length,
                                 icon: Scan,
-                                badgeColor: 'bg-blue-50 text-blue-700 border-blue-200'
+                                badgeColor: 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                               },
                               {
                                 id: 'tech-hybrid',
-                                title: '🟣 Оптический гибрид (Лазер + ИК)',
+                                title: '🟣 Оптический гибрид (ИК)',
                                 count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.technology === 'hybrid' || (p.category.includes('scanner') && (p.name.toLowerCase().includes('combo') || p.name.toLowerCase().includes('hx') || p.name.toLowerCase().includes('einstar') || p.name.toLowerCase().includes('libre') || p.name.toLowerCase().includes('pronova') || p.name.toLowerCase().includes('einscan h'))))).length,
                                 icon: Sparkles,
-                                badgeColor: 'bg-purple-50 text-purple-700 border-purple-200'
+                                badgeColor: 'bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
                               },
                               {
                                 id: 'tech-cmm',
                                 title: '🔵 Стационарные КИМ',
                                 count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.category === 'cmm' || p.category === 'stationary_cmm')).length,
                                 icon: Cpu,
-                                badgeColor: 'bg-blue-50 text-blue-700 border-blue-200'
+                                badgeColor: 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                               },
                               {
                                 id: 'tech-mobile',
-                                title: '🟢 Мобильные КИМ',
+                                title: '🟢 Мобильные КИМ (руки)',
                                 count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.category === 'arms' || p.category === 'mobile_cmm')).length,
                                 icon: Compass,
-                                badgeColor: 'bg-amber-50 text-amber-700 border-amber-200'
+                                badgeColor: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
                               },
                               {
                                 id: 'tech-trackers',
-                                title: '🔵 Лазерные трекеры',
+                                title: '🎯 Лазерные трекеры',
                                 count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && p.category === 'trackers').length,
                                 icon: Target,
-                                badgeColor: 'bg-blue-50 text-blue-700 border-blue-200'
+                                badgeColor: 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
                               }
                             ]
                           },
                           {
-                            groupName: 'ПО БРЕНДАМ',
+                            groupName: 'ПО ПРОИЗВОДИТЕЛЯМ',
                             items: [
                               {
                                 id: 'brand-scanline',
-                                title: 'ScanLine',
+                                title: '🇷🇺 ScanLine (Россия)',
                                 count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('scanline') || p.id.startsWith('scanline') || p.id.startsWith('eq-scanline'))).length,
                                 icon: Box,
-                                badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                badgeColor: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
                               },
                               {
                                 id: 'brand-shining',
-                                title: 'Shining 3D',
+                                title: '🇨🇳 Shining 3D',
                                 count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('shining') || p.id.startsWith('shining') || p.id.startsWith('freescan') || p.id.startsWith('eq-shining') || p.id.startsWith('eq-freescan'))).length,
                                 icon: Sparkles,
-                                badgeColor: 'bg-blue-50 text-blue-700 border-blue-200'
+                                badgeColor: 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                              },
+                              {
+                                id: 'brand-pmt',
+                                title: '🏛️ PMT Arm & CMM',
+                                count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('pmt') || p.id.startsWith('pmt') || p.id.startsWith('eq-pmt') || p.name.toLowerCase().includes('pmt'))).length,
+                                icon: Compass,
+                                badgeColor: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
                               },
                               {
                                 id: 'brand-hexagon',
-                                title: 'Hexagon / Leica',
+                                title: '🔷 Hexagon & Leica',
                                 count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('hexagon') || p.brand?.toLowerCase().includes('leica') || p.id.startsWith('hexagon') || p.id.startsWith('primescan') || p.id.startsWith('stereoscan') || p.id.startsWith('smartscan') || p.id.startsWith('eq-hexagon'))).length,
                                 icon: Target,
-                                badgeColor: 'bg-cyan-50 text-cyan-700 border-cyan-200'
+                                badgeColor: 'bg-cyan-50 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800'
+                              },
+                              {
+                                id: 'brand-renishaw',
+                                title: '⚡ Renishaw (Оснастка)',
+                                count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('renishaw') || p.id.startsWith('renishaw') || p.id.startsWith('eq-renishaw') || p.category === 'renishaw' || p.name.toLowerCase().includes('renishaw'))).length,
+                                icon: Settings,
+                                badgeColor: 'bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
                               }
                             ]
                           }
                         ].map((group, groupIdx) => (
-                          <div key={groupIdx} className="space-y-1">
-                            <div className="px-2 text-[10px] font-bold text-gray-400 mb-1">{group.groupName}</div>
+                          <div key={groupIdx} className="space-y-0.5">
+                            <div className="px-2 py-0.5 text-[9px] font-bold tracking-wider text-gray-400 dark:text-slate-400 uppercase">{group.groupName}</div>
                             {group.items.map((cat) => {
-                              const IconComp = cat.icon;
                               const isActive = activeHardwareNavTab === cat.id;
                               return (
                                 <button
                                   key={cat.id}
                                   onMouseEnter={() => setActiveHardwareNavTab(cat.id)}
                                   onClick={() => setActiveHardwareNavTab(cat.id)}
-                                  className={`w-full text-left px-4 py-2 rounded-xl transition-all flex items-center justify-between group ${
+                                  className={`w-full text-left px-2 py-1 rounded-lg transition-all flex items-center justify-between group cursor-pointer ${
                                     isActive 
-                                      ? 'bg-white shadow-md border border-blue-200 text-blue-700 font-bold translate-x-1' 
-                                      : 'hover:bg-white/80 text-slate-500 font-medium'
+                                      ? 'bg-white dark:bg-slate-700 shadow-xs border border-blue-200 dark:border-blue-600 text-blue-700 dark:text-blue-300 font-bold translate-x-0.5' 
+                                      : 'hover:bg-white/80 dark:hover:bg-slate-700/60 text-slate-600 dark:text-slate-300 font-medium'
                                   }`}
                                 >
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <span className="text-xs truncate">{cat.title}</span>
+                                  <div className="flex items-center gap-1 min-w-0">
+                                    <span className="text-[11px] truncate">{cat.title}</span>
                                   </div>
                                   <div className="flex items-center gap-1 shrink-0 ml-1">
-                                    <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-semibold border ${cat.badgeColor}`}>
+                                    <span className={`text-[9px] px-1.5 py-0.2 rounded-md font-semibold border ${cat.badgeColor}`}>
                                       {cat.count}
                                     </span>
                                   </div>
@@ -758,31 +821,35 @@ export const Header: React.FC = () => {
                       </div>
 
                       {/* Right Panel: Compact Cards of Active Category */}
-                      <div className="flex-1 min-w-0 flex flex-col min-h-0">
+                      <div className="flex-1 min-w-0 flex flex-col justify-between min-h-0">
                         {/* Category Heading Description */}
-                        <div className="flex items-center justify-between pb-2 border-b border-gray-100 shrink-0">
-                          <div>
-                            <h4 className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                        <div className="flex items-center justify-between pb-1.5 border-b border-gray-100 dark:border-slate-800 shrink-0">
+                          <div className="min-w-0 pr-2">
+                            <h4 className="text-xs font-bold text-gray-900 dark:text-white truncate">
                               {activeHardwareNavTab === 'tech-laser' && '🔴 Лазерные 3D-сканеры'}
-                              {activeHardwareNavTab === 'tech-optical' && '🔵 Оптические 3D-сканеры (Структурированный свет)'}
-                              {activeHardwareNavTab === 'tech-ir' && '🟢 Инфракрасные сканеры (IR)'}
-                              {activeHardwareNavTab === 'tech-cmm' && '🔵 Стационарные КИМ'}
-                              {activeHardwareNavTab === 'tech-mobile' && '🟢 Мобильные КИМ'}
-                              {activeHardwareNavTab === 'tech-trackers' && '🔵 Лазерные трекеры'}
-                              {activeHardwareNavTab === 'brand-scanline' && '🇷🇺 Оборудование ScanLine'}
-                              {activeHardwareNavTab === 'brand-shining' && '🇨🇳 Оборудование Shining 3D'}
-                              {activeHardwareNavTab === 'brand-hexagon' && '🔷 Оборудование Hexagon / Leica'}
+                              {activeHardwareNavTab === 'tech-optical' && '🔵 Оптические 3D-сканеры (Структурированный свет LED)'}
+                              {activeHardwareNavTab === 'tech-hybrid' && '🟣 Гибридные 3D-сканеры (Лазер + ИК подсвет)'}
+                              {activeHardwareNavTab === 'tech-cmm' && '🔵 Стационарные координатно-измерительные машины (КИМ)'}
+                              {activeHardwareNavTab === 'tech-mobile' && '🟢 Мобильные КИМ (Измерительные руки-манипуляторы)'}
+                              {activeHardwareNavTab === 'tech-trackers' && '🎯 Лазерные трекеры сверхбольшого радиуса'}
+                              {activeHardwareNavTab === 'brand-scanline' && '🇷🇺 Измерительное оборудование ScanLine (Россия)'}
+                              {activeHardwareNavTab === 'brand-shining' && '🇨🇳 Метрологические 3D-сканеры Shining 3D'}
+                              {activeHardwareNavTab === 'brand-pmt' && '🏛️ Измерительные руки и КИМ PMT (Precision Measuring Tool)'}
+                              {activeHardwareNavTab === 'brand-hexagon' && '🔷 Премиальные системы Hexagon Manufacturing Intelligence & Leica'}
+                              {activeHardwareNavTab === 'brand-renishaw' && '⚡ Прецизионные щупы, измерительные головки и датчики Renishaw'}
                             </h4>
-                            <p className="text-[10px] text-gray-500">
-                              {activeHardwareNavTab === 'tech-laser' && 'Высокая точность и стабильность на зеркальных и черных поверхностях, идеально для цеховых условий.'}
-                              {activeHardwareNavTab === 'tech-optical' && 'Максимальное разрешение и детализация, безопасный свет, оптимально для сложных геометрий и реверс-инжиниринга.'}
-                              {activeHardwareNavTab === 'tech-ir' && 'Безопасное сканирование людей, медицина, VR/AR и сканирование без маркеров.'}
-                              {activeHardwareNavTab === 'tech-cmm' && 'Высочайшая метрологическая точность в прецизионных условиях метрологического зала, портальные и мостовые машины.'}
-                              {activeHardwareNavTab === 'tech-mobile' && 'Свобода измерений сложных крупногабаритных деталей прямо на производстве.'}
-                              {activeHardwareNavTab === 'tech-trackers' && 'Метрологический контроль крупногабаритных объектов до 160 метров.'}
-                              {activeHardwareNavTab === 'brand-scanline' && 'Отечественная разработка с гарантией и сервисом в РФ.'}
-                              {activeHardwareNavTab === 'brand-shining' && 'Официальные поставки высокоточного оборудования Shining 3D.'}
-                              {activeHardwareNavTab === 'brand-hexagon' && 'Премиальные промышленные решения Hexagon Manufacturing Intelligence.'}
+                            <p className="text-[10px] text-gray-500 dark:text-slate-400 truncate">
+                              {activeHardwareNavTab === 'tech-laser' && 'Высокая точность и стабильность на зеркальных и черных поверхностях.'}
+                              {activeHardwareNavTab === 'tech-optical' && 'Максимальное разрешение и детализация, безопасный свет для сложной геометрии.'}
+                              {activeHardwareNavTab === 'tech-hybrid' && 'Два источника света для универсальной оцифровки: от микродеталей до крупных узлов.'}
+                              {activeHardwareNavTab === 'tech-cmm' && 'Высочайшая субмикронная точность в условиях метрологической лаборатории.'}
+                              {activeHardwareNavTab === 'tech-mobile' && 'Свобода контактных и оптических измерений деталей прямо в цеху и на станке.'}
+                              {activeHardwareNavTab === 'tech-trackers' && 'Контроль крупногабаритных объектов до 160 метров с точностью микронного уровня.'}
+                              {activeHardwareNavTab === 'brand-scanline' && 'Отечественная разработка с гарантией, сервисом в РФ и внесением в Госреестр СИ.'}
+                              {activeHardwareNavTab === 'brand-shining' && 'Официальные поставки ручных и стационарных 3D-сканеров FreeScan, EinScan, Transcan.'}
+                              {activeHardwareNavTab === 'brand-pmt' && 'Швейцарско-азиатские прецизионные мобильные руки PMT Gamma+/Alpha и мостовые КИМ.'}
+                              {activeHardwareNavTab === 'brand-hexagon' && 'Мировой эталон метрологии: мобильные руки Absolute Arm, сканеры AS1 и трекеры Leica.'}
+                              {activeHardwareNavTab === 'brand-renishaw' && 'Оригинальные контактные и сканирующие датчики, стилусы и оснастка для КИМ.'}
                             </p>
                           </div>
                           <button
@@ -791,71 +858,74 @@ export const Header: React.FC = () => {
                               setActiveCategory(activeHardwareNavTab);
                               handleNav('hardware');
                             }}
-                            className="text-[11px] font-bold text-blue-600 hover:text-blue-800 shrink-0 ml-2 cursor-pointer"
+                            className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 shrink-0 cursor-pointer transition-colors whitespace-nowrap"
                           >
-                            Подробнее в каталоге →
+                            В каталог →
                           </button>
                         </div>
 
-                        {/* Items Grid */}
-                        <div className="grid grid-cols-2 xl:grid-cols-3 gap-2 flex-1 overflow-y-auto pr-1 py-2">
+                        {/* Items Grid with Compact Cards (CSS Grid) */}
+                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 flex-1 min-h-0 py-1 overflow-y-auto">
                           {PRODUCTS_DATA.filter((p) => {
                             if (p.type !== 'hardware') return false;
                             
-                            const isLaser = p.category.includes('scanner') && (p.name.toLowerCase().includes('лазер') || p.name.toLowerCase().includes('freescan') || p.name.toLowerCase().includes('easyscan') || p.name.toLowerCase().includes('hx') || p.name.toLowerCase().includes('as1'));
-                            const isIr = p.category.includes('scanner') && (p.name.toLowerCase().includes('инфракрас') || p.name.toLowerCase().includes('einstar') || p.name.toLowerCase().includes('ir'));
-                            const isOptical = p.category.includes('scanner') && !isLaser && !isIr;
+                            const isLaser = p.technology === 'laser' || (p.category.includes('scanner') && !p.id.includes('combo') && !p.id.includes('hx') && !p.id.includes('libre') && !p.id.includes('pronova') && (p.name.toLowerCase().includes('лазер') || p.name.toLowerCase().includes('freescan') || p.name.toLowerCase().includes('easyscan') || p.name.toLowerCase().includes('trio') || p.name.toLowerCase().includes('as1')));
+                            const isHybrid = p.technology === 'hybrid' || (p.category.includes('scanner') && (p.name.toLowerCase().includes('combo') || p.name.toLowerCase().includes('hx') || p.name.toLowerCase().includes('einstar') || p.name.toLowerCase().includes('libre') || p.name.toLowerCase().includes('pronova') || p.name.toLowerCase().includes('einscan h')));
+                            const isOptical = (p.technology === 'optical' || p.category.includes('scanner')) && !isLaser && !isHybrid;
                             
                             if (activeHardwareNavTab === 'tech-laser') return isLaser;
                             if (activeHardwareNavTab === 'tech-optical') return isOptical;
-                            if (activeHardwareNavTab === 'tech-ir') return isIr;
+                            if (activeHardwareNavTab === 'tech-hybrid') return isHybrid;
                             if (activeHardwareNavTab === 'tech-cmm') return p.category === 'cmm' || p.category === 'stationary_cmm';
                             if (activeHardwareNavTab === 'tech-mobile') return p.category === 'arms' || p.category === 'mobile_cmm';
                             if (activeHardwareNavTab === 'tech-trackers') return p.category === 'trackers';
                             
                             if (activeHardwareNavTab === 'brand-scanline') return p.brand?.toLowerCase().includes('scanline') || p.id.startsWith('scanline') || p.id.startsWith('eq-scanline');
                             if (activeHardwareNavTab === 'brand-shining') return p.brand?.toLowerCase().includes('shining') || p.id.startsWith('shining') || p.id.startsWith('freescan') || p.id.startsWith('eq-shining') || p.id.startsWith('eq-freescan');
+                            if (activeHardwareNavTab === 'brand-pmt') return p.brand?.toLowerCase().includes('pmt') || p.id.startsWith('pmt') || p.id.startsWith('eq-pmt') || p.name.toLowerCase().includes('pmt');
                             if (activeHardwareNavTab === 'brand-hexagon') return p.brand?.toLowerCase().includes('hexagon') || p.brand?.toLowerCase().includes('leica') || p.id.startsWith('hexagon') || p.id.startsWith('primescan') || p.id.startsWith('stereoscan') || p.id.startsWith('smartscan') || p.id.startsWith('eq-hexagon');
+                            if (activeHardwareNavTab === 'brand-renishaw') return p.brand?.toLowerCase().includes('renishaw') || p.id.startsWith('renishaw') || p.id.startsWith('eq-renishaw') || p.category === 'renishaw' || p.name.toLowerCase().includes('renishaw');
                             
                             return true;
-                          }).map((item) => (
+                          }).slice(0, 6).map((item) => (
                             <button
                               key={item.id}
                               onClick={() => {
                                 setHardwareDropdown(false);
                                 handleNav('hardware', item.id);
                               }}
-                              className="text-left p-2 rounded-xl bg-slate-50/60 hover:bg-blue-50 border border-gray-100 hover:border-blue-200 transition-all group flex flex-col justify-between"
+                              className="text-left p-2 rounded-xl bg-slate-50/70 dark:bg-slate-800/70 hover:bg-blue-50 dark:hover:bg-slate-700 border border-gray-100 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-500 transition-all group flex flex-col justify-between cursor-pointer"
                             >
                               <div>
                                 <div className="flex items-center justify-between gap-1 mb-0.5">
-                                  <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider truncate">{item.brand.split(' ')[0]}</span>
+                                  <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider truncate">{item.brand.split(' ')[0]}</span>
                                   {item.badge && (
-                                    <span className="text-[8px] px-1 py-0.2 bg-blue-100 text-blue-800 rounded font-semibold truncate max-w-[90px]">
+                                    <span className="text-[8px] px-1 py-0.2 bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 rounded font-semibold truncate max-w-[85px]">
                                       {item.badge}
                                     </span>
                                   )}
                                 </div>
-                                <div className="font-bold text-xs text-gray-900 group-hover:text-blue-600 line-clamp-1 leading-snug">
+                                <div className="font-bold text-xs text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-1 leading-snug">
                                   {item.name}
                                 </div>
-                                <div className="text-[10px] text-gray-500 line-clamp-1 mt-0.5">
+                                <div className="text-[10px] text-gray-500 dark:text-slate-400 line-clamp-1 mt-0.5">
                                   {item.shortDescription}
                                 </div>
                               </div>
-                              <div className="mt-1 flex items-center justify-end text-[9px] font-semibold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="mt-1 flex items-center justify-end text-[9px] font-semibold text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <span>Перейти к модели →</span>
                               </div>
                             </button>
                           ))}
                         </div>
+
                         {/* Bottom Actions Toolbar */}
-                        <div className="pt-2 mt-1 border-t border-gray-100 flex items-center justify-between text-xs shrink-0">
-                          <div className="text-[11px] text-gray-500 flex items-center gap-1.5">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                            <span>Поверка по ГОСТ/ISO • Выездная демонстрация • Официальная гарантия и шеф-монтаж</span>
+                        <div className="pt-2 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-xs shrink-0">
+                          <div className="text-[11px] text-gray-500 dark:text-slate-400 flex items-center gap-1.5 truncate pr-2">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                            <span className="truncate">Поверка по ГОСТ/ISO • Выездная демонстрация • Гарантия и шеф-монтаж</span>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 shrink-0">
                             <button
                               onClick={() => {
                                 setHardwareDropdown(false);
@@ -864,7 +934,7 @@ export const Header: React.FC = () => {
                                   formType: 'consultation'
                                 });
                               }}
-                              className="px-4 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-xs transition-colors shadow-xs"
+                              className="px-3.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-xs transition-colors shadow-xs cursor-pointer whitespace-nowrap"
                             >
                               Подобрать под задачу
                             </button>
@@ -897,40 +967,51 @@ export const Header: React.FC = () => {
               </button>
 
               {softwareDropdown && (
-                <div className="absolute top-full left-0 w-[680px] max-h-[70vh] flex flex-col bg-white rounded-xl shadow-sm border border-gray-100 p-4 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-                  <div className="flex items-center justify-between pb-3 mb-2 border-b border-gray-100 shrink-0">
-                    <div className="text-xs font-bold uppercase text-gray-500 tracking-wider flex items-center gap-1.5">
-                      <Layers className="w-4 h-4 text-blue-600" />
-                      <span>Лицензионное ПО</span>
+                <div className="absolute top-full left-1/2 -translate-x-1/4 xl:-translate-x-1/3 w-[840px] xl:w-[940px] max-h-[82vh] h-[490px] flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-800 p-3.5 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                  {/* Top Bar with Title, Software Count and Link */}
+                  <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-gray-100 dark:border-slate-800 shrink-0">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                        <Layers className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                          <span>Лицензионное программное обеспечение</span>
+                          <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 text-[10px] font-bold rounded-full border border-blue-200 dark:border-blue-700">
+                            {PRODUCTS_DATA.filter(p => p.type === 'software').length} комплексов
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-gray-400 dark:text-slate-400">CAD/CAM/PDM, 3D-метрология, контроль геометрии GD&T и реверс-инжиниринг</div>
+                      </div>
                     </div>
                     <button
                       onClick={() => {
                         setSoftwareDropdown(false);
                         handleNav('software');
                       }}
-                      className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                      className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors cursor-pointer whitespace-nowrap"
                     >
                       Все программы →
                     </button>
                   </div>
 
                   {/* Fast Sub-category routing bar */}
-                  <div className="flex flex-wrap items-center gap-1.5 pb-3 mb-3 border-b border-gray-100 text-xs">
+                  <div className="flex flex-wrap items-center gap-1.5 pb-2 mb-2 border-b border-gray-100 dark:border-slate-800 text-xs shrink-0">
                     <button
                       onClick={() => {
                         setSoftwareDropdown(false);
                         handleNav('software', 'topsolid');
                       }}
-                      className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-lg border border-blue-200 transition-colors whitespace-nowrap cursor-pointer"
+                      className="px-2.5 py-1 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 font-semibold rounded-lg border border-blue-200 dark:border-blue-800 text-[11px] transition-colors whitespace-nowrap cursor-pointer"
                     >
-                      TopSolid 7 (CAD/CAM)
+                      TopSolid 7 (CAD/CAM/PDM)
                     </button>
                     <button
                       onClick={() => {
                         setSoftwareDropdown(false);
                         handleNav('software', 'polyworks');
                       }}
-                      className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold rounded-lg border border-emerald-200 transition-colors whitespace-nowrap cursor-pointer"
+                      className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 font-semibold rounded-lg border border-emerald-200 dark:border-emerald-800 text-[11px] transition-colors whitespace-nowrap cursor-pointer"
                     >
                       PolyWorks (Метрология)
                     </button>
@@ -939,22 +1020,23 @@ export const Header: React.FC = () => {
                         setSoftwareDropdown(false);
                         handleNav('software', 'geomagic');
                       }}
-                      className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold rounded-lg border border-amber-200 transition-colors whitespace-nowrap cursor-pointer"
+                      className="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 text-amber-800 dark:text-amber-300 font-semibold rounded-lg border border-amber-200 dark:border-amber-800 text-[11px] transition-colors whitespace-nowrap cursor-pointer"
                     >
-                      Geomagic (Реверс-инжиниринг)
+                      Geomagic (Реверс & Контроль)
                     </button>
                     <button
                       onClick={() => {
                         setSoftwareDropdown(false);
                         handleNav('software', 'shining3d-sw');
                       }}
-                      className="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold rounded-lg border border-purple-200 transition-colors whitespace-nowrap cursor-pointer"
+                      className="px-2.5 py-1 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 text-purple-700 dark:text-purple-300 font-semibold rounded-lg border border-purple-200 dark:border-purple-800 text-[11px] transition-colors whitespace-nowrap cursor-pointer"
                     >
-                      ПО Shining 3D
+                      ПО Shining 3D / ScanLine
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2.5 flex-1 min-h-0 overflow-y-auto pr-1">
+                  {/* Software Grid: 3 columns x 2 rows (fits all 6 software suites neatly without scroll) */}
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 flex-1 min-h-0 py-1 overflow-y-auto">
                     {PRODUCTS_DATA.filter(p => p.type === 'software').map((item) => (
                       <button 
                         key={item.id}
@@ -962,43 +1044,65 @@ export const Header: React.FC = () => {
                           setSoftwareDropdown(false);
                           handleNav('software', item.id);
                         }}
-                        className="w-full text-left p-3 rounded-xl hover:bg-blue-50/80 border border-gray-100 hover:border-blue-200 transition-all flex flex-col justify-between group cursor-pointer"
+                        className="w-full text-left p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/60 hover:bg-blue-50/70 dark:hover:bg-slate-700/80 border border-gray-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-500 transition-all flex flex-col justify-between group cursor-pointer"
                       >
                         <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wide">
-                              {item.brand}
+                          <div className="flex items-center justify-between gap-1 mb-1">
+                            <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide truncate">
+                              {item.brand.split(' ')[0]}
                             </span>
                             {item.badge && (
-                              <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-blue-100/70 text-blue-800 rounded">
+                              <span className="text-[8px] font-semibold px-1.5 py-0.2 bg-blue-100/80 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 rounded truncate max-w-[120px]">
                                 {item.badge}
                               </span>
                             )}
                           </div>
-                          <div className="font-bold text-sm text-gray-900 group-hover:text-blue-600 transition-colors">
+                          <div className="font-bold text-xs text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-1 transition-colors">
                             {item.name}
                           </div>
-                          <div className="text-[11px] text-gray-500 line-clamp-2 mt-1 leading-snug">
+                          <div className="text-[10px] text-gray-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-snug">
                             {item.shortDescription}
                           </div>
                         </div>
 
                         {item.specs && item.specs['Интегрированные модули'] && (
-                          <div className="mt-2.5 pt-2 border-t border-gray-100/80 flex flex-wrap gap-1">
-                            {item.specs['Интегрированные модули'].split(', ').slice(0, 3).map((m) => (
-                              <span key={m} className="px-1.5 py-0.5 bg-white text-slate-500 text-[9px] font-medium rounded border border-gray-200">
+                          <div className="mt-1.5 pt-1.5 border-t border-gray-100/80 dark:border-slate-700/60 flex flex-wrap gap-1">
+                            {item.specs['Интегрированные модули'].split(', ').slice(0, 2).map((m) => (
+                              <span key={m} className="px-1.5 py-0.2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[8px] font-medium rounded border border-gray-200 dark:border-slate-600 truncate max-w-[90px]">
                                 {m}
                               </span>
                             ))}
-                            {item.specs['Интегрированные модули'].split(', ').length > 3 && (
-                              <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-bold rounded">
-                                +{item.specs['Интегрированные модули'].split(', ').length - 3}
+                            {item.specs['Интегрированные модули'].split(', ').length > 2 && (
+                              <span className="px-1 py-0.2 bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-[8px] font-bold rounded">
+                                +{item.specs['Интегрированные модули'].split(', ').length - 2}
                               </span>
                             )}
                           </div>
                         )}
                       </button>
                     ))}
+                  </div>
+
+                  {/* Bottom Actions Toolbar */}
+                  <div className="pt-2 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-xs shrink-0">
+                    <div className="text-[11px] text-gray-500 dark:text-slate-400 flex items-center gap-1.5 truncate pr-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      <span className="truncate">Официальные лицензии • Постпроцессоры под ключ • Обучение и техподдержка</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => {
+                          setSoftwareDropdown(false);
+                          openContactModal({
+                            title: 'Запрос КП и демонстрации ПО',
+                            formType: 'demo'
+                          });
+                        }}
+                        className="px-3.5 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs transition-colors shadow-xs cursor-pointer whitespace-nowrap"
+                      >
+                        Запросить КП / Демо
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1176,6 +1280,18 @@ export const Header: React.FC = () => {
             </button>
 
             <button
+              id="nav-glossary-btn"
+              onClick={() => handleNav('glossary')}
+              className={`px-1.5 2xl:px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap shrink-0 ${
+                currentPage === 'glossary' 
+                  ? 'text-[#2563EB] font-bold bg-blue-50/80' 
+                  : 'hover:text-[#2563EB] hover:bg-slate-50'
+              }`}
+            >
+              ГЛОССАРИЙ
+            </button>
+
+            <button
               id="nav-news-btn"
               onClick={() => handleNav('news')}
               className={`px-1.5 2xl:px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap shrink-0 ${
@@ -1214,16 +1330,8 @@ export const Header: React.FC = () => {
 
           {/* Right Action Icons & CTA Button */}
           <div className="flex items-center space-x-1 sm:space-x-1.5 2xl:space-x-2 shrink-0">
-            {/* Search Trigger */}
-            <button
-              id="header-search-btn"
-              onClick={() => setIsSearchOpen(true)}
-              className="p-1.5 sm:p-2 text-slate-500 hover:text-[#2563EB] hover:bg-blue-50 rounded-lg transition-colors shrink-0"
-              title="Поиск по сайту (ПО, оборудование, статьи)"
-              aria-label="Поиск по сайту"
-            >
-              <Search className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
+            {/* Full-text Search with Dropdown Results */}
+            <HeaderSearch />
 
             {/* Compare Trigger */}
             <button
@@ -1317,6 +1425,24 @@ export const Header: React.FC = () => {
                       {currentUser ? (isAdmin ? "Администратор" : currentUser.role === 'manager' ? "Менеджер" : "Клиент") : "Войти в профиль"}
                     </span>
                   </button>
+
+                  {(isAdmin || currentUser?.role === 'manager' || currentUser?.role === 'superadmin') && (
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleNav('crm');
+                      }}
+                      className="w-full mt-2 py-2 px-3 rounded-xl border border-blue-200 bg-blue-50/90 hover:bg-blue-100 flex items-center justify-between transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Briefcase className="w-4 h-4 text-blue-600 shrink-0" />
+                        <span className="text-xs font-bold text-blue-900">Единая панель CRM</span>
+                      </div>
+                      <span className="text-[10px] bg-blue-600 text-white font-bold px-2 py-0.5 rounded-full">
+                        Сотрудник
+                      </span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Mobile Theme Mode Switch */}
@@ -1357,29 +1483,50 @@ export const Header: React.FC = () => {
                           categoryKey: 'brand-scanline'
                         },
                         {
-                          id: 'laser',
-                          title: '🔴 Лазерные сканеры FreeScan / Shining 3D',
-                          count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('shining') || p.id.startsWith('shining') || p.id.startsWith('freescan'))).length,
-                          items: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('shining') || p.id.startsWith('shining') || p.id.startsWith('freescan'))),
+                          id: 'shining',
+                          title: '🇨🇳 Shining 3D (FreeScan / EinScan)',
+                          count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('shining') || p.id.startsWith('shining') || p.id.startsWith('freescan') || p.id.startsWith('eq-shining') || p.id.startsWith('eq-freescan'))).length,
+                          items: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('shining') || p.id.startsWith('shining') || p.id.startsWith('freescan') || p.id.startsWith('eq-shining') || p.id.startsWith('eq-freescan'))),
                           categoryKey: 'brand-shining'
                         },
                         {
+                          id: 'pmt',
+                          title: '🏛️ PMT Arm & CMM (Руки и КИМ)',
+                          count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('pmt') || p.id.startsWith('pmt') || p.id.startsWith('eq-pmt') || p.name.toLowerCase().includes('pmt'))).length,
+                          items: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('pmt') || p.id.startsWith('pmt') || p.id.startsWith('eq-pmt') || p.name.toLowerCase().includes('pmt'))),
+                          categoryKey: 'brand-pmt'
+                        },
+                        {
+                          id: 'hexagon',
+                          title: '🔷 Hexagon & Leica (Премиум метрология)',
+                          count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('hexagon') || p.brand?.toLowerCase().includes('leica') || p.id.startsWith('hexagon') || p.id.startsWith('primescan') || p.id.startsWith('stereoscan') || p.id.startsWith('smartscan') || p.id.startsWith('eq-hexagon'))).length,
+                          items: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('hexagon') || p.brand?.toLowerCase().includes('leica') || p.id.startsWith('hexagon') || p.id.startsWith('primescan') || p.id.startsWith('stereoscan') || p.id.startsWith('smartscan') || p.id.startsWith('eq-hexagon'))),
+                          categoryKey: 'brand-hexagon'
+                        },
+                        {
+                          id: 'renishaw',
+                          title: '⚡ Renishaw (Щупы и датчики)',
+                          count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('renishaw') || p.id.startsWith('renishaw') || p.id.startsWith('eq-renishaw') || p.category === 'renishaw' || p.name.toLowerCase().includes('renishaw'))).length,
+                          items: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.brand?.toLowerCase().includes('renishaw') || p.id.startsWith('renishaw') || p.id.startsWith('eq-renishaw') || p.category === 'renishaw' || p.name.toLowerCase().includes('renishaw'))),
+                          categoryKey: 'brand-renishaw'
+                        },
+                        {
                           id: 'cmm',
-                          title: '🔵 КИМ (Координатно-измерительные машины)',
-                          count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.category === 'cmm' || p.category === 'stationary_cmm' || p.id.startsWith('pmt-cmm'))).length,
-                          items: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.category === 'cmm' || p.category === 'stationary_cmm' || p.id.startsWith('pmt-cmm'))),
+                          title: '🔵 Стационарные КИМ (Все бренды)',
+                          count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.category === 'cmm' || p.category === 'stationary_cmm' || p.id.startsWith('pmt-cmm') || p.name.toLowerCase().includes('ким'))).length,
+                          items: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.category === 'cmm' || p.category === 'stationary_cmm' || p.id.startsWith('pmt-cmm') || p.name.toLowerCase().includes('ким'))),
                           categoryKey: 'tech-cmm'
                         },
                         {
                           id: 'arms',
-                          title: '🟢 Измерительные руки (манипуляторы)',
+                          title: '🟢 Мобильные КИМ (Измерительные руки)',
                           count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.category === 'arms' || p.category === 'mobile_cmm' || p.id.startsWith('pmt-arm'))).length,
                           items: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.category === 'arms' || p.category === 'mobile_cmm' || p.id.startsWith('pmt-arm'))),
                           categoryKey: 'tech-mobile'
                         },
                         {
                           id: 'trackers',
-                          title: '🎯 Лазерные трекеры и Leica (до 160 м)',
+                          title: '🎯 Лазерные трекеры (до 160 м)',
                           count: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.category === 'trackers' || p.id.includes('tracker'))).length,
                           items: PRODUCTS_DATA.filter(p => p.type === 'hardware' && (p.category === 'trackers' || p.id.includes('tracker'))),
                           categoryKey: 'tech-trackers'
@@ -1507,6 +1654,16 @@ export const Header: React.FC = () => {
                     className="text-left px-4 py-2.5 rounded-lg hover:bg-blue-50 text-gray-800 hover:text-blue-600"
                   >
                     БАЗА ЗНАНИЙ
+                  </button>
+
+                  <button
+                    onClick={() => { setMobileMenuOpen(false); handleNav('glossary'); }}
+                    className={`text-left px-4 py-2.5 rounded-lg hover:bg-blue-50 flex items-center justify-between ${
+                      currentPage === 'glossary' ? 'text-blue-600 font-bold bg-blue-50/80' : 'text-gray-800 hover:text-blue-600'
+                    }`}
+                  >
+                    <span>ТЕХНИЧЕСКИЙ ГЛОССАРИЙ</span>
+                    <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-mono font-bold">GD&T</span>
                   </button>
 
                   <button

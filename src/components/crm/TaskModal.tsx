@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, 
   Calendar, 
@@ -14,6 +14,9 @@ import {
   Sparkles
 } from 'lucide-react';
 import { UserTask, TaskPriority, TaskStatus, TaskTargetType, TaskReminderOption, TaskChecklistItem, CrmCompany, CrmContact } from '../../types';
+import { useFormAutoSave } from '../../hooks/useFormAutoSave';
+import { AutoSaveDraftBanner } from '../common/AutoSaveDraftBanner';
+import { useModalStack } from '../../hooks/useModalStack';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -55,6 +58,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const [newSubtaskText, setNewSubtaskText] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { containerRef, zIndex } = useModalStack({
+    id: `crm-task-modal-${task?.id || 'new'}`,
+    isOpen,
+    onClose,
+    baseZIndex: 580
+  });
 
   // Initialize form
   useEffect(() => {
@@ -104,6 +114,29 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     }
     setError(null);
   }, [isOpen, task, initialCompanyId, initialContactId, initialDealId, initialDate, contacts]);
+
+  const taskFormData = useMemo(() => ({
+    title, description, dueDate, dueTime, priority, status, targetType, companyId, contactId, dealId, reminder
+  }), [title, description, dueDate, dueTime, priority, status, targetType, companyId, contactId, dealId, reminder]);
+
+  const autoSave = useFormAutoSave({
+    formKey: `task_modal_${task?.id || 'new'}`,
+    formData: taskFormData,
+    enabled: isOpen,
+    onRestore: (saved) => {
+      if (saved.title) setTitle(saved.title);
+      if (saved.description) setDescription(saved.description);
+      if (saved.dueDate) setDueDate(saved.dueDate);
+      if (saved.dueTime) setDueTime(saved.dueTime);
+      if (saved.priority) setPriority(saved.priority);
+      if (saved.status) setStatus(saved.status);
+      if (saved.targetType) setTargetType(saved.targetType);
+      if (saved.companyId) setCompanyId(saved.companyId);
+      if (saved.contactId) setContactId(saved.contactId);
+      if (saved.dealId) setDealId(saved.dealId);
+      if (saved.reminder) setReminder(saved.reminder);
+    }
+  });
 
   if (!isOpen) return null;
 
@@ -174,6 +207,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         checklist,
       });
 
+      autoSave.clearDraft();
       onClose();
     } catch (err: any) {
       setError(err.message || 'Ошибка сохранения задачи');
@@ -184,9 +218,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   const selectedCompanyContacts = contacts.filter(c => !companyId || c.companyId === companyId);
 
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 backdrop-blur-xs overflow-y-auto">
+    <div 
+      className="fixed inset-0 flex items-start justify-center bg-black/60 p-4 backdrop-blur-xs overflow-y-auto"
+      style={{ zIndex }}
+    >
       <div 
+        ref={containerRef}
+        tabIndex={-1}
         id="task-modal"
         className="bg-white rounded-lg shadow-sm border border-gray-100 w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-4 sm:my-8"
       >
@@ -211,6 +252,17 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* AutoSave Draft Banner */}
+        <div className="px-4 py-1.5 bg-slate-50 border-b border-gray-100">
+          <AutoSaveDraftBanner
+            hasDraft={autoSave.hasDraft}
+            lastSavedAt={autoSave.lastSavedAt}
+            statusText={autoSave.statusText}
+            onRestore={autoSave.restoreDraft}
+            onClear={autoSave.clearDraft}
+          />
         </div>
 
         {/* Body */}

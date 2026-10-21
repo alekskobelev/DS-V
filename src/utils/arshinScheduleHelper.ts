@@ -248,8 +248,8 @@ export const CLIENT_MONITORED_EQUIPMENT: Omit<ArshinEquipmentItem, 'status' | 'd
     contactPerson: 'Тимофеев С.А. (Инженер ОКК)',
     contactPhone: '+7 (846) 278-45-00',
     contactEmail: 'timofeev@electroshield.ru',
-    modelName: 'Метрологический 3D-сканер Scantech KSCAN-Magic',
-    brand: 'Scantech 3D',
+    modelName: 'Оптический 3D-сканер ScanLine EasyScan Omni',
+    brand: 'ScanLine 3D (РФ, Госреестр СИ)',
     category: '3D-сканеры',
     serialNumber: 'SCAN-MAG-2025-41',
     inventoryNumber: 'ИНВ-ЭЩ-052',
@@ -305,7 +305,7 @@ export const ADDITIONAL_COMPANY_DEVICES: Omit<ArshinEquipmentItem, 'status' | 'd
     verificationNumber: 'С-СПБ/02-09-2025/11094-АРШИН',
     verificationDate: '2025-09-02',
     verificationValidUntil: '2026-09-02', // Overdue by 13 days -> EXPIRED RED!
-    responsiblePerson: 'Скобелев А.С. (Инженер по ПО, ЧПУ и CAD-моделированию)',
+    responsiblePerson: 'Скобелев А.С. (Инженер по внедрению CAD/CAM и постпроцессорам)',
     currentLocation: 'Самара, Метрологический зал (ул. Свободы, 198)',
     accuracy: '0.020 мм',
     notes: 'ВНИМАНИЕ: Свидетельство о поверке просрочено на 13 дней! Прибор перемещен в зону ожидания поверки. Запрещено использовать в официальных протоколах измерений.'

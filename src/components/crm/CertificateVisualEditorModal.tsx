@@ -1751,7 +1751,7 @@ export const CertificateVisualEditorModal: React.FC<CertificateVisualEditorModal
                   >
                     <iframe
                       srcDoc={previewHtml}
-                      title="Live Certificate Preview"
+                      title="Интерактивный предпросмотр сертификата"
                       className="w-[1122.5px] h-[793.7px] border-0 bg-white block"
                     />
                   </div>

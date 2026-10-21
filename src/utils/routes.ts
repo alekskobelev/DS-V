@@ -30,12 +30,14 @@ export const PAGE_PATHS: Record<string, string> = {
   services: '/services',
   about: '/about',
   knowledge: '/knowledge',
+  glossary: '/glossary',
   news: '/news',
   contacts: '/contacts',
   account: '/account',
   crm: '/crm',
   cms: '/cms',
   sitemap: '/sitemap',
+  compare: '/compare',
   notfound: '/notfound',
 };
 
@@ -60,6 +62,9 @@ export function getRoutePath(page: PageId, detailId?: string): string {
   }
   if (page === 'knowledge') {
     return detailId ? `/knowledge/${encodeURIComponent(detailId)}` : '/knowledge';
+  }
+  if (page === 'glossary') {
+    return detailId ? `/glossary/${encodeURIComponent(detailId)}` : '/glossary';
   }
   if (page.startsWith('custom-')) {
     const slug = page.replace('custom-', '');
@@ -94,8 +99,8 @@ export function parseUrl(pathname: string, hash = ''): ParsedRoute {
   const normalized = cleanPath === '/' ? '/' : cleanPath.replace(/\/+$/, '');
   const cleanHash = (hash || '').replace(/^#\/?/, '').trim();
 
-  // 1. Root or /main or /home -> Home page
-  if (normalized === '/' || normalized === '/main' || normalized === '/home') {
+  // 1. Root or /main or /home or /index.html -> Home page
+  if (normalized === '/' || normalized === '/main' || normalized === '/home' || normalized === '/index.html' || normalized === '/index') {
     if (cleanHash) {
       const resolvedFromHash = resolveHash(cleanHash);
       if (resolvedFromHash) return resolvedFromHash;
@@ -141,6 +146,11 @@ export function parseUrl(pathname: string, hash = ''): ParsedRoute {
     return { page: 'knowledge', detailId: subSegment };
   }
 
+  // 8.1. Glossary route: /glossary or /glossariy or /terms or /terminy
+  if (rootSegment === 'glossary' || rootSegment === 'glossariy' || rootSegment === 'terms' || rootSegment === 'terminy') {
+    return { page: 'glossary', detailId: subSegment };
+  }
+
   // 9. News route: /news or /articles or /press or /news/:id
   if (rootSegment === 'news' || rootSegment === 'articles' || rootSegment === 'press') {
     return { page: 'news', detailId: subSegment };
@@ -169,6 +179,11 @@ export function parseUrl(pathname: string, hash = ''): ParsedRoute {
   // 14. Sitemap route: /sitemap or /karta-sayta
   if (rootSegment === 'sitemap' || rootSegment === 'karta-sayta' || rootSegment === 'site-map') {
     return { page: 'sitemap' };
+  }
+
+  // 15. Compare route: /compare or /sravnenie
+  if (rootSegment === 'compare' || rootSegment === 'sravnenie') {
+    return { page: 'compare' };
   }
 
   // 15. Custom page: /page/:slug
@@ -209,12 +224,14 @@ function resolveHash(rawHash: string): ParsedRoute | null {
   if (h === 'calculator' || h === 'service-calculator') return { page: 'services', scrollTo: 'service-calculator' };
   if (h === 'about') return { page: 'about' };
   if (h === 'knowledge' || h === 'knowledge-base') return { page: 'knowledge' };
+  if (h === 'glossary' || h === 'glossariy' || h === 'terms') return { page: 'glossary' };
   if (h === 'news' || h === 'articles') return { page: 'news' };
   if (h === 'contacts') return { page: 'contacts' };
   if (h === 'account') return { page: 'account' };
   if (h === 'crm') return { page: 'crm' };
   if (h === 'cms') return { page: 'cms' };
   if (h === 'sitemap' || h === 'karta-sayta') return { page: 'sitemap' };
+  if (h === 'compare' || h === 'sravnenie') return { page: 'compare' };
   if (h.startsWith('custom-')) return { page: h as PageId };
 
   const prod = PRODUCTS_DATA.find((p) => p.id.toLowerCase() === h);

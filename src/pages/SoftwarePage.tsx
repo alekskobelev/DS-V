@@ -77,7 +77,7 @@ export const SoftwarePage: React.FC = () => {
     },
     geomagic: {
       title: 'Geomagic — Реверс-инжиниринг и контроль качества',
-      subtitle: 'Программные комплексы Design X и Control X для прямого параметрического построения твердотельных CAD-моделей и инспекции по сканам.',
+      subtitle: 'Программные комплексы Design X и Control X для построения точных твердотельных CAD-моделей и контроля геометрии по сканам.',
       badge: 'Реверс-инжиниринг и FAI',
     },
     'shining3d-sw': {
@@ -231,3 +231,6 @@ export const SoftwarePage: React.FC = () => {
     </div>
   );
 };
+
+export default SoftwarePage;
+

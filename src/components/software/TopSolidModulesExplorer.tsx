@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Layers, Cpu, Wrench, ShieldCheck, CheckCircle2, ArrowRight, Zap,
-  FileCode, Sparkles, Box, Scissors, Settings, Cuboid as Cube
+  FileCode, Play, Box, Scissors, Settings, Cuboid as Cube
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -180,7 +180,7 @@ export const TopSolidModulesExplorer: React.FC = () => {
           })}
           className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 shrink-0 cursor-pointer self-start md:self-auto"
         >
-          <Sparkles className="w-4 h-4" />
+          <Play className="w-4 h-4 fill-white" />
           <span>Заказать демонстрацию модуля</span>
         </button>
       </div>

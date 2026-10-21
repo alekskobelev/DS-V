@@ -49,8 +49,11 @@ export const UserManagementPanel: React.FC = () => {
     updateUser, 
     deleteUser, 
     updateUserPermissions, 
+    resetCrmDatabase,
     showToast 
   } = useApp();
+
+  const [isResettingDb, setIsResettingDb] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'superadmin' | 'admin' | 'moderator' | 'manager' | 'client'>('all');
@@ -431,7 +434,22 @@ export const UserManagementPanel: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <button
+            type="button"
+            onClick={async () => {
+              if (!confirm('Сбросить всю базу данных CRM и Личного кабинета к начальному состоянию?\n\nВсе изменения по договорам, обращениям, коммерческим предложениям и лицензиям будут сброшены к заводским эталонам.')) return;
+              setIsResettingDb(true);
+              await resetCrmDatabase();
+              setIsResettingDb(false);
+            }}
+            disabled={isResettingDb}
+            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+            title="Сбросить базу данных CRM и Личного кабинета"
+          >
+            <RotateCcw className={`w-4 h-4 text-amber-600 ${isResettingDb ? 'animate-spin' : ''}`} /> Сброс базы CRM
+          </button>
+
           <button
             type="button"
             onClick={async () => {
@@ -771,7 +789,7 @@ export const UserManagementPanel: React.FC = () => {
       {/* ================= MODAL: CREATE USER ================= */}
       {isCreateModalOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6 animate-in fade-in duration-150"
+          className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6 animate-in fade-in duration-150"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsCreateModalOpen(false);
           }}
@@ -994,7 +1012,7 @@ export const UserManagementPanel: React.FC = () => {
       {/* ================= MODAL: EDIT USER DETAILS ================= */}
       {editingUser && (
         <div 
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6 animate-in fade-in duration-150"
+          className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6 animate-in fade-in duration-150"
           onClick={(e) => {
             if (e.target === e.currentTarget) setEditingUser(null);
           }}
@@ -1204,7 +1222,7 @@ export const UserManagementPanel: React.FC = () => {
       {/* ================= MODAL: CONFIGURE PERMISSIONS ================= */}
       {permissionsUser && (
         <div 
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6 animate-in fade-in duration-150"
+          className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6 animate-in fade-in duration-150"
           onClick={(e) => {
             if (e.target === e.currentTarget) setPermissionsUser(null);
           }}
@@ -1262,7 +1280,7 @@ export const UserManagementPanel: React.FC = () => {
                           {permissionsUser.role === 'superadmin' && 'Супер админ — Полные права управления предприятием и сайтом'}
                           {permissionsUser.role === 'admin' && 'Администратор — Полный доступ к модулям за вычетом деструктивных настроек'}
                           {permissionsUser.role === 'moderator' && 'Модератор — Управление контентом каталога и статей CMS'}
-                          {permissionsUser.role === 'manager' && 'Менеджер — Ведение клиентских сделок, договоров и сервисных тикетов'}
+                          {permissionsUser.role === 'manager' && 'Менеджер — Ведение клиентских сделок, договоров и сервисных заявок'}
                           {permissionsUser.role === 'client' && 'Клиент — Личный кабинет заказчика (просмотр своих заявок и лицензий)'}
                         </div>
                       </div>
@@ -1485,7 +1503,7 @@ export const UserManagementPanel: React.FC = () => {
                       },
                       {
                         key: 'canManageTickets' as keyof UserPermissions,
-                        title: 'Обработка сервисных заявок (Тикеты)',
+                        title: 'Обработка сервисных заявок и обращений',
                         desc: 'Назначение ответственных инженеров, ответы клиентам, смена статусов и файлов',
                         level: 'Сервисное',
                         levelColor: 'bg-cyan-100 text-cyan-800',
@@ -1671,7 +1689,7 @@ export const UserManagementPanel: React.FC = () => {
       {/* ================= MODAL: DELETE CONFIRMATION ================= */}
       {userToDelete && (
         <div 
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-[800] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
           onClick={(e) => {
             if (e.target === e.currentTarget) setUserToDelete(null);
           }}

@@ -1,4 +1,4 @@
-import { TrainingCertificate } from '../types';
+import { TrainingCertificate } from '../types.ts';
 
 export const DEFAULT_CERTIFICATES: TrainingCertificate[] = [
   {

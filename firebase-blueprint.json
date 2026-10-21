@@ -1,0 +1,114 @@
+{
+  "entities": {
+    "PriceCategory": {
+      "title": "PriceCategory",
+      "description": "Иерархическая категория номенклатурного прейскуранта",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "parentId": { "type": "string" },
+        "slug": { "type": "string" },
+        "name": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "icon": { "type": "string", "maxLength": 100 },
+        "colorTheme": { "type": "string", "maxLength": 50 },
+        "orderIndex": { "type": "number" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["id", "slug", "name"]
+    },
+    "PriceItem": {
+      "title": "PriceItem",
+      "description": "Номенклатурная позиция оборудования, ПО, услуг и оснастки",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "sku": { "type": "string", "maxLength": 100 },
+        "name": { "type": "string", "maxLength": 300 },
+        "itemType": { "type": "string", "enum": ["software", "hardware", "service", "accessory", "non_core", "product", "software_license", "engineering_service", "non_core_service"] },
+        "categoryId": { "type": "string" },
+        "category": { "type": "string", "enum": ["software", "hardware", "services", "accessories", "non_core_services"] },
+        "categoryLabel": { "type": "string", "maxLength": 150 },
+        "subCategory": { "type": "string", "maxLength": 150 },
+        "manufacturer": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 3000 },
+        "unit": { "type": "string", "maxLength": 50 },
+        "currency": { "type": "string", "maxLength": 10 },
+        "costPriceRub": { "type": "number" },
+        "priceRub": { "type": "number" },
+        "partnerPriceRub": { "type": "number" },
+        "priceUsd": { "type": "number" },
+        "priceEur": { "type": "number" },
+        "vatRate": { "type": "number" },
+        "maxDiscountPercent": { "type": "number" },
+        "marginPercent": { "type": "number" },
+        "markupPercent": { "type": "number" },
+        "inStock": { "type": "boolean" },
+        "leadTimeDays": { "type": "number" },
+        "warrantyMonths": { "type": "number" },
+        "isPopular": { "type": "boolean" },
+        "isActive": { "type": "boolean" },
+        "currentVersion": { "type": "number" }
+      },
+      "required": ["id", "sku", "name", "category", "priceRub", "costPriceRub"]
+    },
+    "PriceHistoryRecord": {
+      "title": "PriceHistoryRecord",
+      "description": "Запись версионного аудита истории изменения цен",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "itemId": { "type": "string" },
+        "versionNumber": { "type": "number" },
+        "costPriceRub": { "type": "number" },
+        "priceRub": { "type": "number" },
+        "partnerPriceRub": { "type": "number" },
+        "priceUsd": { "type": "number" },
+        "vatRate": { "type": "number" },
+        "marginPercent": { "type": "number" },
+        "markupPercent": { "type": "number" },
+        "maxDiscountPercent": { "type": "number" },
+        "validFrom": { "type": "string" },
+        "validTo": { "type": "string" },
+        "changeReason": { "type": "string", "maxLength": 500 },
+        "changedByUserId": { "type": "string" },
+        "changedByManagerName": { "type": "string", "maxLength": 200 },
+        "notes": { "type": "string", "maxLength": 1000 }
+      },
+      "required": ["id", "itemId", "versionNumber", "costPriceRub", "priceRub", "changeReason", "changedByManagerName"]
+    },
+    "PriceTierRule": {
+      "title": "PriceTierRule",
+      "description": "Скидочная шкала и правила маржинальности контрагентов",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 500 },
+        "discountPercent": { "type": "number" },
+        "minMarginThresholdPercent": { "type": "number" },
+        "isDefault": { "type": "boolean" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["id", "name", "discountPercent", "minMarginThresholdPercent"]
+    }
+  },
+  "firestore": {
+    "/price_items/{itemId}": {
+      "schema": { "$ref": "#/entities/PriceItem" },
+      "description": "Коллекция номенклатуры и прейскуранта"
+    },
+    "/price_categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/PriceCategory" },
+      "description": "Коллекция категорий и подкатегорий"
+    },
+    "/price_history/{historyId}": {
+      "schema": { "$ref": "#/entities/PriceHistoryRecord" },
+      "description": "Журнал версионного аудита цен"
+    },
+    "/price_tier_rules/{ruleId}": {
+      "schema": { "$ref": "#/entities/PriceTierRule" },
+      "description": "Тарифные сетки и скидочные правила"
+    }
+  }
+}

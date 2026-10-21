@@ -50,8 +50,10 @@ import {
   UserCog,
   History,
   Award,
-  Check
+  Check,
+  GitCompare
 } from 'lucide-react';
+import { CrmDocumentationModal } from './CrmDocumentationModal';
 
 export interface CrmManualViewProps {
   onNavigateToTab?: (tab: string) => void;
@@ -64,6 +66,7 @@ export const CrmManualView: React.FC<CrmManualViewProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     'notifications_guide': true,
     'workflow_overview': true,
@@ -203,6 +206,14 @@ export const CrmManualView: React.FC<CrmManualViewProps> = ({
           {/* Quick Stats or Actions */}
           <div className="flex flex-wrap items-center gap-3">
             <button 
+              onClick={() => setIsDocModalOpen(true)}
+              className="px-4 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black transition-all flex items-center gap-2 cursor-pointer shadow-md"
+              title="Открыть интерактивную документацию и историю версий"
+            >
+              <GitCompare className="w-4 h-4" />
+              <span>Версии & Интерактивная справка</span>
+            </button>
+            <button 
               onClick={expandAll}
               className="px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer backdrop-blur-xs"
             >
@@ -304,7 +315,7 @@ export const CrmManualView: React.FC<CrmManualViewProps> = ({
                 <div className="bg-red-50/80 p-4 rounded-lg border border-red-200 flex items-start gap-3 text-xs text-red-950">
                   <Clock className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                   <div>
-                    <strong>Критический норматив реагирования (SLA):</strong> Время первого контакта с клиентом при поступлении заявки на обратный звонок или расчете в онлайн-калькуляторе составляет <strong>не более 5–15 минут</strong> в рабочее время (с 08:30 до 18:00 МСК).
+                    <strong>Критический норматив реагирования (SLA):</strong> Время первого контакта с клиентом при поступлении заявки на обратный звонок или расчете в онлайн-калькуляторе составляет <strong>не более 5–15 минут</strong> в рабочее время (с 09:00 до 18:00 МСК / 09:00 — 17:00 Самара).
                   </div>
                 </div>
 
@@ -1188,7 +1199,7 @@ export const CrmManualView: React.FC<CrmManualViewProps> = ({
                 </div>
                 <div>
                   <h2 className="font-black text-slate-900 text-base sm:text-lg">
-                    Заявки в техподдержку (B2B Сервис & Тикеты)
+                    Заявки в техподдержку (B2B Сервис & Обращения)
                   </h2>
                   <p className="text-xs text-slate-500">
                     Регламент инцидентов, привязка к серийным номерам оборудования, уровни критичности SLA и закрытие
@@ -1215,7 +1226,7 @@ export const CrmManualView: React.FC<CrmManualViewProps> = ({
                   </div>
                   <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
                     <strong className="text-slate-900 block mb-1">3. Конвертация в услуги</strong>
-                    <p className="text-slate-500">Если требуется негарантийный ремонт, тикет в 1 клик переводится в сделку воронки услуг.</p>
+                    <p className="text-slate-500">Если требуется негарантийный ремонт, обращение в 1 клик переводится в сделку воронки услуг.</p>
                   </div>
                 </div>
 
@@ -1325,7 +1336,7 @@ export const CrmManualView: React.FC<CrmManualViewProps> = ({
                     <strong className="text-slate-900 block font-bold">Ролевая модель доступа (RBAC):</strong>
                     <ul className="text-slate-500 space-y-1.5 list-disc pl-4">
                       <li><strong>Суперадминистратор / Администратор:</strong> полный доступ к CRM, CMS, управлению аккаунтами и базе данных.</li>
-                      <li><strong>Менеджер / Ведущий инженер:</strong> доступ к воронкам, сделкам, ТКП, договорам, парку приборов и тикетам.</li>
+                      <li><strong>Менеджер / Ведущий инженер:</strong> доступ к воронкам, сделкам, ТКП, договорам, парку приборов и сервисным заявкам.</li>
                       <li><strong>Клиент (Заказчик):</strong> изолированный доступ только к своим договорам, лицензиям и отчетам.</li>
                     </ul>
                   </div>
@@ -1346,6 +1357,72 @@ export const CrmManualView: React.FC<CrmManualViewProps> = ({
                     className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg text-xs flex items-center gap-2 cursor-pointer shadow-xs transition-colors"
                   >
                     <span>Перейти в «Пользователи и права»</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 15.1. SECTION: Менеджер медиа-активов, логотипов и факсимиле - НОВОЕ! */}
+        {(activeCategory === 'all' || activeCategory === 'settings') && isMatch('ассеты логотипы печати подписи факсимиле бланки графика замена удаление') && (
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xs">
+            <button 
+              onClick={() => toggleSection('assets_manager')}
+              className="w-full flex items-center justify-between p-5 bg-gradient-to-r from-amber-50/70 to-orange-50/50 hover:bg-amber-100/50 transition-colors cursor-pointer text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-amber-600 text-white rounded-lg shadow-xs">
+                  <FileBadge className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="font-black text-slate-900 text-base sm:text-lg">
+                    Менеджер цифровых ассетов, логотипов и факсимиле
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Управление логотипами брендов, официальными печатями, подписями руководства и шаблонами документов
+                  </p>
+                </div>
+              </div>
+              {expandedSections['assets_manager'] ? (
+                <ChevronDown className="w-5 h-5 text-slate-500 shrink-0" />
+              ) : (
+                <ChevronRight className="w-5 h-5 text-slate-500 shrink-0" />
+              )}
+            </button>
+
+            {expandedSections['assets_manager'] && (
+              <div className="p-6 border-t border-slate-100 space-y-4 text-sm text-slate-700 leading-relaxed">
+                <p>
+                  Модуль <strong>«Цифровые ассеты»</strong> обеспечивает централизованное хранение и сквозное использование корпоративной графики в генераторах ТКП, свидетельствах и бланках договоров.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+                    <span className="font-bold text-slate-900 block mb-1">Логотипы брендов и партнеров:</span>
+                    Загрузка и хранение векторов (SVG) и растровых логотипов (PNG с прозрачным фоном) производителей оборудования и САПР (Hexagon, TopSolid, Mitutoyo, Shining 3D).
+                  </div>
+                  <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+                    <span className="font-bold text-slate-900 block mb-1">Факсимиле и печати:</span>
+                    Официальные штампы ООО «ДС-Инжиниринг» и подписи генерального директора/главного метролога с автоподстановкой в печатные формы КП и свидетельств.
+                  </div>
+                  <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+                    <span className="font-bold text-slate-900 block mb-1">Безопасная замена («Заменить файл»):</span>
+                    Обновление графического файла без смены его системного ID — моментально обновляет логотип или печать во всех сгенерированных ранее документах.
+                  </div>
+                  <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+                    <span className="font-bold text-slate-900 block mb-1">Категоризация и удаление:</span>
+                    Удобная фильтрация по категориям («Логотипы», «Печати и подписи», «Шаблоны», «Маркетинг») и безопасное удаление с подтверждением.
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    onClick={() => navigate('assets')}
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs flex items-center gap-2 cursor-pointer shadow-xs transition-colors"
+                  >
+                    <span>Перейти в «Цифровые ассеты»</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -1571,6 +1648,13 @@ export const CrmManualView: React.FC<CrmManualViewProps> = ({
         )}
 
       </div>
+
+      {/* Interactive Documentation and Version Diff Modal */}
+      <CrmDocumentationModal
+        isOpen={isDocModalOpen}
+        onClose={() => setIsDocModalOpen(false)}
+        initialTab="diff"
+      />
     </div>
   );
 };

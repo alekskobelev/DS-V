@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Product, ProductFaqItem } from '../../types';
+import { RichTextEditor } from './RichTextEditor';
 
 export const CmsSoftwareEditor: React.FC = () => {
   const { products, addProduct, updateProduct, deleteProduct, showToast, navigateTo } = useApp();
@@ -611,13 +612,11 @@ export const CmsSoftwareEditor: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Полное техническое описание</label>
-                <textarea
-                  rows={4}
-                  value={formFullDesc}
-                  onChange={(e) => setFormFullDesc(e.target.value)}
-                  placeholder="Детальное инженерное описание возможностей, архитектуры и преимуществ..."
-                  className="w-full p-2.5 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Полное техническое описание (с поддержкой HTML, WYSIWYG и Markdown)</label>
+                <RichTextEditor
+                  content={formFullDesc}
+                  onChange={setFormFullDesc}
+                  minHeight="min-h-[160px]"
                 />
               </div>
             </div>

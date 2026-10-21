@@ -147,19 +147,19 @@ export const NewsPage: React.FC = () => {
 
       {/* Category Banner for Articles */}
       {selectedCategory === 'Статьи' && (
-        <div className="p-5 sm:p-6 bg-gradient-to-r from-indigo-950 via-blue-950 to-slate-900 border border-blue-500/30 text-white rounded-xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-blue-600/40 border border-blue-400/40 flex items-center justify-center text-blue-300 shrink-0">
-            <BookOpen className="w-5 h-5" />
+        <div className="p-5 sm:p-6 bg-gradient-to-r from-blue-950 via-slate-900 to-blue-950 border border-blue-500/30 text-white rounded-xl shadow-md flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-blue-600/30 border border-blue-400/30 flex items-center justify-center text-blue-300 shrink-0">
+            <BookOpen className="w-5 h-5 text-amber-400" />
           </div>
           <div className="space-y-1 flex-1">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-sm sm:text-base text-white">Технические статьи и инженерные разборы</h3>
-              <span className="px-2 py-0.5 text-[10px] bg-blue-500/30 text-blue-200 border border-blue-400/30 rounded-full font-semibold">
+              <span className="px-2 py-0.5 text-[10px] bg-blue-500/20 text-blue-200 border border-blue-400/30 rounded-full font-semibold">
                 Интерактивные материалы
               </span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Публикации инженерного центра «ДС‑Инжиниринг»: методологии 3D-сканирования, математика постпроцессирования для 5-осевых станков, расчет допусков по ГОСТ/ISO и скрипты автоматизации КИМ.
+              Публикации инжиниринговой компании «ДС‑Инжиниринг»: методологии 3D-сканирования, математика постпроцессирования для 5-осевых станков, расчет допусков по ГОСТ/ISO и скрипты автоматизации КИМ.
             </p>
           </div>
         </div>
@@ -176,10 +176,10 @@ export const NewsPage: React.FC = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent flex items-end p-6 sm:p-8">
               <div className="pr-12">
-                <span className={`px-4 py-1 text-xs font-semibold rounded-md ${
+                <span className={`px-3 py-1 text-xs font-semibold rounded-md ${
                   activeArticle.category === 'Статьи' 
-                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white' 
-                    : 'bg-[#2563EB] text-white'
+                    ? 'bg-amber-500 text-slate-950 font-bold' 
+                    : 'bg-blue-600 text-white'
                 }`}>
                   {activeArticle.category}
                 </span>
@@ -282,7 +282,7 @@ export const NewsPage: React.FC = () => {
                     className="w-full h-48 object-cover"
                   />
                   {isArticle ? (
-                    <span className="absolute top-3 left-3 px-2.5 py-1 bg-gradient-to-r from-purple-700 to-indigo-600 text-white text-[10px] font-bold uppercase rounded-md shadow-md flex items-center gap-1">
+                    <span className="absolute top-3 left-3 px-2.5 py-1 bg-amber-500 text-slate-950 text-[10px] font-bold uppercase rounded-md shadow-xs flex items-center gap-1">
                       <BookOpen className="w-3 h-3" />
                       <span>Статья</span>
                     </span>
@@ -323,3 +323,6 @@ export const NewsPage: React.FC = () => {
     </div>
   );
 };
+
+export default NewsPage;
+

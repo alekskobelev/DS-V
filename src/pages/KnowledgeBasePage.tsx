@@ -16,13 +16,17 @@ import {
   Copy,
   Clock,
   Calendar,
-  Sparkles,
+  Info,
   ArrowRight,
   ShieldCheck,
   X,
   LifeBuoy,
+  Share2,
+  Filter,
 } from "lucide-react";
-import { KnowledgeItem } from "../types";
+import { KnowledgeItem, FaqItem, FaqCategoryGroup } from "../types";
+import { FAQ_ITEMS, FAQ_GROUPS } from "../data/knowledgeBase";
+import { ENGINEERING_GLOSSARY_TERMS } from "../data/engineeringGlossary";
 import { useApp } from "../context/AppContext";
 import { useSEO } from "../hooks/useSEO";
 import { Scrollspy } from "../components/common/Scrollspy";
@@ -36,6 +40,7 @@ export const KnowledgeBasePage: React.FC = () => {
     setSelectedKnowledgeItem,
     selectedKnowledgeCategory,
     setSelectedKnowledgeCategory,
+    navigateTo,
   } = useApp();
   const cmsPage = customPages.find(p => p.id === 'knowledge');
   
@@ -78,6 +83,10 @@ export const KnowledgeBasePage: React.FC = () => {
   };
 
   const handleSelectCategory = (catId: string) => {
+    if (catId === 'glossary') {
+      navigateTo('glossary');
+      return;
+    }
     setSelectedCat(catId);
     setSelectedKnowledgeCategory(catId === 'all' ? null : catId);
     setActiveArticle(null);
@@ -114,12 +123,13 @@ export const KnowledgeBasePage: React.FC = () => {
       label: "Разработка постпроцессоров",
       icon: Terminal,
     },
+    { id: "glossary", label: "Технический глоссарий", icon: FileText },
     { id: "faq", label: "Частые вопросы (FAQ)", icon: HelpCircle },
   ];
 
   const categoryMap: Record<string, string[]> = {
     software: ["software", "ПО", "Программное обеспечение"],
-    hardware: ["hardware", "Оборудование", "Метрологическое оборудование"],
+    hardware: ["hardware", "Оборудование", "Метрологическое оборудование", "metrology", "Метрология", "Метрологическая экспертиза"],
     services: ["services", "Услуги", "Услуги и методики"],
     postprocessors: [
       "postprocessors",
@@ -142,11 +152,123 @@ export const KnowledgeBasePage: React.FC = () => {
 
   const getCategoryCount = (catId: string) => {
     if (catId === "all") return knowledgeBase.length;
+    if (catId === "faq") return FAQ_ITEMS.length;
+    if (catId === "glossary") return ENGINEERING_GLOSSARY_TERMS.length;
     const validCats = categoryMap[catId] || [catId];
     return knowledgeBase.filter(
       (item) => item.category === catId || validCats.includes(item.category),
     ).length;
   };
+
+  const [faqGroup, setFaqGroup] = useState<FaqCategoryGroup>('all');
+  const [copiedFaqId, setCopiedFaqId] = useState<string | null>(null);
+
+  const [openFaqIds, setOpenFaqIds] = useState<string[]>(() => {
+    return FAQ_ITEMS.length > 0 ? [FAQ_ITEMS[0].id] : ['faq-01'];
+  });
+
+  // Deep linking: support direct navigation to specific FAQ via #faq-...
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#faq-')) {
+        const targetId = hash.replace('#', '');
+        setSelectedCat('faq');
+        setSelectedKnowledgeCategory('faq');
+        setOpenFaqIds((prev) => (prev.includes(targetId) ? prev : [...prev, targetId]));
+        // Auto-switch group if item belongs to a specific group
+        const targetItem = FAQ_ITEMS.find((f) => f.id === targetId);
+        if (targetItem && targetItem.group) {
+          setFaqGroup(targetItem.group);
+        }
+        setTimeout(() => {
+          const el = document.getElementById(targetId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 350);
+      }
+    }
+  }, []);
+
+  const toggleFaq = (id: string) => {
+    setOpenFaqIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleExpandAllFaqs = () => {
+    setOpenFaqIds(filteredFaqs.map((f) => f.id));
+  };
+
+  const handleCollapseAllFaqs = () => {
+    setOpenFaqIds([]);
+  };
+
+  const handleCopyFaqLink = (faqId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const url = typeof window !== 'undefined' 
+      ? `${window.location.origin}/knowledge#${faqId}`
+      : `https://ds-engineering.ru/knowledge#${faqId}`;
+    navigator.clipboard.writeText(url);
+    setCopiedFaqId(faqId);
+    setTimeout(() => setCopiedFaqId(null), 2500);
+  };
+
+  const handleFaqAction = (faq: FaqItem) => {
+    if (!faq.actionPage) {
+      openContactModal({ title: `Вопрос по теме: ${faq.question}`, formType: 'question' });
+      return;
+    }
+    if (faq.actionPage === 'contacts') {
+      navigateTo('contacts');
+    } else if (faq.actionPage === 'calculator') {
+      navigateTo('services', 'calculator');
+    } else if (faq.actionPage === 'software') {
+      navigateTo('software', faq.actionTargetId);
+    } else if (faq.actionPage === 'hardware') {
+      navigateTo('hardware', faq.actionTargetId);
+    } else if (faq.actionPage === 'services') {
+      navigateTo('services', faq.actionTargetId);
+    }
+  };
+
+  const filteredFaqs = React.useMemo(() => {
+    const q = query.toLowerCase().trim();
+    return FAQ_ITEMS.filter((item) => {
+      const matchesGroup = faqGroup === 'all' || item.group === faqGroup;
+      if (!matchesGroup) return false;
+      if (!q) return true;
+      return (
+        item.question.toLowerCase().includes(q) ||
+        item.answer.toLowerCase().includes(q) ||
+        item.categoryLabel.toLowerCase().includes(q) ||
+        (item.groupLabel && item.groupLabel.toLowerCase().includes(q)) ||
+        (item.tags && item.tags.some(t => t.toLowerCase().includes(q))) ||
+        (item.highlight && item.highlight.toLowerCase().includes(q))
+      );
+    });
+  }, [query, faqGroup]);
+
+  const faqGroupsWithCount = React.useMemo(() => {
+    const q = query.toLowerCase().trim();
+    return FAQ_GROUPS.map((g) => {
+      const count = FAQ_ITEMS.filter((item) => {
+        const inGroup = g.id === 'all' || item.group === g.id;
+        if (!inGroup) return false;
+        if (!q) return true;
+        return (
+          item.question.toLowerCase().includes(q) ||
+          item.answer.toLowerCase().includes(q) ||
+          item.categoryLabel.toLowerCase().includes(q) ||
+          (item.groupLabel && item.groupLabel.toLowerCase().includes(q)) ||
+          (item.tags && item.tags.some(t => t.toLowerCase().includes(q))) ||
+          (item.highlight && item.highlight.toLowerCase().includes(q))
+        );
+      }).length;
+      return { ...g, count };
+    });
+  }, [query]);
 
   const handleCopyContent = (item: KnowledgeItem) => {
     const textToCopy = `${item.title}\n\nКраткое описание:\n${item.summary}\n\nСодержание:\n${item.content}\n\nИсточник: База знаний «ДС‑Инжиниринг»`;
@@ -219,6 +341,17 @@ export const KnowledgeBasePage: React.FC = () => {
                   <X className="w-4 h-4" />
                 </button>
               )}
+            </div>
+
+            {/* Quick Glossary Callout Badge */}
+            <div className="pt-2 flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => navigateTo('glossary')}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition-colors shadow-xs cursor-pointer"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Технический глоссарий: GD&T, ISO 1101, КИМ, постпроцессоры →</span>
+              </button>
             </div>
           </div>
 
@@ -322,6 +455,52 @@ export const KnowledgeBasePage: React.FC = () => {
                 );
               })}
             </div>
+
+            {/* Dedicated Engineering Glossary Sidebar Module */}
+            <div className="mt-5 hidden lg:block bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-2xl p-4.5 border border-blue-800/40 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-amber-400/20 text-amber-300">
+                    <FileText className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-white">Технический глоссарий</h4>
+                    <p className="text-[10px] text-blue-200">GD&T • ISO 1101 • КИМ • ЧПУ</p>
+                  </div>
+                </div>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white/10 text-amber-300">
+                  {ENGINEERING_GLOSSARY_TERMS.length} терминов
+                </span>
+              </div>
+
+              <p className="text-[11px] text-blue-100/90 leading-relaxed">
+                Справочник терминов для главных инженеров: формулировки допусков, кинематика и метрология.
+              </p>
+
+              {/* Quick Key Term Pills */}
+              <div className="space-y-1.5 pt-1">
+                <div className="text-[10px] uppercase font-mono text-slate-400">Ключевые термины:</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {['GD&T', 'ISO 1101', 'Кинематика станка', 'Постпроцессор', 'MPE', 'RTCP', 'B-Rep', 'КЛТР'].map((termName) => (
+                    <button
+                      key={termName}
+                      onClick={() => navigateTo('glossary')}
+                      className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-white/10 hover:bg-white/20 text-slate-100 hover:text-white transition-colors cursor-pointer border border-white/10"
+                    >
+                      {termName}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => navigateTo('glossary')}
+                className="w-full mt-2 py-2 px-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>Открыть полный глоссарий</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -386,7 +565,7 @@ export const KnowledgeBasePage: React.FC = () => {
 
           <div className="space-y-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
             <div className="font-medium text-gray-900 dark:text-slate-100 text-sm bg-slate-100/90 dark:bg-slate-800/80 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
               <div>
                 <strong className="block text-blue-900 dark:text-blue-300 font-semibold mb-1">
                   Инженерное резюме регламента:
@@ -492,17 +671,20 @@ export const KnowledgeBasePage: React.FC = () => {
         <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-800 pb-4">
           <div>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">
-              Технические статьи, регламенты метрологии и САПР
+              {selectedCat === 'faq' ? 'Часто задаваемые вопросы (FAQ) и регламенты' : 'Технические статьи, регламенты метрологии и САПР'}
             </h2>
             <p className="text-xs text-gray-500 dark:text-slate-400">
-              Статьи по калибровке КИМ, постпроцессорам ЧПУ и обработке
-              поверхностей
+              {selectedCat === 'faq'
+                ? 'Официальные ответы экспертов «ДС‑Инжиниринг» по стандартам «Пиши, сокращай»'
+                : 'Статьи по калибровке КИМ, постпроцессорам ЧПУ и обработке поверхностей'}
             </p>
           </div>
           {query && (
             <span className="text-xs text-gray-500 dark:text-slate-400">
               Найдено:{" "}
-              <strong className="text-gray-900 dark:text-white">{filtered.length}</strong>
+              <strong className="text-gray-900 dark:text-white">
+                {selectedCat === 'faq' ? filteredFaqs.length : filtered.length}
+              </strong>
             </span>
           )}
         </div>
@@ -511,9 +693,9 @@ export const KnowledgeBasePage: React.FC = () => {
         {query && (
           <div className="flex items-center justify-between text-xs text-gray-500 px-1">
             <span>
-              Найдено статей по запросу «
-              <strong className="text-gray-900">{query}</strong>»:{" "}
-              {filtered.length}
+              Найдено {selectedCat === 'faq' ? 'вопросов' : 'статей'} по запросу «
+              <strong className="text-gray-900 dark:text-white">{query}</strong>»:{" "}
+              {selectedCat === 'faq' ? filteredFaqs.length : filtered.length}
             </span>
             <button
               onClick={() => setQuery("")}
@@ -524,8 +706,254 @@ export const KnowledgeBasePage: React.FC = () => {
           </div>
         )}
 
-        {/* Articles Grid */}
-        {filtered.length === 0 ? (
+        {/* FAQ or Articles Grid */}
+        {selectedCat === 'faq' ? (
+          <div className="space-y-6">
+            {/* SUB-CATEGORY DIRECTIONS FILTER BAR (4 Key Focus Vectors) */}
+            <div className="bg-slate-50 dark:bg-slate-850 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 dark:border-slate-800 pb-2.5">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200">
+                  <Filter className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  <span>Направления регламентных вопросов:</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <button
+                    type="button"
+                    onClick={handleExpandAllFaqs}
+                    className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium cursor-pointer"
+                  >
+                    Развернуть все
+                  </button>
+                  <span className="text-slate-300 dark:text-slate-700">|</span>
+                  <button
+                    type="button"
+                    onClick={handleCollapseAllFaqs}
+                    className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium cursor-pointer"
+                  >
+                    Свернуть все
+                  </button>
+                  <span className="text-slate-300 dark:text-slate-700">|</span>
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">
+                    Найдено: {filteredFaqs.length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Direction Pills with Live Item Counts */}
+              <div className="flex flex-wrap gap-2 pt-1">
+                {faqGroupsWithCount.map((group) => {
+                  const isActive = faqGroup === group.id;
+                  return (
+                    <button
+                      key={group.id}
+                      type="button"
+                      onClick={() => setFaqGroup(group.id)}
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-[#1E3A8A] text-white shadow-xs dark:bg-blue-600 dark:text-white'
+                          : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
+                      }`}
+                      title={group.description}
+                    >
+                      <span>{group.label}</span>
+                      <span
+                        className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold ${
+                          isActive
+                            ? 'bg-white/20 text-white'
+                            : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        {group.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Questions List */}
+            {filteredFaqs.length === 0 ? (
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 sm:p-12 border border-gray-200 dark:border-slate-700 text-center space-y-4 shadow-xs">
+                <HelpCircle className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto" />
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  По выбранным критериям вопросов не найдено
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-slate-400 max-w-md mx-auto">
+                  {query
+                    ? `По запросу «${query}» в выбранном направлении совпадений нет. Попробуйте сбросить поисковую фразу или выбрать другое направление.`
+                    : 'В данном направлении пока нет активных вопросов.'}
+                </p>
+                <div className="pt-2 flex justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      setFaqGroup("all");
+                    }}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition-colors cursor-pointer shadow-xs"
+                  >
+                    Показать все вопросы FAQ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openContactModal({
+                        title: "Вопрос в инженерную службу «ДС-Инжиниринг»",
+                        formType: "question",
+                      })
+                    }
+                    className="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-colors cursor-pointer"
+                  >
+                    Задать свой вопрос инженеру
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredFaqs.map((faq) => {
+                  const isOpen = openFaqIds.includes(faq.id);
+                  const isCopied = copiedFaqId === faq.id;
+
+                  return (
+                    <div
+                      key={faq.id}
+                      id={faq.id}
+                      className={`bg-white dark:bg-slate-800 rounded-xl border transition-all duration-200 scroll-mt-24 ${
+                        isOpen
+                          ? 'border-blue-300 dark:border-blue-700 shadow-sm ring-1 ring-blue-500/10'
+                          : 'border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600'
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleFaq(faq.id)}
+                        className="w-full flex items-start sm:items-center justify-between p-4 sm:p-5 text-left cursor-pointer transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-750/50"
+                      >
+                        <div className="space-y-1.5 pr-3 flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/40">
+                              {faq.groupLabel || faq.categoryLabel}
+                            </span>
+                            {faq.tags && faq.tags.slice(0, 3).map((tag) => (
+                              <span
+                                key={tag}
+                                className="hidden md:inline-block text-[10px] text-slate-600 dark:text-slate-300 font-mono"
+                              >
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug">
+                            {faq.question}
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyFaqLink(faq.id, e)}
+                            className="p-1.5 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-blue-400 dark:hover:bg-slate-700 transition-colors"
+                            title="Копировать прямую ссылку на вопрос"
+                          >
+                            {isCopied ? (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                            ) : (
+                              <Share2 className="w-4 h-4" />
+                            )}
+                          </button>
+                          <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                            <ChevronRight
+                              className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform duration-200 ${
+                                isOpen ? "rotate-90 text-blue-600 dark:text-blue-400" : ""
+                              }`}
+                            />
+                          </div>
+                        </div>
+                      </button>
+
+                      {isOpen && (
+                        <div className="px-4 sm:px-5 pb-5 pt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-700/80 space-y-3.5">
+                          <p className="font-normal text-slate-700 dark:text-slate-200 leading-relaxed">
+                            {faq.answer}
+                          </p>
+
+                          {faq.highlight && (
+                            <div className="p-3.5 bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 rounded-xl text-blue-900 dark:text-blue-200 text-xs font-medium flex items-start gap-2.5">
+                              <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                              <span className="leading-snug">{faq.highlight}</span>
+                            </div>
+                          )}
+
+                          {faq.tags && faq.tags.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                              <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium">
+                                Ключевые слова:
+                              </span>
+                              {faq.tags.map((tag) => (
+                                <button
+                                  key={tag}
+                                  type="button"
+                                  onClick={() => setQuery(tag)}
+                                  className="px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-mono cursor-pointer"
+                                >
+                                  #{tag}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-750">
+                            <div className="flex flex-wrap items-center gap-2">
+                              {faq.actionText && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleFaqAction(faq)}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#2563EB] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+                                >
+                                  <span>{faq.actionText}</span>
+                                  <ArrowRight className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openContactModal({
+                                    title: `Вопрос по теме: ${faq.question}`,
+                                    formType: "question",
+                                  })
+                                }
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                              >
+                                <span>Задать вопрос эксперту</span>
+                              </button>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleCopyFaqLink(faq.id)}
+                              className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors cursor-pointer ml-auto"
+                            >
+                              {isCopied ? (
+                                <>
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span className="text-emerald-600 font-semibold">Ссылка скопирована</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3.5 h-3.5" />
+                                  <span>Копировать ссылку на вопрос</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="bg-white rounded-xl p-8 border border-gray-200 text-center space-y-4">
             <BookOpen className="w-12 h-12 text-gray-300 mx-auto" />
             <h3 className="text-lg font-bold text-gray-900">
@@ -600,3 +1028,6 @@ export const KnowledgeBasePage: React.FC = () => {
     </div>
   );
 };
+
+export default KnowledgeBasePage;
+

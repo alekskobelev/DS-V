@@ -29,22 +29,30 @@ import { Maximize2, Minimize2,
   Clock,
   ArrowRight,
   Filter,
-  Copy
+  Copy,
+  CheckSquare,
+  Square,
+  Wand2
 } from 'lucide-react';
-import { CommercialProposal, ProposalVersion, CrmCompany, CrmContact, CurrencyCode, getCurrencySymbol } from '../../types';
+import { CommercialProposal, ProposalVersion, CrmCompany, CrmContact, CurrencyCode, getCurrencySymbol, ProjectContract } from '../../types';
 import { CrmDeal, INITIAL_CRM_DEALS } from '../../data/mockCrmData';
 import { useApp } from '../../context/AppContext';
 import { apiService } from '../../services/apiService';
 import { ProposalDocumentViewerModal } from './ProposalDocumentViewerModal';
+import { TkpTzGeneratorView } from './TkpTzGeneratorView';
+import { ProposalQuickSlideOver } from './ProposalQuickSlideOver';
+import { CrmBatchActionBar } from './CrmBatchActionBar';
 import { getStaffMemberInfo } from '../../utils/staffDirectory';
 import { CompanyModal } from './CompanyModal';
 import { ContactModal } from './ContactModal';
 import { exportTableToPdf } from '../../utils/exportTablePdf';
+import { downloadProposalPdf } from '../../utils/printProposal';
 
 interface ProposalsRegistryProps {
   proposals?: CommercialProposal[];
   setProposals?: React.Dispatch<React.SetStateAction<CommercialProposal[]>>;
   deals?: CrmDeal[];
+  onOpenTkpTzGenerator?: () => void;
 }
 
 const STAGE_LABELS: Record<string, { label: string; color: string }> = {
@@ -81,6 +89,9 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
     addCommercialProposal, 
     updateCommercialProposal, 
     deleteCommercialProposal,
+    contracts,
+    setContracts,
+    addContract,
     showToast,
     isAdmin,
     userPermissions,
@@ -93,6 +104,13 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
   const currentProposals = propProposals || commercialProposals;
   const setCurrentProposals = propSetProposals || setCommercialProposals;
 
+  // Batch Operations State
+  const [selectedProposalIds, setSelectedProposalIds] = useState<Set<string>>(new Set());
+
+  // Slide-over Quick Drawer State
+  const [slideOverProposal, setSlideOverProposal] = useState<CommercialProposal | null>(null);
+  const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
+
   // Guarantee deals availability: prop -> context -> INITIAL_CRM_DEALS
   const effectiveDeals = useMemo(() => {
     if (propDeals && propDeals.length > 0) return propDeals;
@@ -104,12 +122,9 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'cards' | 'table' | 'list'>('table');
-  const [selectedFunnelFilter, setSelectedFunnelFilter] = useState<string>('all');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [viewingProposal, setViewingProposal] = useState<CommercialProposal | null>(null);
+  const [viewMode, setViewMode] = useState<'cards' | 'table' | 'list' | 'compact'>('table');
   const [editingProposalId, setEditingProposalId] = useState<string | null>(null);
+  const [selectedFunnelFilter, setSelectedFunnelFilter] = useState<string>('all');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
 
@@ -132,6 +147,11 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
   // Document Viewer Modal States
   const [viewingDocProposal, setViewingDocProposal] = useState<CommercialProposal | null>(null);
   const [viewingDocVersion, setViewingDocVersion] = useState<ProposalVersion | undefined>(undefined);
+
+  // Unified Interactive TKP & TZ Generator / Editor State
+  const [isUnifiedGeneratorOpen, setIsUnifiedGeneratorOpen] = useState(false);
+  const [activeGeneratorProposalId, setActiveGeneratorProposalId] = useState<string | undefined>(undefined);
+  const [activeGeneratorDealId, setActiveGeneratorDealId] = useState<string | undefined>(undefined);
 
   // Version attachment upload state
   const [newVersionName, setNewVersionName] = useState('');
@@ -202,35 +222,140 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
     });
   }, [currentProposals, searchQuery, selectedFunnelFilter]);
 
+  // Batch Selection helpers
+  const allFilteredSelected = filtered.length > 0 && filtered.every(p => selectedProposalIds.has(p.id));
+  const someFilteredSelected = filtered.some(p => selectedProposalIds.has(p.id));
+
+  const handleToggleSelectAll = () => {
+    if (allFilteredSelected) {
+      setSelectedProposalIds(new Set());
+    } else {
+      const newSet = new Set(selectedProposalIds);
+      filtered.forEach(p => newSet.add(p.id));
+      setSelectedProposalIds(newSet);
+    }
+  };
+
+  const handleToggleSelectOne = (id: string, e?: React.SyntheticEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedProposalIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleClearSelection = () => {
+    setSelectedProposalIds(new Set());
+  };
+
+  // Selected proposals array and sum
+  const selectedProposals = useMemo(() => {
+    return currentProposals.filter(p => selectedProposalIds.has(p.id));
+  }, [currentProposals, selectedProposalIds]);
+
+  const selectedTotalSum = useMemo(() => {
+    return selectedProposals.reduce((sum, p) => sum + (p.amount || 0), 0);
+  }, [selectedProposals]);
+
+  // Bulk Reassign Manager
+  const handleBatchReassignManager = (managerName: string) => {
+    if (selectedProposalIds.size === 0) return;
+    const updated = currentProposals.map(p => {
+      if (selectedProposalIds.has(p.id)) {
+        return { ...p, preparedBy: managerName };
+      }
+      return p;
+    });
+    if (propSetProposals) propSetProposals(updated);
+    else setCommercialProposals(updated);
+    showToast(`Ответственный «${managerName}» успешно назначен для ${selectedProposalIds.size} КП`);
+    setSelectedProposalIds(new Set());
+  };
+
+  // Bulk Change Funnel / Type
+  const handleBatchChangeFunnel = (funnelOrType: string) => {
+    if (selectedProposalIds.size === 0) return;
+    const updated = currentProposals.map(p => {
+      if (selectedProposalIds.has(p.id)) {
+        if (funnelOrType === 'akp_partner') {
+          return { ...p, isAlternative: true, akpPurpose: 'partner_tender' as const };
+        } else if (funnelOrType === 'akp_supply') {
+          return { ...p, isAlternative: true, akpPurpose: 'alternative_supply' as const };
+        } else if (funnelOrType === 'standard') {
+          return { ...p, isAlternative: false };
+        } else {
+          return { ...p, dealFunnel: funnelOrType };
+        }
+      }
+      return p;
+    });
+    if (propSetProposals) propSetProposals(updated);
+    else setCommercialProposals(updated);
+    showToast(`Параметры успешно обновлены для ${selectedProposalIds.size} КП`);
+    setSelectedProposalIds(new Set());
+  };
+
+  // Bulk Delete
+  const handleBatchDelete = () => {
+    if (!isAdmin) return;
+    const count = selectedProposalIds.size;
+    const updated = currentProposals.filter(p => !selectedProposalIds.has(p.id));
+    if (propSetProposals) propSetProposals(updated);
+    else setCommercialProposals(updated);
+    showToast(`Удалено ${count} коммерческих предложений`);
+    setSelectedProposalIds(new Set());
+  };
+
+  // Create Contract seamlessly from Proposal
+  const handleCreateContractFromProposal = (cp: CommercialProposal) => {
+    const rawNumberPart = cp.outgoingNumber.replace(/[^0-9]/g, '').slice(-3) || String(Math.floor(Math.random() * 900 + 100));
+    const defaultContractNum = `ДОГ-${new Date().getFullYear()}/${rawNumberPart}`;
+    const newContract: ProjectContract = {
+      id: `cont_${Date.now()}`,
+      number: defaultContractNum,
+      title: cp.content ? `Договор поставки: ${cp.content}` : `Комплексная поставка измерительного оборудования и ПО`,
+      company: cp.toCompany,
+      date: new Date().toLocaleDateString('ru-RU'),
+      status: 'Исполняется',
+      statusColor: 'blue',
+      supportUntil: `${new Date().getDate()}.${String(new Date().getMonth() + 1).padStart(2, '0')}.${new Date().getFullYear() + 1}`,
+      curator: cp.preparedBy || 'Скобелев Александр Сергеевич',
+      curatorPhone: cp.contactPhone || '+7 (937) 984-61-51',
+      amount: cp.amount ? `${cp.amount.toLocaleString('ru-RU')} ₽` : 'По расчету',
+      currency: cp.currency || 'RUB',
+      vatRate: cp.vatRate ?? 22,
+      vatMode: cp.vatMode || 'standard',
+      vatIncluded: true,
+      scope: cp.content || 'Поставка измерительного оборудования, пусконаладка, поверка СИ во ФГИС АРШИН и обучение специалистов',
+      documents: cp.versions?.map((v, i) => ({
+        id: `doc_${Date.now()}_${i}`,
+        name: v.name,
+        category: 'Договор и приложения',
+        size: v.size,
+        uploadedAt: v.uploadedAt,
+        uploadedBy: v.uploadedBy
+      })) || [],
+      dealId: cp.dealId,
+      dealTitle: cp.dealTitle
+    };
+
+    if (addContract) {
+      addContract(newContract);
+    } else if (setContracts) {
+      setContracts(prev => [newContract, ...prev]);
+    }
+
+    showToast(`Проект Договора «${defaultContractNum}» для «${cp.toCompany}» успешно создан!`);
+    setIsSlideOverOpen(false);
+  };
+
   // Open Create Modal
   const handleOpenCreate = () => {
-    setEditingProposalId(null);
-    const dateStr = new Date().toLocaleDateString('ru-RU').replace(/\./g, '/');
-    const count = currentProposals.length + 1;
-    setFormData({
-      outgoingNumber: `КП-${new Date().getFullYear()}/${String(new Date().getMonth() + 1).padStart(2, '0')}/${String(new Date().getDate()).padStart(2, '0')}-${String(count < 10 ? '0' + count : count)}`,
-      date: new Date().toLocaleDateString('ru-RU'),
-      toCompany: '',
-      content: '',
-      preparedBy: authUsers?.find(u => u.id === currentUser?.id)?.fullName || 'Скобелев А.С.',
-      note: '',
-      internalNotes: '',
-      contactPerson: '',
-      contactPhone: '',
-      dealId: '',
-      dealTitle: '',
-      dealStage: '',
-      dealFunnel: 'equipment',
-      amount: undefined,
-      currency: 'RUB',
-      versions: [],
-      isAlternative: false,
-      akpPurpose: 'partner_tender'
-    });
-    setNewVersionName('');
-    setNewVersionDataUrl(undefined);
-    setModalDealSearch('');
-    setIsModalOpen(true);
+    setActiveGeneratorProposalId(undefined);
+    setActiveGeneratorDealId(undefined);
+    setIsUnifiedGeneratorOpen(true);
   };
 
   // Add Version to Form
@@ -288,19 +413,11 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
     showToast(`Создан дубликат предложения «${clonedNum}»`);
   };
 
-  // Open Edit Modal (Admin or authorized manager)
+  // Open Edit in Unified Studio Editor (Admin or authorized manager)
   const handleOpenEdit = (proposal: CommercialProposal) => {
-    setEditingProposalId(proposal.id);
-    setFormData({
-      ...proposal,
-      isAlternative: Boolean(proposal.isAlternative),
-      akpPurpose: proposal.akpPurpose || (proposal.isAlternative ? 'partner_tender' : undefined),
-      dealFunnel: proposal.dealFunnel || (proposal.dealId ? effectiveDeals.find(d => d.id === proposal.dealId)?.funnel : undefined)
-    });
-    setNewVersionName('');
-    setNewVersionDataUrl(undefined);
-    setModalDealSearch('');
-    setIsModalOpen(true);
+    setActiveGeneratorProposalId(proposal.id);
+    setActiveGeneratorDealId(proposal.dealId);
+    setIsUnifiedGeneratorOpen(true);
   };
 
   // Handle Deal selection in Modal (Autofills information)
@@ -407,8 +524,6 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
       }
       showToast(`КП ${newCp.outgoingNumber} ${isAkp ? (akpPurpose === 'partner_tender' ? '(АКП Партнерам) ' : '(АКП Поставка) ') : ''}успешно зарегистрировано`);
     }
-
-    setIsModalOpen(false);
   };
 
   // Delete Proposal
@@ -423,9 +538,10 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
   };
 
   // Export to Excel (.xlsx)
-  const handleExportExcel = async () => {
+  const handleExportExcel = async (onlySelected: boolean = false) => {
     try {
-      const exportRows = filtered.map((cp, idx) => ({
+      const sourceList = (onlySelected && selectedProposalIds.size > 0) ? selectedProposals : filtered;
+      const exportRows = sourceList.map((cp, idx) => ({
         '№ п/п': idx + 1,
         'Исходящий номер КП': cp.outgoingNumber,
         'Тип КП': cp.isAlternative 
@@ -472,9 +588,11 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Реестр КП');
       
-      const fileName = `Реестр_КП_ДС_Инжиниринг_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const fileName = onlySelected 
+        ? `Выбранные_КП_ДС_Инжиниринг_${new Date().toISOString().slice(0, 10)}.xlsx`
+        : `Реестр_КП_ДС_Инжиниринг_${new Date().toISOString().slice(0, 10)}.xlsx`;
       XLSX.writeFile(wb, fileName);
-      showToast('Реестр КП успешно экспортирован в Excel (.xlsx)');
+      showToast(onlySelected ? `Экспортировано ${sourceList.length} выбранных КП в Excel` : 'Реестр КП успешно экспортирован в Excel (.xlsx)');
       setIsExportMenuOpen(false);
     } catch (err) {
       console.error(err);
@@ -485,23 +603,24 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   // PDF Export
-  const handleExportPdf = async () => {
+  const handleExportPdf = async (onlySelected: boolean = false) => {
     try {
       setIsExportingPdf(true);
       setIsExportMenuOpen(false);
+      const sourceList = (onlySelected && selectedProposalIds.size > 0) ? selectedProposals : filtered;
       await exportTableToPdf({
-        title: 'Реестр коммерческих и альтернативных предложений (КП / АКП)',
+        title: onlySelected ? 'Выписка коммерческих предложений (КП / АКП)' : 'Реестр коммерческих и альтернативных предложений (КП / АКП)',
         subtitle: 'ООО «ДС-Инжиниринг» • Департамент продаж и тендерных процедур',
         department: 'Отдел координации поставок и предложений',
-        filterInfo: searchQuery ? `Поиск: "${searchQuery}"` : selectedFunnelFilter !== 'all' ? `Фильтр: ${selectedFunnelFilter}` : 'Все зарегистрированные предложения',
+        filterInfo: onlySelected ? `Выбрано записей: ${sourceList.length}` : searchQuery ? `Поиск: "${searchQuery}"` : selectedFunnelFilter !== 'all' ? `Фильтр: ${selectedFunnelFilter}` : 'Все зарегистрированные предложения',
         summaryBadges: [
-          { label: 'Всего предложений', value: filtered.length, color: 'blue' },
-          { label: 'Основные КП', value: countStandard, color: 'indigo' },
-          { label: 'АКП (Партнеры/Тендеры)', value: countPartnerAkp, color: 'amber' },
-          { label: 'АКП (Поставка)', value: countSupplyAkp, color: 'green' }
+          { label: 'Всего предложений', value: sourceList.length, color: 'blue' },
+          { label: 'Основные КП', value: sourceList.filter(p => !p.isAlternative).length, color: 'indigo' },
+          { label: 'АКП (Партнеры/Тендеры)', value: sourceList.filter(p => p.isAlternative && (p.akpPurpose === 'partner_tender' || !p.akpPurpose)).length, color: 'amber' },
+          { label: 'АКП (Поставка)', value: sourceList.filter(p => p.isAlternative && p.akpPurpose === 'alternative_supply').length, color: 'green' }
         ],
         headers: ['№', 'Номер КП / АКП', 'Дата', 'Контрагент / Заказчик', 'Содержание / Предмет', 'Сумма', 'Менеджер'],
-        rows: filtered.map((cp, idx) => [
+        rows: sourceList.map((cp, idx) => [
           String(idx + 1),
           {
             text: cp.outgoingNumber || '—',
@@ -518,9 +637,11 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
         columnAlignments: ['center', 'center', 'center', 'left', 'left', 'right', 'left'],
         columnWidths: ['4%', '15%', '9%', '22%', '26%', '12%', '12%'],
         orientation: 'landscape',
-        filename: `Reestr_KP_DS_Engineering_${new Date().toISOString().slice(0, 10)}.pdf`
+        filename: onlySelected 
+          ? `Vypiska_KP_DS_Engineering_${new Date().toISOString().slice(0, 10)}.pdf`
+          : `Reestr_KP_DS_Engineering_${new Date().toISOString().slice(0, 10)}.pdf`
       });
-      showToast('PDF-отчет по предложениям успешно сформирован');
+      showToast(onlySelected ? `Сформирован PDF-отчет по ${sourceList.length} выбранным КП` : 'PDF-отчет по предложениям успешно сформирован');
     } catch (err) {
       console.error('Failed to export proposals PDF:', err);
       showToast('Ошибка при формировании PDF');
@@ -665,48 +786,66 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
     return effectiveDeals.find(d => d.id === formData.dealId);
   }, [formData.dealId, effectiveDeals]);
 
+  if (isUnifiedGeneratorOpen) {
+    return (
+      <TkpTzGeneratorView
+        onBack={() => {
+          setIsUnifiedGeneratorOpen(false);
+          setActiveGeneratorProposalId(undefined);
+          setActiveGeneratorDealId(undefined);
+        }}
+        initialProposalId={activeGeneratorProposalId}
+        initialDealId={activeGeneratorDealId}
+      />
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-xs">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
               <Briefcase className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 Реестр коммерческих предложений
               </h2>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Управление выставленными КП, версиями, привязкой к сделкам и аналитикой воронки.
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <button 
-              onClick={handleOpenCreate}
-              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors shadow-xs cursor-pointer"
+              onClick={() => {
+                setActiveGeneratorProposalId(undefined);
+                setActiveGeneratorDealId(undefined);
+                setIsUnifiedGeneratorOpen(true);
+              }}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/20 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>Выставить КП</span>
+              <span>Создать ТКП / ТЗ</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Top Toolbar */}
-      <div className="flex flex-col gap-3 bg-white p-4 rounded-lg border border-gray-200 shadow-xs">
+      <div className="flex flex-col gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
           {/* Search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
               type="text"
               placeholder="Поиск по номеру КП, АКП, компании, сделке, содержанию, менеджеру..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-900 placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             />
           </div>
 
@@ -715,7 +854,7 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
             <select
               value={selectedFunnelFilter}
               onChange={(e) => setSelectedFunnelFilter(e.target.value)}
-              className="px-4 py-2 bg-slate-50 border border-gray-200 rounded-lg text-xs font-semibold text-slate-500 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             >
               <option value="all">Все предложения ({countAll})</option>
               <option value="standard">Только основные КП ({countStandard})</option>
@@ -730,8 +869,38 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
             </select>
           </div>
 
-          {/* Action Buttons */}
+          {/* View Mode & Action Buttons */}
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            {/* View Mode Toggle */}
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  viewMode === 'table'
+                    ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+                title="Подробная таблица с колонками"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Таблица</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('compact')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  viewMode === 'compact'
+                    ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+                title="Компактный вид карточек"
+              >
+                <Square className="w-3.5 h-3.5" />
+                <span>Компактный вид</span>
+              </button>
+            </div>
+
             {/* Export Dropdown */}
             <div className="relative">
               <button
@@ -747,7 +916,7 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
               {isExportMenuOpen && (
                 <div className="absolute right-0 mt-1.5 w-52 bg-white border border-gray-200 rounded-lg shadow-sm z-30 py-1 overflow-hidden">
                   <button
-                    onClick={handleExportPdf}
+                    onClick={() => handleExportPdf(false)}
                     disabled={isExportingPdf}
                     className="w-full flex items-center gap-2 px-4.5 py-2.5 text-left text-xs font-semibold text-slate-500 hover:bg-rose-50 hover:text-rose-700 transition-colors cursor-pointer disabled:opacity-50"
                   >
@@ -758,7 +927,7 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
                     </div>
                   </button>
                   <button
-                    onClick={handleExportExcel}
+                    onClick={() => handleExportExcel(false)}
                     className="w-full flex items-center gap-2 px-4.5 py-2.5 text-left text-xs font-semibold text-slate-500 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer border-t border-gray-100"
                   >
                     <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
@@ -891,327 +1060,467 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
         </div>
       )}
 
-      {/* Proposals Registry Table */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-xs overflow-hidden">
+      {/* Proposals Registry Content (Table or Compact View) */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         {/* Usability Hint Bar */}
-        <div className="px-4 py-2.5 bg-blue-50/60 border-b border-blue-100 flex items-center justify-between gap-3 text-xs text-blue-900">
+        <div className="px-4 py-2.5 bg-blue-50/80 dark:bg-blue-950/40 border-b border-blue-100 dark:border-blue-900/50 flex items-center justify-between gap-3 text-xs text-blue-950 dark:text-blue-200">
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
             <span className="font-semibold">
-              Быстрый доступ: нажмите на любую строку таблицы, чтобы открыть карточку предпросмотра КП, перейти к печати, редактированию или удалению.
+              Быстрый переход: нажмите на любую строку или карточку для открытия официального бланка ТКП с возможностью печати и редактирования.
             </span>
           </div>
-          <div className="text-[11px] text-blue-700 font-medium hidden sm:block shrink-0">
-            Всего записей: {filtered.length}
+          <div className="text-[11px] text-blue-700 dark:text-blue-300 font-medium hidden sm:block shrink-0">
+            Всего записей: {filtered.length} {selectedProposalIds.size > 0 && `(выбрано: ${selectedProposalIds.size})`}
           </div>
         </div>
 
-        <HorizontalScrollContainer>
-          <table className="w-full data-dense-table text-left text-xs whitespace-nowrap border-collapse min-w-[1000px]">
-            <thead className="bg-slate-50/90 border-b border-gray-200 text-[11px] uppercase font-bold text-gray-500 tracking-wider">
-              <tr>
-                <th className="px-4 py-3">Номер КП / Тип</th>
-                <th className="px-4 py-3">Дата</th>
-                <th className="px-4 py-3">Кому (Контрагент)</th>
-                <th className="px-4 py-3">Содержание предложения</th>
-                <th className="px-4 py-3">Файлы / Документы</th>
-                <th className="px-4 py-3">Привязка к сделке и воронке</th>
-                <th className="px-4 py-3">Сумма (с НДС 22%)</th>
-                <th className="px-4 py-3">Кто готовил</th>
-                <th className="px-4 py-3">Контакты</th>
-                <th className="px-4 py-3 text-right">Действия</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.length > 0 ? filtered.map((cp) => {
-                const stageInfo = cp.dealStage ? STAGE_LABELS[cp.dealStage] : null;
-                const isAkp = Boolean(cp.isAlternative);
-                const isPartnerAkp = isAkp && (cp.akpPurpose === 'partner_tender' || !cp.akpPurpose);
-                const isSupplyAkp = isAkp && cp.akpPurpose === 'alternative_supply';
-                const funnelInfo = cp.dealFunnel ? FUNNEL_LABELS[cp.dealFunnel] : null;
+        {viewMode === 'table' ? (
+          <HorizontalScrollContainer>
+            <table className="w-full data-dense-table text-left text-xs whitespace-nowrap border-collapse min-w-[1000px]">
+              <thead className="bg-slate-50/90 dark:bg-slate-800/80 border-b border-gray-200 dark:border-slate-700 text-[11px] uppercase font-bold text-gray-500 dark:text-slate-400 tracking-wider">
+                <tr>
+                  <th className="w-10 px-3 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={allFilteredSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = someFilteredSelected && !allFilteredSelected;
+                      }}
+                      onChange={handleToggleSelectAll}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      title={allFilteredSelected ? 'Снять выделение со всех' : 'Выбрать все КП в текущем списке'}
+                    />
+                  </th>
+                  <th className="px-4 py-3">Номер КП / Тип</th>
+                  <th className="px-4 py-3">Дата</th>
+                  <th className="px-4 py-3">Кому (Контрагент)</th>
+                  <th className="px-4 py-3">Содержание предложения</th>
+                  <th className="px-4 py-3">Файлы / Документы</th>
+                  <th className="px-4 py-3">Привязка к сделке и воронке</th>
+                  <th className="px-4 py-3 text-right">Сумма (с НДС 22%)</th>
+                  <th className="px-4 py-3">Кто готовил</th>
+                  <th className="px-4 py-3">Контакты</th>
+                  <th className="px-4 py-3 text-right">Действия</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+                {filtered.length > 0 ? filtered.map((cp) => {
+                  const stageInfo = cp.dealStage ? STAGE_LABELS[cp.dealStage] : null;
+                  const isAkp = Boolean(cp.isAlternative);
+                  const isPartnerAkp = isAkp && (cp.akpPurpose === 'partner_tender' || !cp.akpPurpose);
+                  const isSupplyAkp = isAkp && cp.akpPurpose === 'alternative_supply';
+                  const funnelInfo = cp.dealFunnel ? FUNNEL_LABELS[cp.dealFunnel] : null;
+                  const isSelected = selectedProposalIds.has(cp.id);
 
-                return (
-                  <tr 
-                    key={cp.id} 
-                    onClick={() => {
-                      setViewingDocProposal(cp);
-                      setViewingDocVersion(cp.versions && cp.versions.length > 0 ? cp.versions[cp.versions.length - 1] : undefined);
-                    }}
-                    title="Нажмите на строку для мгновенного предпросмотра коммерческого предложения"
-                    className={`transition-all duration-150 group cursor-pointer ${
-                      isPartnerAkp 
-                        ? 'bg-slate-100/90 hover:bg-slate-200 text-slate-800 border-l-4 border-l-slate-500 hover:shadow-xs' 
-                        : 'hover:bg-blue-50/60 bg-white hover:shadow-xs'
-                    }`}
-                  >
-                    {/* Outgoing Number & AKP Badge */}
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <FileText className={`w-3.5 h-3.5 shrink-0 ${isPartnerAkp ? 'text-slate-500' : 'text-blue-600 group-hover:scale-110 transition-transform'}`} />
-                        <span className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors flex items-center gap-1">
-                          {cp.outgoingNumber}
-                          <Eye className="w-3 h-3 opacity-0 group-hover:opacity-100 text-blue-600 transition-opacity" />
-                        </span>
-                        {isPartnerAkp && (
-                          <span 
-                            className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-300 text-slate-800 border border-slate-400 shadow-2xs"
-                            title="АКП для партнеров (под тендерные процедуры) — выделено серым цветом"
-                          >
-                            АКП • Партнерам
+                  return (
+                    <tr 
+                      key={cp.id} 
+                      onClick={() => {
+                        setViewingDocProposal(cp);
+                        setViewingDocVersion(cp.versions?.[0]);
+                      }}
+                      title="Нажмите для открытия бланка ТКП с возможностью печати и редактирования"
+                      className={`transition-all duration-150 group cursor-pointer ${
+                        isSelected
+                          ? 'bg-blue-50/90 dark:bg-blue-950/40 border-l-4 border-l-blue-600'
+                          : isPartnerAkp 
+                            ? 'bg-slate-100/90 dark:bg-slate-800/60 hover:bg-slate-200 text-slate-800 border-l-4 border-l-slate-500 hover:shadow-xs' 
+                            : 'hover:bg-blue-50/60 dark:hover:bg-slate-800/50 bg-white dark:bg-slate-900 hover:shadow-xs'
+                      }`}
+                    >
+                      {/* Checkbox */}
+                      <td 
+                        className="w-10 px-3 py-3.5 text-center" 
+                        onClick={(e) => handleToggleSelectOne(cp.id, e)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => handleToggleSelectOne(cp.id, e)}
+                          className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          title={isSelected ? 'Снять выбор' : 'Выбрать КП'}
+                        />
+                      </td>
+                      {/* Outgoing Number & AKP Badge */}
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <FileText className={`w-3.5 h-3.5 shrink-0 ${isPartnerAkp ? 'text-slate-500' : 'text-blue-600 group-hover:scale-110 transition-transform'}`} />
+                          <span className="font-bold text-gray-900 dark:text-white group-hover:text-blue-700 transition-colors flex items-center gap-1">
+                            {cp.outgoingNumber}
+                            <Eye className="w-3 h-3 opacity-0 group-hover:opacity-100 text-blue-600 transition-opacity" />
                           </span>
-                        )}
-                        {isSupplyAkp && (
-                          <span 
-                            className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-300 shadow-2xs"
-                            title="АКП для альтернативной поставки (аналог / оптимизация бюджета) — не выделяется серым"
-                          >
-                            АКП • Поставка
-                          </span>
-                        )}
-                      </div>
-                      {cp.note && (
-                        <div className="text-[10px] text-gray-500 truncate max-w-[180px]" title={cp.note}>
-                          {cp.note}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Date */}
-                    <td className="px-4 py-3.5 text-gray-500 font-medium">
-                      {cp.date}
-                    </td>
-
-                    {/* Company */}
-                    <td className="px-4 py-3.5 font-bold text-gray-900">
-                      <div className="flex items-center gap-1.5">
-                        <Building2 className="w-3.5 h-3.5 text-gray-400 shrink-0 group-hover:text-blue-600 transition-colors" />
-                        <span className="text-blue-950 font-bold group-hover:text-blue-700 transition-colors">{cp.toCompany}</span>
-                      </div>
-                    </td>
-
-                    {/* Content */}
-                    <td className="px-4 py-3.5 text-slate-500 max-w-xs truncate" title={cp.content}>
-                      <span className="font-medium text-gray-800">{cp.content}</span>
-                    </td>
-
-                    {/* Attached Files / Document Viewer Trigger */}
-                    <td className="px-4 py-3.5">
-                      {cp.versions && cp.versions.length > 0 ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setViewingDocProposal(cp);
-                            setViewingDocVersion(cp.versions?.[cp.versions.length - 1]);
-                          }}
-                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-colors cursor-pointer group/file ${
-                            isPartnerAkp
-                              ? 'bg-slate-200 hover:bg-slate-300 text-slate-800 border-slate-300'
-                              : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'
-                          }`}
-                          title={`Просмотреть прикрепленный файл: ${cp.versions[cp.versions.length - 1].name}`}
-                        >
-                          <Paperclip className="w-3.5 h-3.5 shrink-0 opacity-70 group-hover/file:opacity-100" />
-                          <span className="truncate max-w-[130px]">
-                            {cp.versions.length > 1 
-                              ? `${cp.versions.length} файла (v${cp.versions[cp.versions.length - 1].version})` 
-                              : cp.versions[0].name}
-                          </span>
-                          <Eye className="w-3 h-3 ml-0.5 opacity-60 group-hover/file:opacity-100" />
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setViewingDocProposal(cp);
-                            setViewingDocVersion(undefined);
-                          }}
-                          className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-gray-500 hover:text-blue-700 hover:bg-blue-50 cursor-pointer"
-                          title="Просмотреть официальный электронный бланк КП"
-                        >
-                          <FileText className="w-3 h-3 text-gray-400" />
-                          <span>Бланк КП</span>
-                        </button>
-                      )}
-                    </td>
-
-                    {/* Linked Deal, Funnel & Stage */}
-                    <td className="px-4 py-3.5">
-                      {cp.dealId ? (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-bold text-[10px] tracking-wider">
-                              {cp.dealId}
+                          {isPartnerAkp && (
+                            <span 
+                              className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-300 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-400 shadow-2xs"
+                              title="АКП для партнеров (под тендерные процедуры) — выделено серым цветом"
+                            >
+                              АКП • Партнерам
                             </span>
-                            {cp.dealTitle && (
-                              <span className="text-[11px] text-slate-500 font-medium truncate max-w-[140px]" title={cp.dealTitle}>
-                                {cp.dealTitle}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            {funnelInfo && (
-                              <span className="text-[10px] text-gray-500 font-medium flex items-center gap-0.5">
-                                <span>{funnelInfo.icon}</span>
-                                <span>{funnelInfo.label.split(' ')[0]}</span>
-                              </span>
-                            )}
-                            {stageInfo && (
-                              <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold border ${stageInfo.color}`}>
-                                {stageInfo.label}
-                              </span>
-                            )}
-                          </div>
+                          )}
+                          {isSupplyAkp && (
+                            <span 
+                              className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 border border-blue-300 shadow-2xs"
+                              title="АКП для альтернативной поставки (аналог / оптимизация бюджета) — не выделяется серым"
+                            >
+                              АКП • Поставка
+                            </span>
+                          )}
+                          {(cp.isNeutralTemplate || cp.templateMode === 'impersonal') && (
+                            <span 
+                              className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 shadow-2xs"
+                              title="Обезличенный шаблон (White-label) — без реквизитов организации и номеров"
+                            >
+                              White-label
+                            </span>
+                          )}
                         </div>
-                      ) : cp.dealFunnel ? (
+                        {cp.note && (
+                          <div className="text-[10px] text-gray-500 dark:text-slate-400 truncate max-w-[180px]" title={cp.note}>
+                            {cp.note}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Date */}
+                      <td className="px-4 py-3.5 text-gray-500 dark:text-slate-400 font-medium">
+                        {cp.date}
+                      </td>
+
+                      {/* Company */}
+                      <td className="px-4 py-3.5 font-bold text-gray-900 dark:text-white">
                         <div className="flex items-center gap-1.5">
-                          <span className="px-2 py-0.5 rounded-md bg-gray-100 border border-gray-200 text-slate-500 text-[10px] font-semibold">
-                            {FUNNEL_LABELS[cp.dealFunnel]?.icon} {FUNNEL_LABELS[cp.dealFunnel]?.label}
-                          </span>
+                          <Building2 className="w-3.5 h-3.5 text-gray-400 shrink-0 group-hover:text-blue-600 transition-colors" />
+                          <span className="text-blue-950 dark:text-blue-300 font-bold group-hover:text-blue-700 transition-colors">{cp.toCompany}</span>
                         </div>
-                      ) : (
-                        <span className="text-[10px] text-gray-400 font-medium italic">
-                          Без привязки к сделке
-                        </span>
-                      )}
-                    </td>
+                      </td>
 
-                    {/* Amount */}
-                    <td className="px-4 py-3.5 font-bold text-gray-900">
-                      {cp.amount ? (
-                        <span className="text-emerald-700 font-extrabold">
-                          {cp.amount.toLocaleString('ru-RU')} {getCurrencySymbol(cp.currency || 'RUB')}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400 font-normal text-[11px]">По запросу</span>
-                      )}
-                    </td>
+                      {/* Content */}
+                      <td className="px-4 py-3.5 text-slate-500 dark:text-slate-400 max-w-xs truncate" title={cp.content}>
+                        <span className="font-medium text-gray-800 dark:text-slate-200">{cp.content}</span>
+                      </td>
 
-                    {/* Prepared By */}
-                    <td className="px-4 py-3.5 text-slate-500 font-medium">
-                      {cp.preparedBy}
-                    </td>
-
-                    {/* Contacts */}
-                    <td className="px-4 py-3.5 text-slate-500 text-[11px]">
-                      {cp.contactPerson && (
-                        <div className="font-semibold text-gray-800 flex items-center gap-1">
-                          <User className="w-3 h-3 text-gray-400" />
-                          <span>{cp.contactPerson}</span>
-                        </div>
-                      )}
-                      {cp.contactPhone && (
-                        <div className="text-gray-500 flex items-center gap-1 mt-0.5">
-                          <Phone className="w-3 h-3 text-gray-400" />
-                          <span>{cp.contactPhone}</span>
-                        </div>
-                      )}
-                      {!cp.contactPerson && !cp.contactPhone && (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-4 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            showToast('Генерация ТКП в PDF, пожалуйста подождите...');
-                            try {
-                              const { downloadProposalPdf } = await import('../../utils/printProposal');
-                              await downloadProposalPdf(cp);
-                            } catch (error) {
-                              console.error('Ошибка при генерации ТКП:', error);
-                              showToast('Ошибка при генерации ТКП');
-                            }
-                          }}
-                          className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                          title="Скачать ТКП в PDF"
-                        >
-                          <Printer className="w-3.5 h-3.5" />
-                        </button>
-                        
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setViewingDocProposal(cp);
-                            setViewingDocVersion(cp.versions?.[0]);
-                          }}
-                          className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                          title="Просмотреть прикрепленный файл / бланк КП"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setViewingProposal(cp);
-                            setIsViewModalOpen(true);
-                          }}
-                          className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                          title="Просмотреть карточку КП"
-                        >
-                          <FileCheck className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={(e) => handleCloneProposal(cp, e)}
-                          className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                          title="Создать дубликат / копию КП"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-
-                        {canEdit && (
+                      {/* Attached Files / Document Viewer Trigger */}
+                      <td className="px-4 py-3.5">
+                        {cp.versions && cp.versions.length > 0 ? (
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleOpenEdit(cp);
+                              setViewingDocProposal(cp);
+                              setViewingDocVersion(cp.versions?.[cp.versions.length - 1]);
                             }}
-                            className="p-1.5 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
-                            title={isAdmin ? "Редактировать КП (права администратора)" : "Редактировать КП"}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-colors cursor-pointer group/file ${
+                              isPartnerAkp
+                                ? 'bg-slate-200 hover:bg-slate-300 text-slate-800 border-slate-300'
+                                : 'bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                            }`}
+                            title={`Просмотреть прикрепленный файл: ${cp.versions[cp.versions.length - 1].name}`}
+                          >
+                            <Paperclip className="w-3.5 h-3.5 shrink-0 opacity-70 group-hover/file:opacity-100" />
+                            <span className="truncate max-w-[130px]">
+                              {cp.versions.length > 1 
+                                ? `${cp.versions.length} файла (v${cp.versions[cp.versions.length - 1].version})` 
+                                : cp.versions[0].name}
+                            </span>
+                            <Eye className="w-3 h-3 ml-0.5 opacity-60 group-hover/file:opacity-100" />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setViewingDocProposal(cp);
+                              setViewingDocVersion(undefined);
+                            }}
+                            className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-gray-500 dark:text-slate-400 hover:text-blue-700 hover:bg-blue-50 cursor-pointer"
+                            title="Просмотреть официальный электронный бланк КП"
+                          >
+                            <FileText className="w-3 h-3 text-gray-400" />
+                            <span>Бланк КП</span>
+                          </button>
+                        )}
+                      </td>
+
+                      {/* Linked Deal, Funnel & Stage */}
+                      <td className="px-4 py-3.5">
+                        {cp.dealId ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 font-bold text-[10px] tracking-wider">
+                                {cp.dealId}
+                              </span>
+                              {cp.dealTitle && (
+                                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[140px]" title={cp.dealTitle}>
+                                  {cp.dealTitle}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              {funnelInfo && (
+                                <span className="text-[10px] text-gray-500 dark:text-slate-400 font-medium flex items-center gap-0.5">
+                                  <span>{funnelInfo.icon}</span>
+                                  <span>{funnelInfo.label.split(' ')[0]}</span>
+                                </span>
+                              )}
+                              {stageInfo && (
+                                <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold border ${stageInfo.color}`}>
+                                  {stageInfo.label}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ) : cp.dealFunnel ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 text-[10px] font-semibold">
+                              {FUNNEL_LABELS[cp.dealFunnel]?.icon} {FUNNEL_LABELS[cp.dealFunnel]?.label}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-gray-400 font-medium italic">
+                            Без привязки к сделке
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Amount */}
+                      <td className="px-4 py-3.5 font-bold text-gray-900 dark:text-white text-right">
+                        {cp.amount ? (
+                          <span className="text-emerald-700 dark:text-emerald-400 font-extrabold font-mono tabular-nums">
+                            {cp.amount.toLocaleString('ru-RU')} {getCurrencySymbol(cp.currency || 'RUB')}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 font-normal text-[11px] font-mono tabular-nums">По запросу</span>
+                        )}
+                      </td>
+
+                      {/* Prepared By */}
+                      <td className="px-4 py-3.5 text-slate-500 dark:text-slate-400 font-medium">
+                        {cp.preparedBy}
+                      </td>
+
+                      {/* Contacts */}
+                      <td className="px-4 py-3.5 text-slate-500 dark:text-slate-400 text-[11px]">
+                        {cp.contactPerson && (
+                          <div className="font-semibold text-gray-800 dark:text-slate-200 flex items-center gap-1">
+                            <User className="w-3 h-3 text-gray-400" />
+                            <span>{cp.contactPerson}</span>
+                          </div>
+                        )}
+                        {cp.contactPhone && (
+                          <div className="text-gray-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                            <Phone className="w-3 h-3 text-gray-400" />
+                            <span>{cp.contactPhone}</span>
+                          </div>
+                        )}
+                        {!cp.contactPerson && !cp.contactPhone && (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+
+                      {/* Actions (Cleaned up: Quick Edit in Studio, Quick Print, Link Deal, Clone, Delete) */}
+                      <td className="px-4 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveGeneratorProposalId(cp.id);
+                              setActiveGeneratorDealId(cp.dealId);
+                              setIsUnifiedGeneratorOpen(true);
+                            }}
+                            className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                            title="Редактировать в интерактивном конструкторе ТКП/ТЗ"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
-                        )}
 
-                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              showToast('Генерация ТКП в PDF, пожалуйста подождите...');
+                              try {
+                                await downloadProposalPdf(cp);
+                              } catch (error) {
+                                console.error('Ошибка при генерации ТКП:', error);
+                                showToast('Ошибка при генерации ТКП');
+                              }
+                            }}
+                            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                            title="Скачать ТКП в PDF"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleCloneProposal(cp, e)}
+                            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                            title="Создать дубликат / копию КП"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteConfirmId(cp.id);
+                              }}
+                              className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                              title="Удалить КП (права администратора)"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                }) : (
+                  <tr>
+                    <td colSpan={11} className="px-4 py-12 text-center text-gray-500">
+                      <FileText className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                      <div className="text-sm font-bold text-slate-500">Коммерческие предложения не найдены</div>
+                      <div className="text-xs text-gray-400 mt-1">Попробуйте изменить фильтры или добавьте новое КП</div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </HorizontalScrollContainer>
+        ) : (
+          /* COMPACT VIEW MODE */
+          <div className="p-4 bg-slate-50/50 dark:bg-slate-900/50">
+            {filtered.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                {filtered.map((cp) => {
+                  const stageInfo = cp.dealStage ? STAGE_LABELS[cp.dealStage] : null;
+                  const isAkp = Boolean(cp.isAlternative);
+                  const isPartnerAkp = isAkp && (cp.akpPurpose === 'partner_tender' || !cp.akpPurpose);
+                  const isSupplyAkp = isAkp && cp.akpPurpose === 'alternative_supply';
+                  const funnelInfo = cp.dealFunnel ? FUNNEL_LABELS[cp.dealFunnel] : null;
+                  const isSelected = selectedProposalIds.has(cp.id);
+
+                  return (
+                    <div
+                      key={cp.id}
+                      onClick={() => {
+                        setViewingDocProposal(cp);
+                        setViewingDocVersion(cp.versions?.[0]);
+                      }}
+                      className={`p-3.5 rounded-xl border transition-all cursor-pointer bg-white dark:bg-slate-900 hover:shadow-md group relative flex flex-col justify-between ${
+                        isSelected
+                          ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-xs'
+                          : isPartnerAkp
+                            ? 'border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50'
+                            : 'border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700'
+                      }`}
+                    >
+                      <div>
+                        {/* Header: Number, AKP, Date & Select */}
+                        <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2 mb-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <FileText className={`w-3.5 h-3.5 shrink-0 ${isPartnerAkp ? 'text-slate-500' : 'text-blue-600'}`} />
+                            <span className="font-black text-xs text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                              {cp.outgoingNumber}
+                            </span>
+                            {isPartnerAkp && (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200">
+                                АКП
+                              </span>
+                            )}
+                            {isSupplyAkp && (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                Аналог
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-slate-400 font-medium">{cp.date}</span>
+                            <div onClick={(e) => handleToggleSelectOne(cp.id, e)}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => handleToggleSelectOne(cp.id, e)}
+                                className="w-3.5 h-3.5 rounded text-blue-600 cursor-pointer"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Counterparty & Content */}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900 dark:text-white">
+                            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span className="truncate">{cp.toCompany}</span>
+                          </div>
+                          {cp.content && (
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2" title={cp.content}>
+                              {cp.content}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Financial & Deal Footer */}
+                      <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                        <div>
+                          <div className="text-[10px] text-slate-400 font-semibold uppercase">Сумма (с НДС 22%):</div>
+                          <div className="font-black text-sm font-mono text-emerald-600 dark:text-emerald-400">
+                            {cp.amount ? `${cp.amount.toLocaleString('ru-RU')} ₽` : 'По запросу'}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 text-right">
+                          <span className="text-[10px] text-slate-400 truncate max-w-[90px] block" title={`Менеджер: ${cp.preparedBy}`}>
+                            {cp.preparedBy?.split(' ')[0]}
+                          </span>
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setDeleteConfirmId(cp.id);
+                              setActiveGeneratorProposalId(cp.id);
+                              setActiveGeneratorDealId(cp.dealId);
+                              setIsUnifiedGeneratorOpen(true);
                             }}
-                            className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                            title="Удалить КП (права администратора)"
+                            className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
+                            title="Редактировать в конструкторе ТКП/ТЗ"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Edit3 className="w-3.5 h-3.5" />
                           </button>
-                        )}
+                          <button
+                            type="button"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              showToast('Генерация ТКП в PDF...');
+                              try {
+                                await downloadProposalPdf(cp);
+                              } catch (err) {
+                                showToast('Ошибка при генерации PDF');
+                              }
+                            }}
+                            className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
+                            title="Скачать PDF"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
-                    </td>
-                  </tr>
-                );
-              }) : (
-                <tr>
-                  <td colSpan={10} className="px-4 py-12 text-center text-gray-500">
-                    <FileText className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                    <div className="text-sm font-bold text-slate-500">Коммерческие предложения не найдены</div>
-                    <div className="text-xs text-gray-400 mt-1">Попробуйте изменить фильтры или добавьте новое КП</div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </HorizontalScrollContainer>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-12 text-center text-gray-500">
+                <FileText className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                <div className="text-sm font-bold text-slate-500">Коммерческие предложения не найдены</div>
+                <div className="text-xs text-gray-400 mt-1">Попробуйте изменить фильтры или создайте новое КП</div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Table Footer Stats */}
         <div className="px-6 py-3.5 bg-slate-50/90 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 gap-2">
@@ -1231,914 +1540,6 @@ export const ProposalsRegistry: React.FC<ProposalsRegistryProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Modal: Create / Edit Proposal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4">
-          <div className={`${isFullscreen ? 'max-w-none w-full h-full min-h-screen rounded-none' : 'max-w-3xl rounded-lg max-h-[92vh] my-4 sm:my-8'} bg-white w-full shadow-sm overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200`}>
-            {/* Modal Header */}
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-slate-50">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-gray-900">
-                    {editingProposalId ? 'Редактирование коммерческого предложения' : 'Регистрация нового КП'}
-                  </h2>
-                  <p className="text-xs text-gray-500">
-                    Привязка к сделке, воронке CRM, пометка АКП и прикрепление рабочих файлов
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setIsFullscreen(!isFullscreen)}
-                  className="p-2 text-gray-400 hover:text-gray-900 rounded-full hover:bg-gray-200 cursor-pointer"
-                  title={isFullscreen ? "Свернуть в окно" : "На весь экран"}
-                >
-                  {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-                </button>
-                <button 
-                  onClick={() => setIsModalOpen(false)} 
-                  className="p-2 text-gray-400 hover:text-gray-900 rounded-full hover:bg-gray-200 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Form */}
-            <div className="p-6 overflow-y-auto space-y-4">
-              <form id="proposal-form" onSubmit={handleSaveProposal} className="space-y-4">
-                
-                {/* 1. Deal & Sales Funnel Binding */}
-                <div className="p-4 rounded-lg bg-gradient-to-br from-blue-50/90 to-indigo-50/70 border border-blue-200/90 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-blue-950 flex items-center gap-2">
-                      <Link2 className="w-4 h-4 text-blue-600" />
-                      Привязка к сделке и воронке продаж CRM
-                    </label>
-                    {formData.dealId && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData({
-                            ...formData,
-                            dealId: '',
-                            dealTitle: '',
-                            dealStage: ''
-                          });
-                        }}
-                        className="text-[11px] text-rose-600 hover:text-rose-800 font-semibold cursor-pointer underline"
-                      >
-                        Отвязать от сделки
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Funnel Selector */}
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-500 mb-1.5">
-                      Направление / Воронка продаж:
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                      {[
-                        { id: 'all', label: 'Все воронки', icon: '🌐' },
-                        { id: 'equipment', label: 'Оборудование и ПО', icon: '🏭' },
-                        { id: 'services', label: '3D-услуги', icon: '📐' },
-                        { id: 'support', label: 'Сервис КИМ', icon: '🛠️' },
-                        { id: 'unassigned', label: 'Без воронки', icon: '📁' }
-                      ].map((fn) => {
-                        const isSelected = (!formData.dealFunnel && fn.id === 'all') || formData.dealFunnel === fn.id || (formData.dealFunnel === ('all' as any) && fn.id === 'all') || (!formData.dealFunnel && fn.id === 'unassigned' && formData.dealFunnel === undefined);
-                        return (
-                          <button
-                            key={fn.id}
-                            type="button"
-                            onClick={() => {
-                              setFormData({
-                                ...formData,
-                                dealFunnel: fn.id === 'all' ? ('all' as any) : fn.id === 'unassigned' ? undefined : (fn.id as any)
-                              });
-                            }}
-                            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all text-left flex items-center gap-1.5 cursor-pointer border ${
-                              isSelected
-                                ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                                : 'bg-white text-slate-500 border-gray-200 hover:bg-blue-50/60'
-                            }`}
-                          >
-                            <span>{fn.icon}</span>
-                            <span className="truncate">{fn.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Deal Selector with Filter */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-[11px] font-bold text-slate-500">
-                        Сделка CRM ({modalDealsList.length} доступно для привязки):
-                      </label>
-                      {formData.dealId && (
-                        <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">
-                          Текущая привязка: {formData.dealId}
-                        </span>
-                      )}
-                    </div>
-
-                    <select
-                      value={formData.dealId || ''}
-                      onChange={(e) => handleDealSelect(e.target.value)}
-                      className="w-full px-4 py-2 bg-white border border-blue-200 rounded-lg text-xs font-semibold text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
-                    >
-                      <option value="">-- Без привязки к конкретной сделке (свободное КП) --</option>
-                      {modalDealsList.map((deal, dIdx) => (
-                        <option key={`${deal.id}_${dIdx}`} value={deal.id}>
-                          [{deal.id}] {deal.companyName} — {deal.serviceType} ({STAGE_LABELS[deal.stage]?.label || deal.stage})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Card of selected deal */}
-                  {selectedDealInfo && (
-                    <div className="p-3 bg-white rounded-lg border border-blue-200 shadow-2xs space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-blue-900 text-xs flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                          Связано со сделкой: {selectedDealInfo.id}
-                        </span>
-                        {selectedDealInfo.stage && STAGE_LABELS[selectedDealInfo.stage] && (
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${STAGE_LABELS[selectedDealInfo.stage].color}`}>
-                            {STAGE_LABELS[selectedDealInfo.stage].label}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        <strong>Контрагент:</strong> {selectedDealInfo.companyName}
-                        {selectedDealInfo.estimatedPrice ? ` • Бюджет: ${selectedDealInfo.estimatedPrice.toLocaleString('ru-RU')} ₽` : ''}
-                      </div>
-                      <div className="text-[11px] text-gray-500 truncate">
-                        <strong>Предмет:</strong> {selectedDealInfo.serviceType}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Deal Stage in Funnel */}
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-500 mb-1">
-                      Этап воронки CRM:
-                    </label>
-                    <select
-                      value={formData.dealStage || ''}
-                      onChange={(e) => setFormData({ ...formData, dealStage: e.target.value })}
-                      className="w-full px-4 py-1.5 bg-white border border-blue-200 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
-                    >
-                      <option value="">-- Не указывать этап --</option>
-                      {Object.entries(STAGE_LABELS).map(([key, info]) => (
-                        <option key={key} value={key}>{info.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <p className="text-[11px] text-blue-800 leading-tight">
-                    При выборе сделки данные контрагента, контактов и предмета заполняются автоматически, а КП связывается с карточкой клиента.
-                  </p>
-                </div>
-
-                {/* 2. AKP (Alternative Proposal) Section */}
-                <div className={`p-4 rounded-lg border transition-all ${
-                  formData.isAlternative 
-                    ? (formData.akpPurpose === 'partner_tender' || !formData.akpPurpose
-                        ? 'bg-slate-100/95 border-slate-400 text-slate-900 shadow-2xs' 
-                        : 'bg-blue-50/80 border-blue-300 text-blue-950 shadow-2xs')
-                    : 'bg-slate-50/80 border-gray-200 text-slate-500'
-                }`}>
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(formData.isAlternative)}
-                      onChange={(e) => {
-                        const isChecked = e.target.checked;
-                        let newNumber = formData.outgoingNumber || '';
-                        if (isChecked && !newNumber.includes('/АКП') && !newNumber.includes('АКП')) {
-                          newNumber = newNumber ? `${newNumber}/АКП` : 'КП-2026/08/20-04/АКП';
-                        }
-                        setFormData({
-                          ...formData,
-                          isAlternative: isChecked,
-                          akpPurpose: isChecked ? (formData.akpPurpose || 'partner_tender') : undefined,
-                          outgoingNumber: newNumber
-                        });
-                      }}
-                      className="mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-extrabold text-gray-900">
-                          Альтернативное коммерческое предложение (АКП)
-                        </span>
-                        <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-200 text-slate-800 border border-slate-300">
-                          АКП
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                        Пометьте, если данное КП является альтернативным (запрошено партнерами под тендер либо формируется как альтернатива комплектации/поставки).
-                      </p>
-
-                      {formData.isAlternative && (
-                        <div className="mt-3 space-y-2.5 pt-2.5 border-t border-gray-200/80">
-                          <div className="text-[11px] font-bold text-gray-800">
-                            Назначение АКП (правило цветовой индикации):
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <label className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-all ${
-                              formData.akpPurpose === 'partner_tender' || !formData.akpPurpose
-                                ? 'bg-slate-200/90 border-slate-500 text-slate-900 shadow-2xs font-semibold' 
-                                : 'bg-white border-gray-200 text-slate-500 hover:bg-gray-100'
-                            }`}>
-                              <input
-                                type="radio"
-                                name="akpPurpose"
-                                value="partner_tender"
-                                checked={formData.akpPurpose === 'partner_tender' || !formData.akpPurpose}
-                                onChange={() => setFormData({ ...formData, akpPurpose: 'partner_tender' })}
-                                className="mt-0.5 text-slate-700 focus:ring-slate-500 cursor-pointer"
-                              />
-                              <div className="text-[11px] leading-tight">
-                                <div className="font-bold text-slate-900">Для партнеров (под тендер)</div>
-                                <div className="text-[10px] text-slate-500 mt-0.5">
-                                  ✓ Выделяется <strong>серым цветом</strong> в реестре
-                                </div>
-                              </div>
-                            </label>
-
-                            <label className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-all ${
-                              formData.akpPurpose === 'alternative_supply' 
-                                ? 'bg-blue-100/90 border-blue-500 text-blue-950 shadow-2xs font-semibold' 
-                                : 'bg-white border-gray-200 text-slate-500 hover:bg-gray-100'
-                            }`}>
-                              <input
-                                type="radio"
-                                name="akpPurpose"
-                                value="alternative_supply"
-                                checked={formData.akpPurpose === 'alternative_supply'}
-                                onChange={() => setFormData({ ...formData, akpPurpose: 'alternative_supply' })}
-                                className="mt-0.5 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                              />
-                              <div className="text-[11px] leading-tight">
-                                <div className="font-bold text-blue-900">Альтернативная поставка</div>
-                                <div className="text-[10px] text-blue-700 mt-0.5">
-                                  ✓ Обычный вид (<strong>НЕ выделяется серым</strong>)
-                                </div>
-                              </div>
-                            </label>
-                          </div>
-
-                          <div className="text-[11px] text-slate-500 bg-white/70 p-2 rounded-lg border border-gray-200/70 flex items-center justify-between">
-                            <span>
-                              {formData.akpPurpose === 'partner_tender' || !formData.akpPurpose
-                                ? 'Строка будет выделена серым цветом в общем реестре КП для наглядности внутри компании.' 
-                                : 'Строка будет отображаться в стандартном виде (без серого фона).'}
-                            </span>
-                            {!formData.outgoingNumber?.includes('/АКП') && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setFormData({
-                                    ...formData,
-                                    outgoingNumber: `${formData.outgoingNumber || 'КП'}/АКП`
-                                  });
-                                }}
-                                className="text-blue-700 underline font-bold cursor-pointer ml-2 shrink-0"
-                              >
-                                Добавить /АКП
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </label>
-                </div>
-
-                {/* 3. Primary Data: Number, Date, Amount */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">
-                      Исходящий номер КП <span className="text-red-500">*</span>
-                    </label>
-                    <input 
-                      required 
-                      type="text" 
-                      value={formData.outgoingNumber || ''} 
-                      onChange={e => setFormData({ ...formData, outgoingNumber: e.target.value })} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-gray-900" 
-                      placeholder="КП-2026/08/..." 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">
-                      Дата регистрации <span className="text-red-500">*</span>
-                    </label>
-                    <input 
-                      required 
-                      type="text" 
-                      value={formData.date || new Date().toLocaleDateString('ru-RU')} 
-                      onChange={e => setFormData({ ...formData, date: e.target.value })} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-gray-900" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1 flex items-center justify-between">
-                      <span>Сумма предложения (с НДС 22%)</span>
-                      <span className="text-[10px] text-gray-500 font-normal">Валюта:</span>
-                    </label>
-                    <div className="flex gap-2">
-                      <input 
-                        type="number" 
-                        min="0"
-                        step="1000"
-                        value={formData.amount || ''} 
-                        onChange={e => setFormData({ ...formData, amount: e.target.value ? Number(e.target.value) : undefined })} 
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-emerald-800" 
-                        placeholder="Например, 4850000" 
-                      />
-                      <select
-                        value={formData.currency || 'RUB'}
-                        onChange={e => setFormData({ ...formData, currency: e.target.value as CurrencyCode })}
-                        className="px-2.5 py-2 border border-gray-300 rounded-lg bg-gray-50 font-bold text-xs text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none shrink-0"
-                        title="Выбор валюты коммерческого предложения"
-                      >
-                        <option value="RUB">₽ RUB (Рубли)</option>
-                        <option value="USD">$ USD (Доллар США)</option>
-                        <option value="EUR">€ EUR (Евро)</option>
-                        <option value="CNY">¥ CNY (Юани)</option>
-                      </select>
-                    </div>
-
-                    {/* 3-point VAT breakdown preview */}
-                    {formData.amount && formData.amount > 0 && (
-                      <div className="mt-2 p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] space-y-1">
-                        <div className="flex justify-between text-slate-500">
-                          <span>ИТОГО без НДС:</span>
-                          <span className="font-mono font-bold text-gray-800">
-                            {Math.round(formData.amount / 1.22).toLocaleString('ru-RU')} {getCurrencySymbol(formData.currency || 'RUB')}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-slate-500">
-                          <span>В том числе НДС 22%:</span>
-                          <span className="font-mono font-bold text-blue-600">
-                            {Math.round((formData.amount / 1.22) * 0.22).toLocaleString('ru-RU')} {getCurrencySymbol(formData.currency || 'RUB')}
-                          </span>
-                        </div>
-                        <div className="flex justify-between font-bold text-gray-900 border-t border-slate-200 pt-1">
-                          <span>ИТОГО с учетом НДС 22%:</span>
-                          <span className="font-mono font-black text-emerald-800">
-                            {formData.amount.toLocaleString('ru-RU')} {getCurrencySymbol(formData.currency || 'RUB')}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* 4. Company & Author */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1 flex items-center justify-between">
-                      <span>Кому / Компания-заказчик <span className="text-red-500">*</span></span>
-                      <button 
-                        type="button" 
-                        onClick={() => setIsCompModalOpen(true)}
-                        className="text-[10px] text-blue-600 font-bold hover:underline flex items-center gap-0.5"
-                      >
-                        <Plus className="w-3 h-3" />
-                        Новый
-                      </button>
-                    </label>
-                    <select 
-                      required 
-                      value={crmCompanies.some(c => c.name === formData.toCompany) ? formData.toCompany : ''} 
-                      onChange={e => setFormData({ ...formData, toCompany: e.target.value })} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-blue-900" 
-                    >
-                      <option value="" disabled>{formData.toCompany && !crmCompanies.some(c => c.name === formData.toCompany) ? formData.toCompany : 'Выберите из базы...'}</option>
-                      {crmCompanies.map(c => (
-                        <option key={c.id} value={c.name}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">
-                      Ответственный специалист (Кто готовил КП) <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      required 
-                      value={formData.preparedBy || ''} 
-                      onChange={e => setFormData({ ...formData, preparedBy: e.target.value })} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-gray-900" 
-                    >
-                      <option value="" disabled>Выберите специалиста...</option>
-                      {authUsers
-                        .filter(u => u.role === 'superadmin' || u.role === 'admin' || u.role === 'manager')
-                        .map(u => {
-                          const staff = getStaffMemberInfo(u.fullName);
-                          return (
-                            <option key={u.id} value={staff.shortName}>
-                              {staff.fullName} — {staff.position}
-                            </option>
-                          );
-                      })}
-                    </select>
-                  </div>
-                </div>
-
-                {/* 5. Content */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">
-                    Содержание и состав коммерческого предложения <span className="text-red-500">*</span>
-                  </label>
-                  <textarea 
-                    required 
-                    value={formData.content || ''} 
-                    onChange={e => setFormData({ ...formData, content: e.target.value })} 
-                    rows={3} 
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-medium text-gray-800" 
-                    placeholder="Поставка стационарной КИМ Mitutoyo CRYSTA-Apex S + ПО PolyWorks|Inspector..." 
-                  />
-                </div>
-
-                {/* 6. Contacts */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1 flex items-center justify-between">
-                      <span>Контактное лицо (со стороны заказчика)</span>
-                      <button 
-                        type="button" 
-                        onClick={() => setIsContModalOpen(true)}
-                        className="text-[10px] text-blue-600 font-bold hover:underline flex items-center gap-0.5"
-                      >
-                        <Plus className="w-3 h-3" />
-                        Новый
-                      </button>
-                    </label>
-                    <select 
-                      value={crmContacts.some(c => c.fullName === formData.contactPerson) ? formData.contactPerson : ''} 
-                      onChange={e => {
-                        const selectedContact = crmContacts.find(c => c.fullName === e.target.value);
-                        setFormData({ 
-                          ...formData, 
-                          contactPerson: e.target.value,
-                          contactPhone: selectedContact ? (selectedContact.mobilePhone || selectedContact.workPhone || formData.contactPhone) : formData.contactPhone
-                        });
-                      }} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs text-gray-900" 
-                    >
-                      <option value="">{formData.contactPerson && !crmContacts.some(c => c.fullName === formData.contactPerson) ? formData.contactPerson : 'Выберите из базы...'}</option>
-                      {crmContacts
-                        .filter(c => !formData.toCompany || (crmCompanies.find(comp => comp.name === formData.toCompany)?.id === c.companyId))
-                        .map(c => (
-                          <option key={c.id} value={c.fullName}>{c.fullName} ({c.position})</option>
-                        ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">
-                      Контактный телефон / E-mail
-                    </label>
-                    <input 
-                      type="text" 
-                      value={formData.contactPhone || ''} 
-                      onChange={e => setFormData({ ...formData, contactPhone: e.target.value })} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs text-gray-900" 
-                      placeholder="+7 (846) 207-15-44" 
-                    />
-                  </div>
-                </div>
-
-                {/* 7. Notes & Internal Notes */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">
-                      Примечание (статус отправки)
-                    </label>
-                    <input 
-                      type="text" 
-                      value={formData.note || ''} 
-                      onChange={e => setFormData({ ...formData, note: e.target.value })} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs text-slate-500" 
-                      placeholder="Отправлено на email гл. метрологу" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">
-                      Внутренние служебные заметки
-                    </label>
-                    <input 
-                      type="text" 
-                      value={formData.internalNotes || ''} 
-                      onChange={e => setFormData({ ...formData, internalNotes: e.target.value })} 
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs text-slate-500" 
-                      placeholder="Ожидаем результатов тестового замера" 
-                    />
-                  </div>
-                </div>
-
-                {/* 8. Attached Versions / Files Section */}
-                <div className="p-4 rounded-lg bg-slate-50 border border-gray-200 space-y-3 mt-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5">
-                      <FileCheck className="w-4 h-4 text-blue-600" />
-                      Прикрепленные файлы и версии КП ({formData.versions?.length || 0})
-                    </span>
-                    <span className="text-[10px] text-gray-400">PDF, Word, Excel, сканы</span>
-                  </div>
-
-                  {/* Versions List */}
-                  {formData.versions && formData.versions.length > 0 ? (
-                    <div className="space-y-2">
-                      {formData.versions.map(ver => (
-                        <div key={ver.id} className="flex items-center justify-between p-2.5 bg-white border border-gray-200 rounded-lg text-xs">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-700 shrink-0">
-                              v{ver.version}
-                            </div>
-                            <div className="truncate">
-                              <div className="font-bold text-gray-800 truncate">{ver.name}</div>
-                              <div className="text-[10px] text-gray-400">{ver.uploadedAt} • {ver.size} • {ver.uploadedBy}</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setViewingDocProposal({
-                                  id: editingProposalId || 'preview',
-                                  outgoingNumber: formData.outgoingNumber || 'КП-Черновик',
-                                  date: formData.date || '',
-                                  toCompany: formData.toCompany || 'Компания',
-                                  content: formData.content || '',
-                                  preparedBy: formData.preparedBy || 'Менеджер',
-                                  note: formData.note || '',
-                                  internalNotes: formData.internalNotes || '',
-                                  contactPerson: formData.contactPerson || '',
-                                  contactPhone: formData.contactPhone || '',
-                                  dealId: formData.dealId,
-                                  dealTitle: formData.dealTitle,
-                                  amount: formData.amount,
-                                  versions: formData.versions,
-                                  isAlternative: formData.isAlternative
-                                });
-                                setViewingDocVersion(ver);
-                              }}
-                              className="p-1 text-gray-500 hover:text-blue-600 rounded-lg hover:bg-blue-50 cursor-pointer"
-                              title="Просмотреть документ"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveVersion(ver.id)}
-                              className="p-1 text-gray-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 cursor-pointer"
-                              title="Удалить файл"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-[11px] text-gray-400 italic">
-                      Файлы еще не прикреплены. Вы можете загрузить PDF/Word документ предложения ниже.
-                    </div>
-                  )}
-
-                  {/* Add Version Row */}
-                  <div className="pt-2 border-t border-gray-200/70 grid grid-cols-1 sm:grid-cols-12 gap-2">
-                    <div className="sm:col-span-10 relative">
-                      <input
-                        type="file"
-                        ref={docFileInputRef}
-                        onChange={e => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            setNewVersionName(file.name);
-                            setNewVersionSize((file.size / 1024 / 1024).toFixed(1) + ' MB');
-                            const reader = new FileReader();
-                            reader.onload = (loadEvt) => {
-                              setNewVersionDataUrl(loadEvt.target?.result as string);
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        accept=".pdf,.doc,.docx,.xls,.xlsx"
-                      />
-                      <div className="w-full px-4 py-1.5 bg-white border border-gray-300 rounded-lg text-xs flex items-center justify-between text-gray-500 hover:border-blue-400 transition-colors pointer-events-none">
-                        <span className="truncate">{newVersionName || 'Выберите файл КП (PDF/Word/Excel)...'}</span>
-                        <Upload className="w-3.5 h-3.5 text-gray-400" />
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleAddVersion}
-                      className="sm:col-span-2 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer text-center"
-                    >
-                      Загрузить
-                    </button>
-                  </div>
-                </div>
-
-              </form>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="px-4 py-3 border-t border-gray-100 bg-slate-50 flex items-center justify-between">
-              <div className="text-xs text-gray-500">
-                {isAdmin && <span className="font-semibold text-blue-700">Режим Администратора активен</span>}
-              </div>
-              <div className="flex items-center gap-3">
-                <button 
-                  type="button"
-                  onClick={() => setIsModalOpen(false)} 
-                  className="px-5 py-2 text-xs font-bold text-slate-500 hover:text-gray-900 bg-white border border-gray-300 rounded-lg transition-colors cursor-pointer"
-                >
-                  Отмена
-                </button>
-                <button 
-                  form="proposal-form" 
-                  type="submit" 
-                  className="px-6 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md transition-colors flex items-center gap-2 cursor-pointer"
-                >
-                  <Check className="w-4 h-4" />
-                  <span>{editingProposalId ? 'Сохранить изменения' : 'Зарегистрировать КП'}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: View Proposal Details */}
-      {isViewModalOpen && viewingProposal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4">
-          <div className={`${isFullscreen ? 'max-w-none w-full h-full min-h-screen rounded-none' : 'max-w-2xl rounded-lg max-h-[92vh] my-4 sm:my-8'} bg-white w-full shadow-sm overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200`}>
-            <div className={`px-4 py-3 border-b flex items-center justify-between text-white ${
-              viewingProposal.isAlternative 
-                ? (viewingProposal.akpPurpose === 'partner_tender' || !viewingProposal.akpPurpose 
-                    ? 'bg-slate-800 border-slate-700' 
-                    : 'bg-blue-800 border-blue-700')
-                : 'bg-blue-600 border-blue-500'
-            }`}>
-              <div className="flex items-center gap-3">
-                <FileText className="w-6 h-6" />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-base">{viewingProposal.outgoingNumber}</h3>
-                    {viewingProposal.isAlternative && (
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider border ${
-                        viewingProposal.akpPurpose === 'partner_tender' || !viewingProposal.akpPurpose
-                          ? 'bg-slate-700 text-slate-200 border-slate-600'
-                          : 'bg-blue-700 text-blue-100 border-blue-500'
-                      }`}>
-                        {viewingProposal.akpPurpose === 'partner_tender' || !viewingProposal.akpPurpose
-                          ? 'АКП • Партнерам (Тендер)'
-                          : 'АКП • Поставка (Аналог)'}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs opacity-90">{viewingProposal.date} • {viewingProposal.toCompany}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setIsFullscreen(!isFullscreen)}
-                  className="p-1.5 text-blue-100 hover:text-white rounded-full hover:bg-white/10 cursor-pointer"
-                  title={isFullscreen ? "Свернуть в окно" : "На весь экран"}
-                >
-                  {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-                </button>
-                <button 
-                  onClick={() => setIsViewModalOpen(false)} 
-                  className="p-1.5 text-blue-100 hover:text-white rounded-full hover:bg-white/10 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-4 text-xs overflow-y-auto">
-              {/* AKP Banner if alternative */}
-              {viewingProposal.isAlternative && (
-                <div className={`p-3 rounded-lg flex items-start gap-2.5 border ${
-                  viewingProposal.akpPurpose === 'partner_tender' || !viewingProposal.akpPurpose
-                    ? 'bg-slate-100 border-slate-300 text-slate-800'
-                    : 'bg-blue-50 border-blue-200 text-blue-900'
-                }`}>
-                  <div className={`w-6 h-6 rounded flex items-center justify-center font-black text-[10px] shrink-0 ${
-                    viewingProposal.akpPurpose === 'partner_tender' || !viewingProposal.akpPurpose
-                      ? 'bg-slate-700 text-white'
-                      : 'bg-blue-700 text-white'
-                  }`}>
-                    АКП
-                  </div>
-                  <div className="text-xs">
-                    <div className="font-bold">
-                      {viewingProposal.akpPurpose === 'partner_tender' || !viewingProposal.akpPurpose
-                        ? 'АКП для партнеров (под тендерные процедуры)'
-                        : 'АКП для альтернативной поставки (аналог / оптимизация бюджета)'}
-                    </div>
-                    <div className="opacity-90">
-                      {viewingProposal.akpPurpose === 'partner_tender' || !viewingProposal.akpPurpose
-                        ? 'Сформировано по запросу партнера под тендер (выделено серым фоном в реестре).'
-                        : 'Сформировано в качестве альтернативного варианта поставки (стандартный вид в реестре).'}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="p-4 rounded-lg bg-slate-50 border border-gray-200/70 space-y-3">
-                <div>
-                  <div className="text-[10px] uppercase font-bold text-gray-400">Предмет / Содержание КП</div>
-                  <div className="text-sm font-bold text-gray-900 mt-1">{viewingProposal.content}</div>
-                </div>
-
-                {viewingProposal.amount && (
-                  <div className="pt-2 border-t border-gray-200 space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between text-slate-500">
-                      <span>ИТОГО без НДС:</span>
-                      <span className="font-mono font-bold text-gray-800">
-                        {Math.round(viewingProposal.amount / 1.22).toLocaleString('ru-RU')} {getCurrencySymbol(viewingProposal.currency || 'RUB')}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-slate-500">
-                      <span>В том числе НДС 22%:</span>
-                      <span className="font-mono font-bold text-blue-600">
-                        {Math.round((viewingProposal.amount / 1.22) * 0.22).toLocaleString('ru-RU')} {getCurrencySymbol(viewingProposal.currency || 'RUB')}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between pt-1 border-t border-gray-200 font-black text-gray-900">
-                      <span className="uppercase text-[11px] tracking-wide">ИТОГО с учетом НДС 22%:</span>
-                      <span className="text-sm font-black text-emerald-800 font-mono">
-                        {viewingProposal.amount.toLocaleString('ru-RU')} {getCurrencySymbol(viewingProposal.currency || 'RUB')}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg bg-slate-50 border border-gray-200">
-                  <div className="text-[10px] text-gray-400 font-bold uppercase">Ответственный специалист</div>
-                  <div className="font-bold text-gray-800 mt-0.5">{viewingProposal.preparedBy}</div>
-                  <div className="text-[11px] text-gray-500 font-medium">
-                    {getStaffMemberInfo(viewingProposal.preparedBy).position}
-                  </div>
-                </div>
-                <div className="p-3 rounded-lg bg-slate-50 border border-gray-200">
-                  <div className="text-[10px] text-gray-400 font-bold uppercase">Связанная сделка CRM</div>
-                  <div className="font-bold text-blue-700 mt-0.5">
-                    {viewingProposal.dealId ? `${viewingProposal.dealId} (${viewingProposal.dealTitle || ''})` : 'Без привязки'}
-                  </div>
-                </div>
-              </div>
-
-              {(viewingProposal.contactPerson || viewingProposal.contactPhone) && (
-                <div className="p-3 rounded-lg bg-slate-50 border border-gray-200 space-y-1">
-                  <div className="text-[10px] text-gray-400 font-bold uppercase">Контакты заказчика</div>
-                  <div className="text-gray-900 font-semibold">{viewingProposal.contactPerson || '—'}</div>
-                  {viewingProposal.contactPhone && <div className="text-slate-500">{viewingProposal.contactPhone}</div>}
-                </div>
-              )}
-
-              {/* View Versions / Files with direct viewer */}
-              <div className="p-3 rounded-lg bg-slate-50 border border-gray-200 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="text-[10px] text-gray-400 font-bold uppercase flex items-center gap-1.5">
-                    <FileCheck className="w-3.5 h-3.5 text-blue-600" />
-                    Файлы и документы КП ({viewingProposal.versions?.length || 0})
-                  </div>
-                  <button
-                    onClick={() => {
-                      setViewingDocProposal(viewingProposal);
-                      setViewingDocVersion(viewingProposal.versions?.[0]);
-                    }}
-                    className="text-[11px] text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 cursor-pointer"
-                  >
-                    <Eye className="w-3 h-3" />
-                    <span>Открыть просмотр документа</span>
-                  </button>
-                </div>
-                
-                {viewingProposal.versions && viewingProposal.versions.length > 0 ? (
-                  <div className="space-y-1.5">
-                    {viewingProposal.versions.map(ver => (
-                      <div key={ver.id} className="flex items-center justify-between p-2 bg-white border border-gray-200 rounded-lg text-xs">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-5 h-5 rounded bg-blue-100 flex items-center justify-center text-[9px] font-bold text-blue-700 shrink-0">
-                            v{ver.version}
-                          </div>
-                          <div className="truncate">
-                            <div className="font-bold text-gray-800 truncate">{ver.name}</div>
-                            <div className="text-[9px] text-gray-400">{ver.uploadedAt} • {ver.size} • {ver.uploadedBy}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setViewingDocProposal(viewingProposal);
-                              setViewingDocVersion(ver);
-                            }}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer"
-                            title="Просмотреть документ"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-[11px] text-gray-500 italic p-2 bg-white rounded-lg border border-gray-200">
-                    Файлы не загружены. Доступен автоматический корпоративный бланк «ДС‑Инжиниринг».
-                  </div>
-                )}
-              </div>
-
-              {viewingProposal.note && (
-                <div className="p-3 rounded-lg bg-blue-50/50 border border-blue-200">
-                  <div className="text-[10px] text-blue-800 font-bold uppercase">Примечание</div>
-                  <div className="text-blue-950 mt-0.5">{viewingProposal.note}</div>
-                </div>
-              )}
-
-              {viewingProposal.internalNotes && (
-                <div className="p-3 rounded-lg bg-amber-50/50 border border-amber-200">
-                  <div className="text-[10px] text-amber-800 font-bold uppercase">Внутренние служебные заметки</div>
-                  <div className="text-amber-950 mt-0.5">{viewingProposal.internalNotes}</div>
-                </div>
-              )}
-            </div>
-
-            <div className="px-4 py-3 border-t border-gray-100 bg-slate-50 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    const current = viewingProposal;
-                    setIsViewModalOpen(false);
-                    setViewingDocProposal(current);
-                    setViewingDocVersion(current.versions?.[0]);
-                  }}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold cursor-pointer"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>Просмотреть бланк КП</span>
-                </button>
-                {canEdit && (
-                  <button
-                    onClick={() => {
-                      const current = viewingProposal;
-                      setIsViewModalOpen(false);
-                      handleOpenEdit(current);
-                    }}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-300 text-slate-500 hover:bg-gray-100 rounded-lg text-xs font-bold cursor-pointer"
-                  >
-                    <Edit3 className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Редактировать</span>
-                  </button>
-                )}
-                {(isAdmin || canEdit) && (
-                  <button
-                    onClick={() => {
-                      const id = viewingProposal.id;
-                      setIsViewModalOpen(false);
-                      setDeleteConfirmId(id);
-                    }}
-                    className="flex items-center gap-1.5 px-4.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Удалить</span>
-                  </button>
-                )}
-              </div>
-              <button
-                onClick={() => setIsViewModalOpen(false)}
-                className="px-5 py-2 bg-gray-900 text-white hover:bg-gray-800 rounded-lg text-xs font-bold cursor-pointer"
-              >
-                Закрыть
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Proposal Document / Attached Files Viewer Modal */}
       {viewingDocProposal && (

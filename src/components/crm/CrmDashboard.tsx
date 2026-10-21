@@ -59,6 +59,7 @@ import { useApp } from '../../context/AppContext';
 import { ExtendedDeal, INITIAL_CRM_DEALS } from '../../data/mockCrmData';
 import { COMPANY_INFO } from '../../data/mockData';
 import { ArshinVerificationWidget } from './ArshinVerificationWidget';
+import { TasksSidebarWidget } from './TasksSidebarWidget';
 
 // Format currency in Russian Rubles
 const formatRub = (value: number): string => {
@@ -97,9 +98,10 @@ interface RecentRequestItem {
 
 export interface CrmDashboardProps {
   onNavigateToSchedule?: () => void;
+  onNavigateToTasks?: () => void;
 }
 
-export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onNavigateToSchedule }) => {
+export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onNavigateToSchedule, onNavigateToTasks }) => {
   const { deals: contextDeals, contracts, commercialProposals, supportTickets } = useApp();
 
   // Active Deals dataset (fallback to initial mock if empty)
@@ -1013,8 +1015,22 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({ onNavigateToSchedule
         </div>
       </div>
 
-      {/* FGIS ARSHIN VERIFICATION MONITORING WIDGET */}
-      <ArshinVerificationWidget onOpenFullSchedule={onNavigateToSchedule} />
+      {/* 2-COLUMN OPERATIONAL WIDGETS: TODAY TASKS & FGIS ARSHIN MONITORING */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 w-full items-start">
+        {/* WIDGET 1: MY TASKS FOR TODAY */}
+        <div id="crm-dashboard-my-today-tasks" className="w-full">
+          <TasksSidebarWidget onOpenFullModule={() => {
+            if (onNavigateToTasks) {
+              onNavigateToTasks();
+            }
+          }} />
+        </div>
+
+        {/* WIDGET 2: FGIS ARSHIN VERIFICATION MONITORING */}
+        <div id="crm-dashboard-arshin-widget" className="w-full">
+          <ArshinVerificationWidget onOpenFullSchedule={onNavigateToSchedule} />
+        </div>
+      </div>
 
       {/* 6. RECENT REQUESTS DETAILED TABLE & FEED */}
       <div id="crm-dashboard-recent-requests-table" className="bg-white dark:bg-slate-900 rounded-lg border-2 border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden w-full">

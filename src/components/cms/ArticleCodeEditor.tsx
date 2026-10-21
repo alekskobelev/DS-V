@@ -534,7 +534,7 @@ export const ArticleCodeEditor: React.FC<ArticleCodeEditorProps> = ({
       author: author.trim() || 'ДС‑Инжиниринг',
       date: date.trim() || '03 сентября 2026',
       readTime: readTime.trim() || '5 мин',
-      preview: preview.trim() || 'Подробный технический материал от инженерного центра «ДС‑Инжиниринг».',
+      preview: preview.trim() || 'Подробный технический материал от инжиниринговой компании «ДС‑Инжиниринг».',
       content: content, // Direct unaltered HTML/CSS/JS without any tag stripping!
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
       image: image.trim(),
@@ -545,9 +545,9 @@ export const ArticleCodeEditor: React.FC<ArticleCodeEditorProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col space-y-4">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col space-y-4 relative z-20 isolate max-w-full overflow-hidden">
       {/* Top Header */}
-      <div className="px-6 py-4 bg-white text-gray-900 flex flex-wrap items-center justify-between gap-3 border-b border-gray-200">
+      <div className="px-6 py-4 bg-white text-gray-900 flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 sticky top-0 z-30 rounded-t-xl shadow-2xs">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
             <Code className="w-5 h-5" />

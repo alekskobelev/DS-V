@@ -11,20 +11,20 @@ export const CallbackFloatingButton: React.FC = () => {
 
   return (
     <div 
-      className="relative flex items-center justify-center group w-12 h-12 sm:w-14 sm:h-14 shrink-0"
+      className="relative flex items-center justify-center group w-11 h-11 sm:w-14 sm:h-14 shrink-0"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Continuous radiating sonar / radar pulse waves (Alive & interactive) */}
-      <span className="absolute -inset-1 rounded-full bg-blue-500/35 dark:bg-blue-400/30 animate-floating-pulse-1 pointer-events-none" />
-      <span className="absolute -inset-1 rounded-full bg-blue-400/25 dark:bg-blue-300/20 animate-floating-pulse-2 pointer-events-none" />
+      {/* Continuous radiating sonar / radar pulse waves (Alive & interactive on tablets/desktop) */}
+      <span className="hidden sm:block absolute -inset-1 rounded-full bg-blue-500/35 dark:bg-blue-400/30 animate-floating-pulse-1 pointer-events-none" />
+      <span className="hidden sm:block absolute -inset-1 rounded-full bg-blue-400/25 dark:bg-blue-300/20 animate-floating-pulse-2 pointer-events-none" />
 
       {/* Main Interactive Translucent Button */}
       <button
         id="floating-callback-btn"
         type="button"
         onClick={() => openCallbackModal()}
-        className="relative flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-[#1E3A8A]/75 hover:bg-[#1E3A8A] dark:bg-[#1E3A8A]/60 dark:hover:bg-[#1E3A8A] backdrop-blur-md text-white rounded-full shadow-[0_4px_16px_rgba(30,58,138,0.3)] hover:shadow-[0_8px_28px_rgba(37,99,235,0.45)] border-2 border-white/50 dark:border-white/30 hover:border-white transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400/30 cursor-pointer select-none active:scale-90 hover:scale-105 opacity-85 hover:opacity-100"
+        className="relative flex items-center justify-center w-11 h-11 sm:w-14 sm:h-14 bg-[#1E3A8A]/90 hover:bg-[#1E3A8A] dark:bg-[#1E3A8A]/80 dark:hover:bg-[#1E3A8A] backdrop-blur-md text-white rounded-full shadow-[0_4px_14px_rgba(30,58,138,0.35)] hover:shadow-[0_8px_28px_rgba(37,99,235,0.45)] border-2 border-white/60 dark:border-white/40 hover:border-white transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400/30 cursor-pointer select-none active:scale-90 hover:scale-105"
         aria-label="Заказать обратный звонок инженера"
       >
         {/* Animated Phone Icon with ringing wiggle */}
@@ -32,7 +32,7 @@ export const CallbackFloatingButton: React.FC = () => {
           <PhoneCall className="w-5 h-5 sm:w-6 sm:h-6 text-white animate-phone-ring transition-transform duration-300 group-hover:scale-115" />
           
           {/* Animated online status dot with pulsing ping wave */}
-          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400">
+          <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 w-2.5 h-2.5 rounded-full bg-emerald-400">
             <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
           </span>
         </div>
@@ -49,7 +49,7 @@ export const CallbackFloatingButton: React.FC = () => {
           Экспресс-связь с инженером
         </div>
         <div className="text-[11px] text-gray-300 mt-0.5">
-          Перезвоним вам в течение 10–15 минут
+          Консультация дежурного инженера
         </div>
       </div>
     </div>

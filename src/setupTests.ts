@@ -22,9 +22,10 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 });
 window.scrollTo = () => {};
+const defaultHeaders = new Headers({ 'content-type': 'application/json' });
 global.fetch = () => Promise.resolve({
-  json: () => Promise.resolve({}),
-  text: () => Promise.resolve(""),
-  headers: new Headers(),
+  json: () => Promise.resolve({ success: true, data: [] }),
+  text: () => Promise.resolve('{"success":true,"data":[]}'),
+  headers: defaultHeaders,
   ok: true
 } as any);

@@ -136,32 +136,35 @@ export const AccountTicketModal: React.FC<AccountTicketModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-white rounded-xl max-w-4xl w-full shadow-sm border border-gray-200 overflow-hidden flex flex-col my-auto max-h-[94vh]">
         
         {/* Header */}
-        <div className="p-5 bg-gradient-to-r from-gray-900 via-blue-950 to-gray-900 text-white flex items-center justify-between border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center">
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-gray-900 via-blue-950 to-gray-900 text-white flex items-center justify-between gap-3 border-b border-gray-800 shrink-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
               <MessageSquare className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold text-amber-400 bg-amber-400/20 px-2 py-0.5 rounded">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-mono text-xs font-bold text-amber-400 bg-amber-400/20 px-2 py-0.5 rounded shrink-0">
                   {ticket?.id || 'Новое обращение'}
                 </span>
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${TICKET_STATUS_LABELS[status].color}`}>
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${TICKET_STATUS_LABELS[status].color} shrink-0`}>
                   {TICKET_STATUS_LABELS[status].label}
                 </span>
               </div>
-              <h2 className="text-base font-bold text-white mt-1 truncate max-w-lg">
+              <h2 className="text-sm sm:text-base font-bold text-white mt-1 truncate max-w-full">
                 {isEditing ? ticket?.subject : 'Подача заявки в службу технической поддержки'}
               </h2>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl transition-colors cursor-pointer"
+            className="p-2 text-gray-300 hover:text-white bg-gray-800 hover:bg-rose-600 rounded-xl transition-colors cursor-pointer shrink-0 ml-1"
+            title="Закрыть окно"
+            aria-label="Закрыть окно"
           >
             <X className="w-5 h-5" />
           </button>
@@ -302,8 +305,8 @@ export const AccountTicketModal: React.FC<AccountTicketModalProps> = ({
                       className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-800"
                     >
                       <option value="">Не выбрано</option>
-                      {deals.map(d => (
-                        <option key={d.id} value={d.id}>{d.id} - {d.companyName} ({d.customerName})</option>
+                      {deals.map((d, idx) => (
+                        <option key={`${d.id}-${idx}`} value={d.id}>{d.id} - {d.companyName} ({d.customerName})</option>
                       ))}
                     </select>
                   </div>
@@ -539,7 +542,7 @@ export const AccountTicketModal: React.FC<AccountTicketModalProps> = ({
       {fileModalOpen && (
         <AccountFileModal
           existingDoc={editingDoc}
-          parentTitle={`Тикет: ${subject || 'Обращение'}`}
+          parentTitle={`Заявка: ${subject || 'Сервисное обращение'}`}
           defaultCategories={[
             'Лог ошибки / Скриншот',
             'CAD-модель / Чертеж',

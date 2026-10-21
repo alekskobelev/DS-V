@@ -2,90 +2,33 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
-import { VitePWA } from 'vite-plugin-pwa';
+import { defineConfig, Plugin } from 'vite';
+import { generateSitemapFile } from './src/utils/generate-sitemap';
+
+/**
+ * Плагин Vite для автоматической генерации sitemap.xml на этапе сборки (build-time)
+ */
+function sitemapBuildPlugin(): Plugin {
+  return {
+    name: 'vite-plugin-sitemap-generator',
+    apply: 'build',
+    closeBundle() {
+      try {
+        const result = generateSitemapFile();
+        console.log(`[vite-sitemap-generator] Успешно сгенерирован sitemap.xml (${result.totalEntries} URL) на этапе сборки.`);
+      } catch (err) {
+        console.warn('[vite-sitemap-generator] Предупреждение при сборке sitemap.xml:', err);
+      }
+    },
+  };
+}
 
 export default defineConfig(() => {
   return {
     plugins: [
       react(),
       tailwindcss(),
-      VitePWA({
-        registerType: 'autoUpdate',
-        includeAssets: ['favicon.svg', 'logo.svg'],
-        manifest: {
-          id: '/',
-          name: 'ДС-Инжиниринг',
-          short_name: 'ДС-Инж',
-          description: 'Инжиниринговые решения в CAD/CAM и метрологии',
-          theme_color: '#1E3A8A',
-          background_color: '#ffffff',
-          display: 'standalone',
-          start_url: '/',
-          scope: '/',
-          icons: [
-            {
-              src: '/logo.svg',
-              sizes: '192x192 512x512',
-              type: 'image/svg+xml',
-              purpose: 'any maskable',
-            },
-          ],
-        },
-        workbox: {
-          maximumFileSizeToCacheInBytes: 25 * 1024 * 1024,
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}'],
-          navigateFallback: '/index.html',
-          navigateFallbackAllowlist: [/^(?!\/__).*/],
-          runtimeCaching: [
-            {
-              urlPattern: /\.(?:png|jpg|jpeg|svg|webp|gif)$/,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'images-cache',
-                expiration: {
-                  maxEntries: 100,
-                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
-              },
-            },
-            {
-              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'google-fonts-cache',
-                expiration: {
-                  maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24 * 365,
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
-              },
-            },
-            {
-              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'gstatic-fonts-cache',
-                expiration: {
-                  maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24 * 365,
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
-              },
-            },
-          ],
-        },
-        devOptions: {
-          enabled: false,
-        },
-      }),
+      sitemapBuildPlugin(),
     ],
     test: {
       globals: true,
@@ -94,11 +37,12 @@ export default defineConfig(() => {
     },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(__dirname, './src'),
+        '@root': path.resolve(__dirname, '.'),
         react: path.resolve(__dirname, 'node_modules/react'),
         'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       },
-      dedupe: ['react', 'react-dom'],
+      dedupe: ['react', 'react-dom', 'lucide-react', 'three'],
     },
     optimizeDeps: {
       include: [
@@ -107,22 +51,34 @@ export default defineConfig(() => {
         'react-dom/client',
         'react/jsx-runtime',
         'react/jsx-dev-runtime',
+        'lucide-react',
       ],
+      exclude: ['pg', 'nodemailer', 'firebase-admin', 'minio', 'compression', 'express'],
     },
     server: {
       port: 3000,
       host: '0.0.0.0',
-      hmr: process.env.DISABLE_HMR !== 'true',
-      watch: process.env.DISABLE_HMR === 'true' ? null : {},
+      hmr: false,
+      ws: false,
     },
     build: {
       outDir: 'dist',
       assetsDir: 'assets',
+      target: 'es2022',
+      minify: 'esbuild',
       sourcemap: false,
       emptyOutDir: true,
-      chunkSizeWarningLimit: 4500,
+      cssCodeSplit: true,
+      chunkSizeWarningLimit: 2500,
       rollupOptions: {
+        treeshake: {
+          moduleSideEffects: 'no-external',
+          preset: 'recommended',
+        },
         output: {
+          entryFileNames: 'assets/[name]-[hash].js',
+          chunkFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]',
           manualChunks(id) {
             if (id.includes('node_modules')) {
               if (id.includes('three')) {
@@ -152,8 +108,8 @@ export default defineConfig(() => {
               if (id.includes('motion')) {
                 return 'vendor-motion';
               }
-              if (id.includes('marked') || id.includes('turndown')) {
-                return 'vendor-markdown';
+              if (id.includes('marked') || id.includes('turndown') || id.includes('dompurify')) {
+                return 'vendor-content';
               }
               if (id.includes('react') || id.includes('react-dom')) {
                 return 'vendor-react';

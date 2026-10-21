@@ -112,7 +112,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1 p-2 bg-[#f8f9fa] border-b border-[#e5e7eb] text-slate-500">
+    <div className="sticky top-0 z-20 flex flex-wrap items-center gap-1 p-2 bg-[#f8f9fa] border-b border-[#e5e7eb] text-slate-500 shadow-2xs">
       <button
         type="button"
         onClick={() => editor.chain().focus().undo().run()}
@@ -532,10 +532,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChang
   };
 
   return (
-    <div className="border border-gray-300 rounded-xl overflow-hidden bg-white flex flex-col shadow-2xs relative z-10 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+    <div className="border border-gray-300 rounded-xl bg-white flex flex-col shadow-xs relative z-20 isolate focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all max-w-full overflow-hidden">
       
       {/* Mode Switcher Header - Visible Tabs */}
-      <div className="bg-slate-50 border-b border-gray-200 flex items-center px-2 py-1.5 rounded-t-xl gap-1">
+      <div className="bg-slate-50 border-b border-gray-200 flex items-center px-2 py-1.5 rounded-t-xl gap-1 sticky top-0 z-30 flex-wrap">
         <button 
           type="button"
           onClick={() => switchMode('wysiwyg')}
@@ -565,14 +565,14 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChang
 
       {mode === 'wysiwyg' && <MenuBar editor={editor} />}
       
-      <div className="flex-1 rounded-b-xl overflow-hidden bg-white">
-        {mode === 'wysiwyg' && <EditorContent editor={editor} className="rounded-b-xl overflow-hidden" />}
+      <div className="flex-1 rounded-b-xl overflow-x-auto overflow-y-auto max-h-[650px] bg-white min-w-0">
+        {mode === 'wysiwyg' && <EditorContent editor={editor} className="rounded-b-xl min-w-0" />}
         
         {mode === 'markdown' && (
           <textarea
             value={localMarkdown}
             onChange={handleMarkdownChange}
-            className={`w-full ${minHeight} p-4 text-sm font-mono text-gray-800 bg-slate-50 rounded-b-xl resize-y focus:outline-none focus:ring-inset focus:ring-2 focus:ring-blue-500`}
+            className={`w-full ${minHeight} max-h-[600px] p-4 text-sm font-mono text-gray-800 bg-slate-50 rounded-b-xl resize-y focus:outline-none focus:ring-inset focus:ring-2 focus:ring-blue-500 break-words`}
             placeholder="Пишите в формате Markdown..."
           />
         )}
@@ -581,7 +581,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChang
           <textarea
             value={localHtml}
             onChange={handleHtmlChange}
-            className={`w-full ${minHeight} p-4 text-sm font-mono text-blue-900 bg-blue-50/50 rounded-b-xl resize-y focus:outline-none focus:ring-inset focus:ring-2 focus:ring-blue-500`}
+            className={`w-full ${minHeight} max-h-[600px] p-4 text-sm font-mono text-blue-900 bg-blue-50/50 rounded-b-xl resize-y focus:outline-none focus:ring-inset focus:ring-2 focus:ring-blue-500 break-words`}
             placeholder="Вставьте или отредактируйте HTML код..."
           />
         )}

@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  Sparkles,
 } from 'lucide-react';
 import {
   AccuracyTier,

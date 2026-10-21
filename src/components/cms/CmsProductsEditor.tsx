@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Product } from '../../types';
+import { RichTextEditor } from './RichTextEditor';
 import { FileUploadField } from '../common/FileUploadField';
 
 export const CmsProductsEditor: React.FC = () => {
@@ -498,13 +499,11 @@ export const CmsProductsEditor: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Полное инженерное описание</label>
-                <textarea
-                  rows={3}
-                  value={newProdFullDesc}
-                  onChange={e => setNewProdFullDesc(e.target.value)}
-                  placeholder="Подробные технические характеристики, ГОСТы, применимость..."
-                  className="w-full p-2.5 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Полное инженерное описание (с поддержкой HTML, WYSIWYG и Markdown)</label>
+                <RichTextEditor
+                  content={newProdFullDesc}
+                  onChange={setNewProdFullDesc}
+                  minHeight="min-h-[160px]"
                 />
               </div>
 

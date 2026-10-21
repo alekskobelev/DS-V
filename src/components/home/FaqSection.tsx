@@ -6,30 +6,33 @@ import {
   MessageSquare, 
   Phone, 
   ArrowRight, 
-  Sparkles, 
+  Info,
   Layers, 
   Box, 
   Wrench, 
   Cpu, 
   Share2,
   Check,
-  ExternalLink
+  ExternalLink,
+  CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../../context/AppContext';
 import { useJsonLdFaq } from '../../hooks/useJsonLdFaq';
 import { COMPANY_INFO } from '../../data/mockData';
+import { FAQ_ITEMS } from '../../data/knowledgeBase';
 import { FaqItem } from '../../types';
 
 export const FaqSection: React.FC = () => {
   const { navigateTo, openContactModal, showToast } = useApp();
-  const { faqItems } = useJsonLdFaq();
+  const { faqItems: hookFaqItems } = useJsonLdFaq();
+  const faqItems = hookFaqItems && hookFaqItems.length > 0 ? hookFaqItems : FAQ_ITEMS;
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [openIds, setOpenIds] = useState<string[]>(() => {
     // По умолчанию раскрываем первый вопрос
-    return faqItems.length > 0 ? [faqItems[0].id] : ['faq-schema-1'];
+    return faqItems.length > 0 ? [faqItems[0].id] : ['faq-01'];
   });
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -40,8 +43,9 @@ export const FaqSection: React.FC = () => {
     ];
 
     const categoryMap: Record<string, { label: string; icon: React.FC<{ className?: string }> }> = {
-      software: { label: 'CAD/CAM и ПО', icon: Layers },
+      software: { label: 'Инженерное ПО (CAD/CAM)', icon: Layers },
       hardware: { label: 'Оборудование КИМ', icon: Box },
+      metrology: { label: 'Метрологическая экспертиза', icon: CheckCircle2 },
       services: { label: '3D-сканирование и реверс', icon: Wrench },
       postprocessors: { label: 'Постпроцессоры ЧПУ', icon: Cpu },
       training: { label: 'Консультации', icon: HelpCircle }
@@ -327,7 +331,7 @@ export const FaqSection: React.FC = () => {
                           {/* Ключевой инженерный вывод */}
                           {faq.highlight && (
                             <div className="p-3.5 bg-blue-50/90 dark:bg-blue-950/50 border-l-4 border-blue-600 dark:border-blue-400 rounded-r-xl text-xs text-blue-950 dark:text-blue-200 flex items-start gap-2.5 shadow-2xs">
-                              <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                              <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                               <span className="leading-relaxed font-medium">{faq.highlight}</span>
                             </div>
                           )}
@@ -367,8 +371,8 @@ export const FaqSection: React.FC = () => {
         {/* Нижний блок прямой связи с инженером */}
         <div className="mt-8 sm:mt-10 bg-slate-200/70 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl p-5 sm:p-7 text-slate-900 dark:text-white shadow-xs flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-1.5 text-center md:text-left">
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 dark:text-amber-400">
-              <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-amber-400" />
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 dark:text-blue-300">
+              <HelpCircle className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
               <span>Индивидуальный инженерный консалтинг</span>
             </div>
             <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">

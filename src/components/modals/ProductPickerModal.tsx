@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, Search, Check, SlidersHorizontal, ArrowRight, Sparkles, Filter } from 'lucide-react';
+import { X, Search, Check, SlidersHorizontal, ArrowRight, Filter } from 'lucide-react';
 import { PRODUCTS_DATA } from '../../data/mockData';
 import { Product } from '../../types';
 
@@ -21,6 +21,7 @@ export const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
   onApplyPreset,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [productTypeFilter, setProductTypeFilter] = useState<'all' | 'hardware' | 'software'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
 
@@ -50,12 +51,12 @@ export const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
       },
       {
         id: 'cmm-stationary',
-        title: 'Стационарные координатно-измерительные машины',
-        desc: 'Mitutoyo CRYSTA-Apex S vs PMT Future Plus vs Coord3 Universal',
+        title: 'Координатно-измерительные системы и калибровка',
+        desc: 'ScanLine TrackerScan Pro vs PMT Alpha Arm vs Renishaw Equator 300',
         products: [
-          findProd('eq-mitutoyo-crysta-apex-s') || PRODUCTS_DATA.find((p) => p.name.includes('Mitutoyo')),
-          PRODUCTS_DATA.find((p) => p.category === 'cmm' && p.name.includes('PMT')),
-          PRODUCTS_DATA.find((p) => p.category === 'cmm' && !p.name.includes('Mitutoyo') && !p.name.includes('PMT')),
+          findProd('scanline-trackerscan-pronova') || PRODUCTS_DATA.find((p) => p.id.includes('trackerscan')),
+          PRODUCTS_DATA.find((p) => p.id.includes('pmt') || p.name.includes('PMT')),
+          PRODUCTS_DATA.find((p) => p.id.includes('equator') || p.name.includes('Equator')),
         ].filter((p): p is Product => Boolean(p)),
       },
       {
@@ -101,6 +102,8 @@ export const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
   // Filtered products
   const filteredProducts = useMemo(() => {
     return PRODUCTS_DATA.filter((p) => {
+      if (productTypeFilter === 'hardware' && p.type === 'software') return false;
+      if (productTypeFilter === 'software' && p.type !== 'software') return false;
       if (selectedCategory !== 'all' && p.category !== selectedCategory) return false;
       if (selectedBrand !== 'all' && p.brand !== selectedBrand) return false;
       if (searchQuery.trim()) {
@@ -113,14 +116,14 @@ export const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
       }
       return true;
     });
-  }, [searchQuery, selectedCategory, selectedBrand]);
+  }, [searchQuery, selectedCategory, selectedBrand, productTypeFilter]);
 
   if (!isOpen) return null;
 
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -136,7 +139,7 @@ export const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-bold text-white">Выбор товара для сравнения</h3>
                 <span className="text-xs px-2.5 py-0.5 bg-amber-500 text-white font-bold rounded-full">
-                  Слот {targetSlotIndex + 1} из 3
+                  Слот {targetSlotIndex + 1} из {currentProducts.length}
                 </span>
               </div>
               <p className="text-xs text-blue-200">
@@ -154,6 +157,49 @@ export const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
 
         {/* Filters & Search Toolbar */}
         <div className="p-4 bg-slate-50 dark:bg-slate-850 border-b border-gray-200 dark:border-slate-800 space-y-3 shrink-0">
+          {/* Product Type Tabs */}
+          <div className="flex items-center gap-1.5 p-1 bg-slate-200/80 dark:bg-slate-800 rounded-xl w-fit text-xs font-semibold">
+            <button
+              onClick={() => {
+                setProductTypeFilter('all');
+                setSelectedCategory('all');
+              }}
+              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                productTypeFilter === 'all'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+              }`}
+            >
+              Все позиции
+            </button>
+            <button
+              onClick={() => {
+                setProductTypeFilter('hardware');
+                setSelectedCategory('all');
+              }}
+              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                productTypeFilter === 'hardware'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+              }`}
+            >
+              Оборудование (Hardware)
+            </button>
+            <button
+              onClick={() => {
+                setProductTypeFilter('software');
+                setSelectedCategory('all');
+              }}
+              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                productTypeFilter === 'software'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+              }`}
+            >
+              Программное обеспечение (Software)
+            </button>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-2.5">
             {/* Search Input */}
             <div className="relative flex-1">
@@ -224,7 +270,7 @@ export const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
           <div className="bg-blue-50/70 dark:bg-blue-950/40 border-b border-blue-100 dark:border-blue-900/60 p-3 md:px-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5 uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <SlidersHorizontal className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 Готовые комплекты для сравнения инженеров (1 клик):
               </span>
             </div>

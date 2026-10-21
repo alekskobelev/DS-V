@@ -3,6 +3,7 @@ import { COMPANY_INFO } from '../data/mockData';
 export interface StaffMember {
   fullName: string;
   shortName: string;
+  name?: string;
   position: string;
   department: string;
   phone: string;
@@ -23,8 +24,8 @@ export const STAFF_DIRECTORY: Record<string, StaffMember> = {
   skobelev: {
     fullName: 'Скобелев Александр Сергеевич',
     shortName: 'Скобелев А.С.',
-    position: 'Инженер по ПО, ЧПУ и CAD-моделированию',
-    department: 'Отдел ПО, ЧПУ и CAD-моделирования',
+    position: 'Инженер по внедрению CAD/CAM и постпроцессорам',
+    department: 'Отдел внедрения CAD/CAM и постпроцессоров',
     phone: '+7 (937) 984-61-51',
     email: 'a.skobelev@ds-enginering.ru',
   },
@@ -105,7 +106,7 @@ export function getStaffMemberInfo(query?: string): StaffMember {
     fullName: query,
     shortName: query,
     position: 'Специалист «ДС‑Инжиниринг»',
-    department: 'Отдел ПО, ЧПУ и CAD-моделирования',
+    department: 'Инженерно-технический отдел',
     phone: COMPANY_INFO.phone,
     email: COMPANY_INFO.email,
   };

@@ -49,41 +49,41 @@ export const CasesGallerySection: React.FC = () => {
     : CASE_STUDIES.filter(c => c.clientIndustry === selectedIndustry);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-5">
       {/* Section Header with NDA notice */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-6 sm:pt-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 pt-0">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-800 text-xs font-bold rounded-full mb-2 uppercase tracking-wider border border-blue-200/80 shadow-xs">
-            <Award className="w-3.5 h-3.5 text-blue-600" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-cyan-300 text-xs font-bold rounded-md mb-2 uppercase tracking-wider border border-blue-200 dark:border-blue-800 shadow-xs">
+            <Award className="w-3.5 h-3.5 text-blue-600 dark:text-cyan-400" />
             <span>Инженерное портфолио</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             Примеры выполненных работ и проектов
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl leading-relaxed">
             Реальные производственные кейсы: от оцифровки лопаток авиадвигателей до настройки постпроцессоров для парка 18 станков с ЧПУ
           </p>
         </div>
 
         {/* NDA Disclaimer Pill */}
-        <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-700 shadow-2xs self-start md:self-auto">
-          <Lock className="w-4 h-4 text-slate-600 shrink-0" />
+        <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-300 shadow-xs self-start md:self-auto">
+          <Lock className="w-4 h-4 text-blue-600 dark:text-cyan-400 shrink-0" />
           <span>
-            <strong className="text-slate-900">Конфиденциальность:</strong> Материалы публикуются с соблюдением требований NDA заказчиков
+            <strong className="text-slate-900 dark:text-white">Конфиденциальность:</strong> Публикация по требованиям NDA
           </span>
         </div>
       </div>
 
       {/* Industry Filter Buttons */}
-      <div className="flex flex-wrap items-center gap-2 pt-2 border-b border-slate-200 pb-4">
+      <div className="flex flex-wrap items-center gap-2 pt-1 border-b border-slate-200 dark:border-slate-800 pb-3">
         {industries.map((ind) => (
           <button
             key={ind}
             onClick={() => setSelectedIndustry(ind)}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
               selectedIndustry === ind
-                ? 'bg-blue-700 text-white shadow-xs'
-                : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300'
+                ? 'bg-blue-600 text-white border-blue-600 shadow-sm ring-1 ring-blue-500/20'
+                : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
             }`}
           >
             {ind === 'all' ? 'Все отрасли' : ind}
@@ -92,7 +92,7 @@ export const CasesGallerySection: React.FC = () => {
       </div>
 
       {/* Cases Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
         {filteredCases.map((cs, idx) => (
           <motion.div
             key={cs.id}
@@ -100,7 +100,7 @@ export const CasesGallerySection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-10px" }}
             transition={{ duration: 0.3, delay: idx * 0.05 }}
-            className="bg-white rounded-xl border border-slate-300 overflow-hidden shadow-[0_2px_8px_rgba(15,23,42,0.06)] hover:border-blue-500 hover:shadow-md transition-all duration-300 flex flex-col justify-between group"
+            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:border-blue-400 hover:shadow-md transition-all duration-300 flex flex-col justify-between group"
           >
             <div>
               {/* Image Container */}
@@ -122,20 +122,20 @@ export const CasesGallerySection: React.FC = () => {
               {/* Body */}
               <div className="p-4 space-y-3">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700 block mb-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 block mb-0.5">
                     Было (проблема производства):
                   </span>
-                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
                     {cs.task}
                   </p>
                 </div>
 
-                <div className="pt-2 border-t border-slate-100">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block mb-1">
                     Стало (результат «ДС-Инжиниринг»):
                   </span>
-                  <div className="flex items-start gap-1.5 text-xs text-slate-800 font-medium line-clamp-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-1.5 text-xs text-slate-800 dark:text-slate-100 font-medium line-clamp-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                     <span>{cs.results[0]}</span>
                   </div>
                 </div>
@@ -143,10 +143,10 @@ export const CasesGallerySection: React.FC = () => {
             </div>
 
             {/* Footer Buttons */}
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
               <button
                 onClick={() => setActiveCaseModal(cs)}
-                className="text-xs font-bold text-blue-700 hover:text-blue-900 transition-colors"
+                className="text-xs font-bold text-blue-700 dark:text-cyan-400 hover:text-blue-800 dark:hover:text-cyan-300 transition-colors"
               >
                 Детали проекта →
               </button>
@@ -155,7 +155,7 @@ export const CasesGallerySection: React.FC = () => {
                   title: `Заявка по аналогии: ${cs.title}`,
                   formType: 'consultation'
                 })}
-                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors shadow-2xs"
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
               >
                 Аналогичный проект
               </button>

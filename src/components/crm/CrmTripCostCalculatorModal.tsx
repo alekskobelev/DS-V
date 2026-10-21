@@ -90,7 +90,7 @@ export const CrmTripCostCalculatorModal: React.FC<CrmTripCostCalculatorModalProp
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs overflow-y-auto">
+      <div className="fixed inset-0 z-[500] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -256,7 +256,7 @@ export const CrmTripCostCalculatorModal: React.FC<CrmTripCostCalculatorModalProp
                   {recommendedPrice.toLocaleString('ru-RU')} ₽
                 </div>
                 <div className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80">
-                  Включает НДС 20% и накладные расходы
+                  Включает базовый НДС 22% и накладные расходы
                 </div>
               </div>
             </div>

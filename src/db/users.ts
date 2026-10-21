@@ -142,7 +142,7 @@ const INITIAL_SYSTEM_USERS: DbUserRecord[] = [
     email: 'a.skobelev@ds-enginering.ru',
     fullName: 'Скобелев Александр Сергеевич',
     role: 'manager',
-    position: 'Инженер по ПО, ЧПУ и CAD-моделированию',
+    position: 'Инженер по внедрению CAD/CAM и постпроцессорам',
     company: 'ООО «ДС‑Инжиниринг»',
     phone: '+7 (937) 984-61-51',
     permissions: {

@@ -4,6 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { COMPANY_INFO } from '../../data/mockData';
 import { apiService } from '../../services/apiService';
 import { emailNotificationService } from '../../services/emailNotificationService';
+import { useModalStack } from '../../hooks/useModalStack';
 
 const POPULAR_CAM_SYSTEMS = [
   'TopSolid 7 CAM (TopSolid SAS / Франция)',
@@ -24,16 +25,12 @@ export const ContactModal: React.FC = () => {
   const { contactModal, closeContactModal, showToast, setIsPrivacyModalOpen } = useApp();
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    if (contactModal.isOpen) {
-      const prevOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = prevOverflow;
-      };
-    }
-  }, [contactModal.isOpen]);
+  const { containerRef, zIndex } = useModalStack({
+    id: 'public-contact-modal',
+    isOpen: contactModal.isOpen,
+    onClose: closeContactModal,
+    baseZIndex: 300
+  });
 
   const isPostprocessor = 
     contactModal.formType === 'postprocessor' ||
@@ -94,7 +91,9 @@ export const ContactModal: React.FC = () => {
         itemInterest: contactModal.defaultProduct || contactModal.defaultService || '',
         camSystem: contactModal.camSystem || 'TopSolid 7 CAM (TopSolid SAS / Франция)',
         isLicensedCam: contactModal.isLicensedCam ?? false,
-        message: contactModal.defaultProduct 
+        message: contactModal.customMessage 
+          ? contactModal.customMessage
+          : contactModal.defaultProduct 
           ? `Интересует поставка и демонстрация: ${contactModal.defaultProduct}` 
           : contactModal.defaultService 
           ? `Интересует расчет стоимости услуги: ${contactModal.defaultService}`
@@ -102,14 +101,6 @@ export const ContactModal: React.FC = () => {
         smartCaptchaPassed: true,
         smartCaptchaToken: 'SMART_CAPTCHA_PASSED_TOKEN',
       }));
-
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          closeContactModal();
-        }
-      };
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
     }
   }, [contactModal, closeContactModal]);
 
@@ -260,31 +251,38 @@ export const ContactModal: React.FC = () => {
 
   return (
     <div 
+      data-testid="contact-modal-backdrop"
       onClick={closeContactModal}
-      className={`fixed inset-0 z-[200] flex items-center justify-center bg-black/75 sm: backdrop-blur-xs overflow-hidden animate-in fade-in duration-200 cursor-pointer ${isFullscreen ? 'p-0' : 'p-2 sm:p-4'}`}
+      className={`fixed inset-0 flex items-center justify-center bg-black/75 sm: backdrop-blur-xs overflow-hidden animate-in fade-in duration-200 cursor-pointer ${isFullscreen ? 'p-0' : 'p-2 sm:p-4'}`}
+      style={{ zIndex }}
     >
       <div 
+        ref={containerRef}
+        data-testid="contact-modal-container"
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className={`${isFullscreen ? 'fixed inset-0 z-[201] w-screen h-screen max-w-none max-h-none rounded-none' : 'relative max-w-2xl w-full h-auto max-h-[96vh] rounded-xl sm:rounded-xl'} bg-white shadow-sm border border-gray-100 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 cursor-default`}
+        className={`${isFullscreen ? 'fixed inset-0 w-screen h-screen max-w-none max-h-none rounded-none' : 'relative max-w-2xl w-full h-auto max-h-[96vh] rounded-xl sm:rounded-xl'} bg-white shadow-sm border border-gray-100 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 cursor-default`}
+        style={isFullscreen ? { zIndex: zIndex + 1 } : undefined}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#1E3A8A] via-blue-900 to-[#2563EB] text-white px-5 py-3 md:px-6 sm:py-3.5 flex items-start justify-between gap-3 relative shrink-0">
+        <div data-testid="contact-modal-header" className="bg-gradient-to-r from-[#1E3A8A] via-blue-900 to-[#2563EB] text-white px-5 py-3 md:px-6 sm:py-3.5 flex items-start justify-between gap-3 relative shrink-0">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 text-blue-200 text-[11px] font-semibold uppercase tracking-wider mb-0.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span>ДС‑Инжиниринг • Официальный представитель</span>
             </div>
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+            <h2 data-testid="contact-modal-title" className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               {isPostprocessor && <Terminal className="w-4 h-4 text-amber-300 shrink-0" />}
               <span className="truncate">{contactModal.title}</span>
             </h2>
             <p className="text-[11px] sm:text-xs text-blue-100 mt-0.5 line-clamp-1">
-              {contactModal.subtitle || 'Заполните форму, и дежурный инженер свяжется с вами в течение 15 минут.'}
+              {contactModal.subtitle || 'Заполните форму, и профильный инженер свяжется с вами для уточнения деталей.'}
             </p>
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
+              data-testid="contact-modal-fullscreen-btn"
               onClick={() => setIsFullscreen(prev => !prev)}
               title={isFullscreen ? "Свернуть в окно" : "На весь экран"}
               className="p-1.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
@@ -292,6 +290,7 @@ export const ContactModal: React.FC = () => {
               {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
             </button>
             <button
+              data-testid="contact-modal-close-btn"
               onClick={closeContactModal}
               className="p-1.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
               aria-label="Закрыть"
@@ -304,7 +303,7 @@ export const ContactModal: React.FC = () => {
         {/* Content */}
         <div className="px-5 py-3.5 md:px-6 sm:py-4 overflow-y-auto flex-1">
           {isSuccess ? (
-            <div className="text-center py-6 space-y-4">
+            <div data-testid="contact-modal-success-screen" className="text-center py-6 space-y-4">
               <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
                 <CheckCircle className="w-10 h-10" />
               </div>
@@ -339,6 +338,7 @@ export const ContactModal: React.FC = () => {
               </div>
               <div className="pt-2">
                 <button
+                  data-testid="contact-modal-success-done-btn"
                   onClick={closeContactModal}
                   className="px-6 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold rounded-lg text-sm transition-colors shadow-sm"
                 >
@@ -347,10 +347,10 @@ export const ContactModal: React.FC = () => {
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5 text-xs sm:text-sm">
+            <form data-testid="contact-modal-form" onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5 text-xs sm:text-sm">
               {/* Product/Service tag if pre-selected */}
               {formData.itemInterest && (
-                <div className="p-2 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between text-xs text-blue-900">
+                <div data-testid="modal-item-interest-badge" className="p-2 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between text-xs text-blue-900">
                   <span className="truncate pr-2">Тема: <strong>{formData.itemInterest}</strong></span>
                   <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded font-medium shrink-0">Выбрано</span>
                 </div>
@@ -375,6 +375,7 @@ export const ContactModal: React.FC = () => {
                       1. Используемая CAM-система <span className="text-red-500">*</span>
                     </label>
                     <select
+                      data-testid="modal-select-cam"
                       value={formData.camSystem}
                       onChange={(e) => {
                         setFormData({ ...formData, camSystem: e.target.value });
@@ -400,6 +401,7 @@ export const ContactModal: React.FC = () => {
                         Укажите точное наименование вашей CAM-системы <span className="text-red-500">*</span>
                       </label>
                       <input
+                        data-testid="modal-input-cam-custom"
                         type="text"
                         value={formData.camSystemCustom}
                         onChange={(e) => {
@@ -419,6 +421,7 @@ export const ContactModal: React.FC = () => {
                         Версия / релиз CAM-системы
                       </label>
                       <input
+                        data-testid="modal-input-cam-version"
                         type="text"
                         value={formData.camVersion}
                         onChange={(e) => setFormData({ ...formData, camVersion: e.target.value })}
@@ -431,6 +434,7 @@ export const ContactModal: React.FC = () => {
                         Стойка ЧПУ и модель станка
                       </label>
                       <input
+                        data-testid="modal-input-cnc-model"
                         type="text"
                         value={formData.cncControlAndMachine}
                         onChange={(e) => setFormData({ ...formData, cncControlAndMachine: e.target.value })}
@@ -452,6 +456,7 @@ export const ContactModal: React.FC = () => {
                       <input
                         type="checkbox"
                         id="licensed-cam-check"
+                        data-testid="modal-checkbox-licensed-cam"
                         checked={formData.isLicensedCam}
                         onChange={(e) => {
                           setFormData({ ...formData, isLicensedCam: e.target.checked });
@@ -482,7 +487,7 @@ export const ContactModal: React.FC = () => {
 
               {/* SOFTWARE FIELDS */}
               {isSoftware && (
-                <div className="p-4 bg-slate-50 border border-gray-200 rounded-xl space-y-3.5 shadow-2xs">
+                <div data-testid="modal-software-fields-block" className="p-4 bg-slate-50 border border-gray-200 rounded-xl space-y-3.5 shadow-2xs">
                   <div className="flex items-center gap-2 text-xs font-bold text-gray-800 border-b border-gray-200 pb-2">
                     <Cpu className="w-4 h-4 text-blue-600" />
                     <span>Параметры интеграции ПО</span>
@@ -491,6 +496,7 @@ export const ContactModal: React.FC = () => {
                     <div>
                       <label className="block text-xs font-semibold text-slate-500 mb-1">Количество рабочих мест</label>
                       <select
+                        data-testid="modal-select-software-seats"
                         value={formData.softwareSeats}
                         onChange={(e) => setFormData({ ...formData, softwareSeats: e.target.value })}
                         className="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -505,6 +511,7 @@ export const ContactModal: React.FC = () => {
                     <div>
                       <label className="block text-xs font-semibold text-slate-500 mb-1">Ваша отрасль / Станки с ЧПУ</label>
                       <input
+                        data-testid="modal-input-industry"
                         type="text"
                         placeholder="Например: Авиастроение, 3-осевые фрезерные"
                         value={formData.companyIndustry}
@@ -518,7 +525,7 @@ export const ContactModal: React.FC = () => {
 
               {/* HARDWARE FIELDS */}
               {isHardware && (
-                <div className="p-4 bg-slate-50 border border-gray-200 rounded-xl space-y-3.5 shadow-2xs">
+                <div data-testid="modal-hardware-fields-block" className="p-4 bg-slate-50 border border-gray-200 rounded-xl space-y-3.5 shadow-2xs">
                   <div className="flex items-center gap-2 text-xs font-bold text-gray-800 border-b border-gray-200 pb-2">
                     <FileText className="w-4 h-4 text-amber-600" />
                     <span>Техническое задание на КИМ / Сканер</span>
@@ -526,6 +533,7 @@ export const ContactModal: React.FC = () => {
                   <div>
                     <label className="block text-xs font-semibold text-slate-500 mb-1">Требуемая точность (MPE) / Тип измеряемых деталей</label>
                     <textarea
+                      data-testid="modal-textarea-hardware-specs"
                       placeholder="Например: корпуса редукторов до 1500 мм, требуемая точность 5-8 мкм"
                       value={formData.hardwareSpecs}
                       onChange={(e) => setFormData({ ...formData, hardwareSpecs: e.target.value })}
@@ -545,6 +553,7 @@ export const ContactModal: React.FC = () => {
                   <div className="relative">
                     <User className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
                     <input
+                      data-testid="modal-input-name"
                       type="text"
                       value={formData.name}
                       onChange={(e) => {
@@ -568,6 +577,7 @@ export const ContactModal: React.FC = () => {
                   <div className="relative">
                     <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
                     <input
+                      data-testid="modal-input-phone"
                       type="tel"
                       value={formData.phone}
                       onChange={handlePhoneChange}
@@ -588,6 +598,7 @@ export const ContactModal: React.FC = () => {
                   <div className="relative">
                     <Building className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
                     <input
+                      data-testid="modal-input-company"
                       type="text"
                       value={formData.company}
                       onChange={(e) => setFormData({ ...formData, company: e.target.value })}
@@ -605,6 +616,7 @@ export const ContactModal: React.FC = () => {
                   <div className="relative">
                     <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
                     <input
+                      data-testid="modal-input-email"
                       type="email"
                       value={formData.email}
                       onChange={(e) => {
@@ -627,6 +639,7 @@ export const ContactModal: React.FC = () => {
                   {isPostprocessor ? 'Дополнительные требования к постпроцессору' : 'Описание технической задачи / Детали запроса'}
                 </label>
                 <textarea
+                  data-testid="modal-textarea-message"
                   rows={2}
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
@@ -644,6 +657,7 @@ export const ContactModal: React.FC = () => {
                 <div className={`p-1.5 sm:p-2 bg-slate-50 border rounded-lg flex items-center justify-between ${errors.captcha ? 'border-red-400 bg-red-50/50' : 'border-gray-200'}`}>
                   <div className="flex items-center gap-2">
                     <input
+                      data-testid="modal-checkbox-captcha"
                       type="checkbox"
                       id="captcha-check"
                       checked={formData.smartCaptchaPassed}
@@ -674,6 +688,7 @@ export const ContactModal: React.FC = () => {
               <div className="p-1.5 sm:p-2 bg-blue-50/50 border border-blue-200/80 rounded-xl">
                 <div className="flex items-start gap-2">
                   <input
+                    data-testid="modal-checkbox-consent"
                     type="checkbox"
                     id="consent-check"
                     checked={formData.agreeConsent}
@@ -700,6 +715,7 @@ export const ContactModal: React.FC = () => {
 
               {/* Submit CTA */}
               <button
+                data-testid="modal-submit-btn"
                 type="submit"
                 disabled={isSubmitting}
                 className="w-full py-2.5 px-4 bg-[#F59E0B] hover:bg-amber-600 disabled:opacity-50 text-gray-950 font-bold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"

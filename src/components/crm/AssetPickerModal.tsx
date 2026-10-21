@@ -47,7 +47,7 @@ export function AssetPickerModal({ onSelect, onClose }: AssetPickerModalProps) {
   );
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
       <div className="bg-white rounded-lg w-full max-w-3xl max-h-[85vh] flex flex-col shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
           <div className="flex items-center gap-2">

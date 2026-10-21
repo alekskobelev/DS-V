@@ -17,12 +17,14 @@ import {
   ArrowRight,
   Filter,
   RefreshCw,
-  FileText
+  FileText,
+  Download
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { PRODUCTS_DATA, SERVICES_DATA, KNOWLEDGE_BASE_ITEMS, NEWS_ARTICLES } from '../data/mockData';
 import { PageId } from '../types';
 import { getRoutePath, getCanonicalUrl } from '../utils/routes';
+import { downloadSitemapXmlFile } from '../utils/sitemapGenerator';
 
 interface SitemapEntry {
   id: string;
@@ -57,8 +59,9 @@ export const SitemapPage: React.FC = () => {
       { id: 'services', title: 'Инжиниринговые услуги и метрологический контроль', priority: '0.9', freq: 'weekly', desc: '3D-сканирование, реверс-инжиниринг в STEP, контроль геометрии по CAD, постпроцессоры.' },
       { id: 'about', title: 'О компании «ДС-Инжиниринг» (История с 1995 года)', priority: '0.8', freq: 'monthly', desc: 'Структура компании, филиалы в Самаре и Тольятти, официальные дилерские статусы.' },
       { id: 'knowledge', title: 'База знаний, ГОСТы и методики измерений', priority: '0.8', freq: 'weekly', desc: 'Стандарты GD&T, руководства по CAD/CAM, методики поверки КИМ по ISO 10360.' },
+      { id: 'glossary', title: 'Технический глоссарий: GD&T, ISO 1101, КИМ и ЧПУ', priority: '0.8', freq: 'weekly', desc: 'Профессиональный справочник определений стандартов, допусков формы и систем ЧПУ.' },
       { id: 'news', title: 'Пресс-центр, новости машиностроения и релизы ПО', priority: '0.8', freq: 'weekly', desc: 'События, отраслевые выставки, новые версии софта и метрологического оборудования.' },
-      { id: 'contacts', title: 'Контакты, демонстрационные залы и реквизиты', priority: '0.8', freq: 'monthly', desc: 'Адреса центрального офиса в Самаре и метрологической лаборатории в Тольятти.' },
+      { id: 'contacts', title: 'Контакты, адреса офисов и реквизиты', priority: '0.8', freq: 'monthly', desc: 'Адрес центрального офиса в Самаре и представительства в Тольятти, телефоны и реквизиты.' },
     ];
 
     mainPages.forEach((p) => {
@@ -269,6 +272,21 @@ export const SitemapPage: React.FC = () => {
 
           {/* Quick Actions */}
           <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                const res = downloadSitemapXmlFile('sitemap.xml', {
+                  customPages
+                });
+                if (res.success) {
+                  showToast(`Файл sitemap.xml (${res.totalUrls} URL) успешно сгенерирован и скачан!`);
+                }
+              }}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              <span>Скачать sitemap.xml</span>
+            </button>
             <a
               href="/sitemap.xml"
               target="_blank"
@@ -276,7 +294,7 @@ export const SitemapPage: React.FC = () => {
               className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm hover:shadow transition-all flex items-center gap-2"
             >
               <FileCode className="w-4 h-4" />
-              <span>Открыть sitemap.xml</span>
+              <span>Открыть в браузере</span>
               <ExternalLink className="w-3.5 h-3.5 opacity-80" />
             </a>
             <button
@@ -292,13 +310,13 @@ export const SitemapPage: React.FC = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {[
-            { key: 'all', label: 'Все страницы', icon: Globe, count: categoryStats.all, color: 'text-blue-600 bg-blue-50 border-blue-200' },
-            { key: 'main', label: 'Основные', icon: Building2, count: categoryStats.main, color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
-            { key: 'software', label: 'ПО CAD/CAM', icon: Layers, count: categoryStats.software, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-            { key: 'hardware', label: 'Оборудование', icon: Cpu, count: categoryStats.hardware, color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
-            { key: 'services', label: 'Услуги', icon: Wrench, count: categoryStats.services, color: 'text-amber-600 bg-amber-50 border-amber-200' },
-            { key: 'knowledge', label: 'База знаний', icon: BookOpen, count: categoryStats.knowledge, color: 'text-purple-600 bg-purple-50 border-purple-200' },
-            { key: 'news', label: 'Пресс-центр', icon: Newspaper, count: categoryStats.news, color: 'text-rose-600 bg-rose-50 border-rose-200' },
+            { key: 'all', label: 'Все страницы', icon: Globe, count: categoryStats.all, color: 'text-blue-700 bg-blue-50 border-blue-200' },
+            { key: 'main', label: 'Основные', icon: Building2, count: categoryStats.main, color: 'text-slate-800 bg-slate-100 border-slate-200' },
+            { key: 'software', label: 'ПО CAD/CAM', icon: Layers, count: categoryStats.software, color: 'text-blue-700 bg-blue-50 border-blue-200' },
+            { key: 'hardware', label: 'Оборудование', icon: Cpu, count: categoryStats.hardware, color: 'text-slate-700 bg-slate-100 border-slate-200' },
+            { key: 'services', label: 'Услуги', icon: Wrench, count: categoryStats.services, color: 'text-amber-700 bg-amber-50 border-amber-200' },
+            { key: 'knowledge', label: 'База знаний', icon: BookOpen, count: categoryStats.knowledge, color: 'text-teal-700 bg-teal-50 border-teal-200' },
+            { key: 'news', label: 'Пресс-центр', icon: Newspaper, count: categoryStats.news, color: 'text-slate-700 bg-slate-100 border-slate-200' },
           ].map((cat) => {
             const Icon = cat.icon;
             const isSelected = selectedCategory === cat.key;
@@ -408,13 +426,13 @@ export const SitemapPage: React.FC = () => {
 
                     {/* Category Badge */}
                     <td className="py-3.5 px-4 hidden md:table-cell whitespace-nowrap">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                        item.category === 'main' ? 'bg-indigo-50 text-indigo-700' :
-                        item.category === 'software' ? 'bg-emerald-50 text-emerald-700' :
-                        item.category === 'hardware' ? 'bg-cyan-50 text-cyan-700' :
-                        item.category === 'services' ? 'bg-amber-50 text-amber-700' :
-                        item.category === 'knowledge' ? 'bg-purple-50 text-purple-700' :
-                        item.category === 'news' ? 'bg-rose-50 text-rose-700' :
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium ${
+                        item.category === 'main' ? 'bg-slate-100 text-slate-800' :
+                        item.category === 'software' ? 'bg-blue-50 text-blue-700' :
+                        item.category === 'hardware' ? 'bg-slate-100 text-slate-700' :
+                        item.category === 'services' ? 'bg-amber-50 text-amber-800' :
+                        item.category === 'knowledge' ? 'bg-teal-50 text-teal-800' :
+                        item.category === 'news' ? 'bg-slate-100 text-slate-700' :
                         'bg-slate-100 text-slate-700'
                       }`}>
                         {item.categoryLabel}
@@ -510,3 +528,6 @@ export const SitemapPage: React.FC = () => {
     </div>
   );
 };
+
+export default SitemapPage;
+

@@ -50,34 +50,32 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
-  LayoutDashboard
+  LayoutDashboard,
+  RotateCcw,
+  GraduationCap,
+  ClipboardCheck
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { DEFAULT_ADMIN_ACCOUNTS, DEFAULT_CLIENT_ACCOUNTS } from '../data/mockData';
 import { apiService } from '../services/apiService';
 import { formatUserInitials } from '../utils/userFormatting';
 
-import { ProposalsRegistry } from '../components/crm/ProposalsRegistry';
 import { CertificatesRegistry } from '../components/crm/CertificatesRegistry';
 import { MetrologyReportsRegistry } from '../components/crm/MetrologyReportsRegistry';
-import { CompanyFleetRegistry } from '../components/crm/CompanyFleetRegistry';
-import { EmailSettingsView } from '../components/crm/EmailSettingsView';
+import { UnifiedCommunicationsHub } from '../components/common/UnifiedCommunicationsHub';
 import { BotSettingsView } from '../components/crm/BotSettingsView';
-import { NotificationSettingsView } from '../components/notifications/NotificationSettingsView';
+import { CrmRealtimeLogsView } from '../components/crm/CrmRealtimeLogsView';
+import { AssetsManagerView } from '../components/crm/AssetsManagerView';
 import { AccountSidebarTree } from '../components/account/AccountSidebarTree';
-
-import { CrmDashboard } from '../components/crm/CrmDashboard';
-import { ArshinVerificationSchedule } from '../components/crm/ArshinVerificationSchedule';
-import { CrmPanel } from '../components/crm/CrmPanel';
 import { ContractsRegistry } from '../components/crm/ContractsRegistry';
 import { ClientDashboard } from '../components/client-portal/ClientDashboard';
 import { LicensesRegistry } from '../components/crm/LicensesRegistry';
 import { SupportRegistry } from '../components/crm/SupportRegistry';
 import { CrmManualView } from '../components/crm/CrmManualView';
-import { ManagerTasksTab } from '../components/crm/ManagerTasksTab';
-import { ContactCenterTab } from '../components/crm/ContactCenterTab';
 import { TasksSidebarWidget } from '../components/crm/TasksSidebarWidget';
 
+import { ClientFaqSection } from '../components/knowledge/ClientFaqSection';
+import { StaffCabinetManualView } from '../components/knowledge/StaffCabinetManualView';
 import { ManagerFaqSection, MANAGER_FAQ_DATA } from '../components/knowledge/ManagerFaqSection';
 import { UserManagementPanel } from '../components/account/UserManagementPanel';
 import { AccountContractModal } from '../components/account/AccountContractModal';
@@ -86,6 +84,8 @@ import { AccountLicenseModal } from '../components/account/AccountLicenseModal';
 import { AccountFileModal } from '../components/account/AccountFileModal';
 import { AccountDocViewerModal } from '../components/account/AccountDocViewerModal';
 import { ProfilePhotoModal } from '../components/account/ProfilePhotoModal';
+import { ClientRfqModal } from '../components/account/ClientRfqModal';
+import { Calculator } from 'lucide-react';
 import { ProjectContract, SupportTicketItem, LicenseItem, AttachedDocument, AuthAccount } from '../types';
 
 const INITIAL_CONTRACTS: ProjectContract[] = [
@@ -227,8 +227,11 @@ export const AccountPage: React.FC = () => {
     licenses,
     setLicenses,
     deals,
-    fleetDevices
+    fleetDevices,
+    resetCrmDatabase
   } = useApp();
+
+  const [isResettingCrmDb, setIsResettingCrmDb] = useState(false);
 
   // Auth Mode when not logged in
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -256,8 +259,26 @@ export const AccountPage: React.FC = () => {
   const canViewMetrologyReports = isAdmin || !!userPermissions?.canViewMetrologyReports;
   
   
-  const [activeModule, setActiveModule] = useState<'sales' | 'docs' | 'knowledge' | 'admin'>(hasCrmAccess ? 'sales' : 'docs');
-  const [activeSubTab, setActiveSubTab] = useState<string>(hasCrmAccess ? 'funnels' : 'contracts');
+  const [activeModule, setActiveModule] = useState<'docs' | 'knowledge' | 'admin'>(() => {
+    try {
+      const savedMod = sessionStorage.getItem('ds_account_module');
+      if (savedMod === 'admin' && (isAdmin || canManageUsers)) return 'admin';
+      if (savedMod === 'knowledge') return 'knowledge';
+      if (savedMod === 'docs') return 'docs';
+    } catch {}
+    if (isAdmin || canManageUsers) return 'admin';
+    return 'docs';
+  });
+
+  const [activeSubTab, setActiveSubTab] = useState<string>(() => {
+    try {
+      const savedSub = sessionStorage.getItem('ds_account_subtab');
+      if (savedSub) return savedSub;
+    } catch {}
+    if (isAdmin || canManageUsers) return 'users';
+    return hasCrmAccess ? 'contracts' : 'client-dashboard';
+  });
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState<boolean>(false);
 
@@ -276,17 +297,17 @@ export const AccountPage: React.FC = () => {
         return {
           title: 'Администратор системы',
           shortLabel: 'Admin',
-          badgeClass: 'bg-rose-500 text-white font-bold shadow-xs',
-          avatarBadgeClass: 'bg-rose-500 text-white font-black ring-2 ring-blue-900',
+          badgeClass: 'bg-slate-900 text-white font-bold shadow-xs',
+          avatarBadgeClass: 'bg-slate-900 text-white font-bold ring-2 ring-blue-900',
           desc: 'Администрирование сайта, контент CMS, воронки продаж, договоры и настройки реестров.'
         };
       case 'moderator':
         return {
           title: 'Модератор / Техподдержка',
           shortLabel: 'Модератор',
-          badgeClass: 'bg-purple-600 text-white font-bold shadow-xs',
-          avatarBadgeClass: 'bg-purple-600 text-white font-black ring-2 ring-blue-900',
-          desc: 'Обработка тикетов сервиса, контроль документации и статей базы знаний.'
+          badgeClass: 'bg-teal-700 text-white font-bold shadow-xs',
+          avatarBadgeClass: 'bg-teal-700 text-white font-bold ring-2 ring-blue-900',
+          desc: 'Обработка сервисных заявок, контроль документации и статей базы знаний.'
         };
       case 'manager':
         return {
@@ -303,7 +324,7 @@ export const AccountPage: React.FC = () => {
           shortLabel: 'Клиент',
           badgeClass: 'bg-blue-400/30 text-blue-100 border border-blue-300/40 font-semibold',
           avatarBadgeClass: 'bg-blue-600 text-white font-bold ring-2 ring-blue-900',
-          desc: 'Личный кабинет заказчика: доступ к подписанным договорам, выданным лицензиям и тикетам сервиса.'
+          desc: 'Личный кабинет заказчика: доступ к подписанным договорам, выданным лицензиям и сервисным заявкам.'
         };
     }
   };
@@ -312,29 +333,29 @@ export const AccountPage: React.FC = () => {
 
   // Synchronize active tab when permissions change dynamically
   useEffect(() => {
-    if (activeModule === 'sales' && !hasCrmAccess) {
+    if (activeModule === 'admin' && !canManageUsers && !isAdmin) {
       setActiveModule('docs');
-      setActiveSubTab('client-dashboard');
-    }
-    if (activeModule === 'admin' && !canManageUsers) {
-      setActiveModule(hasCrmAccess ? 'sales' : 'docs');
-      setActiveSubTab(hasCrmAccess ? 'funnels' : 'client-dashboard');
-    }
-    if (activeModule === 'knowledge' && !hasCrmAccess && !isAdmin) {
-      setActiveModule('docs');
-      setActiveSubTab('client-dashboard');
+      setActiveSubTab(hasCrmAccess ? 'contracts' : 'client-dashboard');
     }
   }, [hasCrmAccess, canManageUsers, isAdmin, activeModule]);
 
-  const handleModuleSwitch = (mod: 'sales' | 'docs' | 'knowledge' | 'admin', defaultSubTab: string) => {
+  const handleModuleSwitch = (mod: 'docs' | 'knowledge' | 'admin', defaultSubTab: string) => {
     setActiveModule(mod);
     setActiveSubTab(defaultSubTab);
+    try {
+      sessionStorage.setItem('ds_account_module', mod);
+      sessionStorage.setItem('ds_account_subtab', defaultSubTab);
+    } catch {}
     setIsMobileDrawerOpen(false);
   };
 
-  const handleSelectSubTab = (moduleId: 'sales' | 'docs' | 'knowledge' | 'admin', subTabId: string) => {
+  const handleSelectSubTab = (moduleId: 'docs' | 'knowledge' | 'admin', subTabId: string) => {
     setActiveModule(moduleId);
     setActiveSubTab(subTabId);
+    try {
+      sessionStorage.setItem('ds_account_module', moduleId);
+      sessionStorage.setItem('ds_account_subtab', subTabId);
+    } catch {}
     setIsMobileDrawerOpen(false);
   };
 
@@ -367,7 +388,15 @@ export const AccountPage: React.FC = () => {
     let isMounted = true;
     if (!currentUser) return;
     apiService.getServiceRequests(currentUser.role, currentUser.company).then((data) => {
-      if (isMounted) setRfqs(data || []);
+      if (isMounted) {
+        const seen = new Set<string>();
+        const unique = (data || []).filter((item: any) => {
+          if (!item?.id || seen.has(item.id)) return false;
+          seen.add(item.id);
+          return true;
+        });
+        setRfqs(unique);
+      }
     });
     return () => { isMounted = false; };
   }, [currentUser]);
@@ -381,6 +410,7 @@ export const AccountPage: React.FC = () => {
 
   const [licenseModalOpen, setLicenseModalOpen] = useState(false);
   const [editingLicense, setEditingLicense] = useState<LicenseItem | null>(null);
+  const [isNewRfqModalOpen, setIsNewRfqModalOpen] = useState(false);
 
   // Direct File Modals (Add file directly to contract/license/ticket)
   const [attachFileTarget, setAttachFileTarget] = useState<{
@@ -473,7 +503,7 @@ export const AccountPage: React.FC = () => {
         }
         return t;
       }));
-      showToast(`Файл «${doc.name}» прикреплен к тикету`);
+      showToast(`Файл «${doc.name}» прикреплен к сервисной заявке`);
     } else if (attachFileTarget.type === 'license') {
       setLicenses(licenses.map(l => {
         if (l.id === attachFileTarget.entityId) {
@@ -618,7 +648,7 @@ export const AccountPage: React.FC = () => {
   // -------------------------------------------------------------
   if (!currentUser) {
     return (
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
         <div className="bg-gradient-to-r from-[#1E3A8A] via-blue-900 to-[#2563EB] text-white p-5 sm:p-6 rounded-xl shadow-sm border-2 border-blue-800/80">
           <div className="max-w-3xl space-y-3">
             <div className="inline-flex items-center gap-2 px-4 py-1 bg-white/20 rounded-full text-xs font-semibold text-amber-300">
@@ -899,7 +929,7 @@ export const AccountPage: React.FC = () => {
   // VIEW 2: LOGGED IN USER
   // -------------------------------------------------------------
   return (
-    <div className="w-full min-w-0 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5">
+    <div className="w-full min-w-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5">
       {/* Top Header Card */}
       <div className="bg-gradient-to-r from-[#1E3A8A] via-blue-900 to-[#2563EB] text-white p-6 sm:p-8 rounded-xl shadow-sm border-2 border-blue-800/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
@@ -962,6 +992,24 @@ export const AccountPage: React.FC = () => {
 
         {/* User Actions */}
         <div className="flex flex-wrap items-center gap-3">
+          {(canAccessCms || currentUser?.role === 'superadmin' || currentUser?.role === 'admin' || currentUser?.role === 'manager') && (
+            <button
+              type="button"
+              onClick={async () => {
+                if (!confirm('Сбросить всю базу данных CRM и Личного кабинета к начальному состоянию?\n\nБудут восстановлены заводские эталоны договоров, счетов, коммерческих предложений, обращений клиентов и лицензий ООО «ДС-Инжиниринг».')) return;
+                setIsResettingCrmDb(true);
+                await resetCrmDatabase();
+                setIsResettingCrmDb(false);
+              }}
+              disabled={isResettingCrmDb}
+              className="px-3.5 py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 font-bold rounded-xl text-xs flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+              title="Сбросить всю базу данных CRM и Кабинета"
+            >
+              <RotateCcw className={`w-4 h-4 text-amber-300 ${isResettingCrmDb ? 'animate-spin' : ''}`} />
+              <span>{isResettingCrmDb ? 'Сброс базы CRM...' : 'Сброс базы CRM и Кабинета'}</span>
+            </button>
+          )}
+
           {canAccessCms && (
             <button
               onClick={() => navigateTo('cms')}
@@ -1040,9 +1088,9 @@ export const AccountPage: React.FC = () => {
                     ? isSuper
                       ? 'bg-amber-100 text-amber-950 border-2 border-amber-500 font-black ring-2 ring-amber-400/40 shadow-sm'
                       : user.role === 'admin'
-                      ? 'bg-rose-100 text-rose-950 border-2 border-rose-500 font-black ring-2 ring-rose-400/40 shadow-sm'
+                      ? 'bg-slate-200 text-slate-950 border-2 border-slate-700 font-bold ring-2 ring-slate-400/40 shadow-sm'
                       : user.role === 'moderator'
-                      ? 'bg-purple-100 text-purple-950 border-2 border-purple-500 font-black ring-2 ring-purple-400/40 shadow-sm'
+                      ? 'bg-teal-100 text-teal-950 border-2 border-teal-600 font-bold ring-2 ring-teal-400/40 shadow-sm'
                       : user.role === 'manager'
                       ? 'bg-blue-100 text-blue-950 border-2 border-blue-500 font-black ring-2 ring-blue-400/40 shadow-sm'
                       : 'bg-emerald-100 text-emerald-950 border-2 border-emerald-500 font-black ring-2 ring-emerald-400/40 shadow-sm'
@@ -1055,9 +1103,9 @@ export const AccountPage: React.FC = () => {
                     isSuper
                       ? 'bg-amber-500'
                       : user.role === 'admin'
-                      ? 'bg-rose-500'
+                      ? 'bg-slate-800 dark:bg-slate-200'
                       : user.role === 'moderator'
-                      ? 'bg-purple-500'
+                      ? 'bg-teal-600'
                       : user.role === 'manager'
                       ? 'bg-blue-500'
                       : 'bg-emerald-500'
@@ -1071,13 +1119,13 @@ export const AccountPage: React.FC = () => {
                   {isSuper ? (
                     <span className="text-[9px] bg-amber-200 text-amber-950 px-1.5 py-0.2 rounded font-black border border-amber-300">Супер-админ</span>
                   ) : user.role === 'admin' ? (
-                    <span className="text-[9px] bg-rose-200 text-rose-950 px-1 py-0.2 rounded font-bold">Админ</span>
+                    <span className="text-[9px] bg-slate-200 text-slate-900 px-1 py-0.2 rounded font-bold">Админ</span>
                   ) : user.role === 'moderator' ? (
-                    <span className="text-[9px] bg-purple-200 text-purple-950 px-1 py-0.2 rounded font-bold">Модератор</span>
+                    <span className="text-[9px] bg-teal-100 text-teal-950 px-1 py-0.2 rounded font-bold border border-teal-300">Модератор</span>
                   ) : (
                     <>
                       {hasCms && (
-                        <span className="text-[9px] bg-purple-200 text-purple-900 px-1 py-0.2 rounded font-bold ring-1 ring-purple-400/40">CMS</span>
+                        <span className="text-[9px] bg-slate-200 text-slate-900 px-1 py-0.2 rounded font-bold ring-1 ring-slate-400/40">CMS</span>
                       )}
                       {hasCrm && (
                         <span className="text-[9px] bg-blue-200/70 text-blue-900 px-1 py-0.2 rounded font-semibold">CRM</span>
@@ -1086,10 +1134,10 @@ export const AccountPage: React.FC = () => {
                         <span className="text-[9px] bg-emerald-200 text-emerald-900 px-1 py-0.2 rounded font-bold">Договоры</span>
                       )}
                       {hasMngTickets && (
-                        <span className="text-[9px] bg-cyan-200 text-cyan-900 px-1 py-0.2 rounded font-bold">Тикеты</span>
+                        <span className="text-[9px] bg-amber-100 text-amber-900 px-1 py-0.2 rounded font-bold">Сервис</span>
                       )}
                       {hasMngLicenses && (
-                        <span className="text-[9px] bg-teal-200 text-teal-900 px-1 py-0.2 rounded font-bold">Ключи</span>
+                        <span className="text-[9px] bg-blue-100 text-blue-900 px-1 py-0.2 rounded font-bold">Ключи</span>
                       )}
                     </>
                   )}
@@ -1102,62 +1150,139 @@ export const AccountPage: React.FC = () => {
       )}
 
       
-      {/* Mobile Navigation Trigger Bar (< lg screens) */}
-      <div className="lg:hidden bg-white dark:bg-slate-900 rounded-xl p-3.5 border-2 border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-between gap-2.5">
-        <button
-          type="button"
-          onClick={() => setIsMobileDrawerOpen(true)}
-          className="flex-1 flex items-center gap-2.5 px-4.5 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200 transition-colors cursor-pointer"
-        >
-          <Menu className="w-4 h-4 text-blue-600 shrink-0" />
-          <span className="truncate">
-            Меню: {
-              activeSubTab === 'funnels' ? 'Сделки и воронка' :
-              activeSubTab === 'contact-center' ? 'Клиенты и ЛПР' :
-              activeSubTab === 'proposals' ? 'Реестр ТКП' :
-              activeSubTab === 'tasks' ? 'Календарь и задачи' :
-              activeSubTab === 'analytics' ? 'Аналитика KPI' :
-              activeSubTab === 'contracts' ? 'Договоры и проекты' :
-              activeSubTab === 'licenses' ? 'Лицензии и ключи' :
-              activeSubTab === 'tickets' ? 'Техподдержка' :
-              activeSubTab === 'certificates' ? 'Свидетельства' :
-              activeSubTab === 'metrology-reports' ? 'Метрологические отчеты' :
-              activeSubTab === 'requests' ? 'Мои заявки' :
-              activeSubTab === 'guide' ? 'Регламенты и инструкции' :
-              activeSubTab === 'faq' ? 'База знаний и FAQ' :
-              activeSubTab === 'users' ? 'Пользователи' : 'Настройки почты'
-            }
-          </span>
-        </button>
+      {/* Mobile Navigation Bar (< lg screens) */}
+      <div className="lg:hidden bg-white dark:bg-slate-900 rounded-xl p-3 border-2 border-slate-200 dark:border-slate-700 shadow-md space-y-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => setIsMobileDrawerOpen(true)}
+            className="flex-1 flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-xs border border-blue-200 transition-colors cursor-pointer min-h-[44px]"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Menu className="w-4 h-4 text-blue-600 shrink-0" />
+              <span className="truncate">
+                {
+                  activeSubTab === 'contracts' ? 'Договоры и проекты' :
+                  activeSubTab === 'licenses' ? 'Лицензии и ключи' :
+                  activeSubTab === 'tickets' ? 'Техподдержка' :
+                  activeSubTab === 'certificates' ? 'Свидетельства' :
+                  activeSubTab === 'metrology-reports' ? 'Метрологические отчеты' :
+                  activeSubTab === 'client-dashboard' ? 'Дашборд заказчика' :
+                  activeSubTab === 'requests' ? 'Мои заявки' :
+                  activeSubTab === 'guide' ? 'Регламенты и инструкции' :
+                  activeSubTab === 'faq' ? 'База знаний и FAQ' :
+                  activeSubTab === 'users' ? 'Пользователи' :
+                  activeSubTab === 'email' ? 'Настройки почты' :
+                  activeSubTab === 'notifications' ? 'Оповещения' :
+                  activeSubTab === 'bot-settings' ? 'Онлайн-инженер' :
+                  activeSubTab === 'assets' ? 'Медиа-активы' : 'Меню разделов'
+                }
+              </span>
+            </div>
+            <span className="text-[10px] bg-blue-200 text-blue-900 px-2 py-0.5 rounded-full font-black uppercase tracking-wider shrink-0 ml-1">
+              Меню
+            </span>
+          </button>
 
-        {hasCrmAccess && (
-          <>
+          {hasCrmAccess && (
             <button
               type="button"
-              onClick={() => handleSelectSubTab('sales', 'dashboard')}
-              className={`px-4.5 py-2.5 rounded-xl font-bold text-xs border-2 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                activeModule === 'sales' && activeSubTab === 'dashboard'
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
-              }`}
+              onClick={() => {
+                sessionStorage.setItem('ds_crm_active_tab', 'dashboard');
+                navigateTo('crm');
+              }}
+              className="px-3.5 py-2.5 rounded-xl font-bold text-xs border-2 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 min-h-[44px]"
             >
-              <LayoutDashboard className="w-4 h-4" />
-              <span className="hidden sm:inline">Дашборд CRM (30 лет)</span>
+              <Briefcase className="w-4 h-4" />
+              <span className="hidden sm:inline">Открыть CRM</span>
             </button>
+          )}
+        </div>
+
+        {/* Quick Horizontal Scroll Pills on Mobile */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1 touch-pan-x">
+          {!hasCrmAccess && (
             <button
               type="button"
-              onClick={() => handleSelectSubTab('sales', 'tasks')}
-              className={`px-4.5 py-2.5 rounded-xl font-bold text-xs border-2 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                activeModule === 'sales' && activeSubTab === 'tasks'
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+              onClick={() => handleSelectSubTab('docs', 'client-dashboard')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                activeSubTab === 'client-dashboard'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
               }`}
             >
-              <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">Задачи</span>
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              <span>Дашборд</span>
             </button>
-          </>
-        )}
+          )}
+          <button
+            type="button"
+            onClick={() => handleSelectSubTab('docs', 'contracts')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+              activeSubTab === 'contracts'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
+            }`}
+          >
+            <Briefcase className="w-3.5 h-3.5" />
+            <span>Договоры</span>
+            {visibleContracts.length > 0 && (
+              <span className={`text-[10px] px-1 rounded font-black ${activeSubTab === 'contracts' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-800'}`}>
+                {visibleContracts.length}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSelectSubTab('docs', 'licenses')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+              activeSubTab === 'licenses'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
+            }`}
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            <span>Лицензии</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSelectSubTab('docs', 'tickets')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+              activeSubTab === 'tickets'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Поддержка</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSelectSubTab('knowledge', 'guide')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+              activeSubTab === 'guide'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Регламенты</span>
+          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => handleSelectSubTab('admin', 'users')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                activeSubTab === 'users'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Пользователи</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Mobile Slide-Over Drawer (< lg screens) */}
@@ -1214,13 +1339,59 @@ export const AccountPage: React.FC = () => {
               proposalsCount={(deals as any[]).filter(d => d.proposal || d.proposalId).length}
               fleetCount={fleetDevices?.length || 0}
               onItemClickMobile={() => setIsMobileDrawerOpen(false)}
+              onNavigateToCrm={(tab) => {
+                if (tab) sessionStorage.setItem('ds_crm_active_tab', tab);
+                setIsMobileDrawerOpen(false);
+                navigateTo('crm');
+              }}
             />
           </div>
         </div>
       )}
 
+      {/* Internal Staff Workspace Notice (Direct shortcut to full-screen CRM) */}
+      {hasCrmAccess && (
+        <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-blue-950 text-white rounded-2xl p-4 sm:p-5 border-2 border-blue-700/60 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-blue-500/20 border border-blue-400/30 text-amber-300 shrink-0">
+              <Briefcase className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400 text-gray-950 px-2 py-0.5 rounded-full shadow-2xs">
+                  Рабочая среда сотрудника
+                </span>
+                <span className="text-xs text-blue-200 font-medium">
+                  Оптимизированное рабочее место менеджеров и инженеров
+                </span>
+              </div>
+              <h2 className="text-base sm:text-lg font-black text-white">
+                Оперативная CRM-система и Канбан-доски вынесены в отдельный рабочий центр
+              </h2>
+              <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                Воронка сделок, реестр контрагентов, расчет ТКП, оперативные задачи и график поверок ФГИС «АРШИН» доступны в полноэкранном режиме с удобными широкими таблицами.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.setItem('ds_crm_active_tab', 'funnels');
+                navigateTo('crm');
+              }}
+              className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-gray-950 font-black text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>Перейти в CRM-систему</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Container: Desktop Sidebar + Content Area */}
-      <div className="flex flex-col xl:flex-row gap-6 mt-4 sm:mt-6 items-start">
+      <div className="flex flex-col lg:flex-row gap-6 mt-4 sm:mt-6 items-start">
         
         {/* Desktop Collapsible Accordion Sidebar (hidden on mobile, drawer is used instead) */}
         <div className="hidden lg:block shrink-0">
@@ -1245,6 +1416,10 @@ export const AccountPage: React.FC = () => {
             dealsCount={deals.length}
             proposalsCount={(deals as any[]).filter(d => d.proposal || d.proposalId).length}
             fleetCount={fleetDevices?.length || 0}
+            onNavigateToCrm={(tab) => {
+              if (tab) sessionStorage.setItem('ds_crm_active_tab', tab);
+              navigateTo('crm');
+            }}
           />
         </div>
 
@@ -1256,154 +1431,162 @@ export const AccountPage: React.FC = () => {
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
                 <span className="hover:text-blue-600 transition-colors">
-                  {activeModule === 'sales' ? 'Продажи (CRM)' :
-                   activeModule === 'docs' ? (hasCrmAccess ? 'Документооборот и Сервис' : 'Мои документы') :
-                   activeModule === 'knowledge' ? 'Обучающий центр' : 'Администрирование'}
+                  {activeModule === 'docs' ? (hasCrmAccess ? 'Служебные реестры и Сервис' : 'Личный кабинет заказчика') :
+                   activeModule === 'knowledge' ? (hasCrmAccess ? 'Служебные инструкции и регламенты' : 'Помощь и поддержка') : 'Администрирование системы'}
                 </span>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 <span className="text-blue-700 dark:text-blue-400 font-black">
-                  {activeSubTab === 'dashboard' ? 'Главный дашборд CRM (30 лет)' :
-                   activeSubTab === 'funnels' ? 'Сделки и воронка' :
-                   activeSubTab === 'contact-center' ? 'База клиентов и ЛПР' :
-                   activeSubTab === 'proposals' ? 'Реестр ТКП' :
-                   activeSubTab === 'tasks' ? 'Календарь и задачи' :
-                   activeSubTab === 'analytics' ? 'Аналитика и KPI' :
-                   activeSubTab === 'contracts' ? 'Договоры и проекты' :
+                  {activeSubTab === 'contracts' ? 'Договоры и проекты' :
                    activeSubTab === 'licenses' ? 'Лицензии и ключи ПО' :
-                   activeSubTab === 'tickets' ? 'Техподдержка' :
+                   activeSubTab === 'tickets' ? 'Заявки в техподдержку' :
                    activeSubTab === 'certificates' ? 'Свидетельства и сертификаты' :
-                   activeSubTab === 'fleet' ? 'Парк оборудования' :
-                   activeSubTab === 'arshin-schedule' ? 'График поверок ФГИС «АРШИН»' :
                    activeSubTab === 'metrology-reports' ? 'Реестр метрологических отчетов' :
                    activeSubTab === 'client-dashboard' ? 'Дашборд заказчика' :
                    activeSubTab === 'requests' ? 'Мои заявки и расчеты' :
-                   activeSubTab === 'guide' ? 'Регламенты и инструкции' :
-                   activeSubTab === 'faq' ? 'База знаний и FAQ' :
-                   activeSubTab === 'users' ? 'Пользователи и права' :
-                   activeSubTab === 'bot-settings' ? 'Ответы ИИ-чата' :
-                   activeSubTab === 'email' ? 'Настройки почты' :
-                   activeSubTab === 'notifications' ? 'Оповещения и каналы' : activeSubTab}
+                   activeSubTab === 'staff-guide' ? 'Инструкции для специалистов' :
+                   activeSubTab === 'guide' ? 'Руководство пользователя' :
+                   activeSubTab === 'faq' ? 'Вопросы и ответы (FAQ)' :
+                   activeSubTab === 'users' ? 'Пользователи и права (RBAC)' :
+                   activeSubTab === 'email' ? 'Настройки почты (SMTP)' :
+                   activeSubTab === 'logs' ? 'Журнал безопасности и логи' : activeSubTab}
                 </span>
               </div>
 
               <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                {activeSubTab === 'dashboard' ? 'Сводный дашборд показателей' :
-                 activeSubTab === 'funnels' ? 'Управление сделками и воронка продаж' :
-                 activeSubTab === 'contact-center' ? 'База предприятий, контактных лиц и ЛПР' :
-                 activeSubTab === 'proposals' ? 'Реестр коммерческих предложений (ТКП)' :
-                 activeSubTab === 'tasks' ? 'Календарь и персональные задачи' :
-                 activeSubTab === 'analytics' ? 'Сквозная аналитика и показатели конверсии' :
-                 activeSubTab === 'contracts' ? 'Реестр договоров и проектов' :
+                {activeSubTab === 'contracts' ? 'Реестр договоров и проектов' :
                  activeSubTab === 'licenses' ? 'Лицензии и аппаратные ключи защиты' :
-                 activeSubTab === 'tickets' ? 'Заявки в службу технической поддержки' :
+                 activeSubTab === 'tickets' ? 'Реестр заявок в службу технической поддержки' :
                  activeSubTab === 'certificates' ? 'Реестр свидетельств и сертификатов' :
-                 activeSubTab === 'fleet' ? 'Парк оборудования и метрологический контроль' :
-                 activeSubTab === 'arshin-schedule' ? 'График поверок ФГИС «АРШИН» и мониторинг СИ' :
                  activeSubTab === 'metrology-reports' ? 'Реестр метрологических отчетов' :
+                 activeSubTab === 'client-dashboard' ? 'Сводный дашборд заказчика' :
                  activeSubTab === 'requests' ? 'Мои расчеты стоимости и заявки' :
-                 activeSubTab === 'guide' ? 'Регламенты работы и должностные инструкции' :
-                 activeSubTab === 'faq' ? 'База знаний и практические чек-листы' :
-                 activeSubTab === 'users' ? 'Управление учетными записями и правами доступа' :
-                 activeSubTab === 'bot-settings' ? 'База ответов Онлайн-Инженера' :
+                 activeSubTab === 'staff-guide' ? 'Служебные инструкции и регламенты кабинета' :
+                 activeSubTab === 'guide' ? 'Руководство пользователя личного кабинета' :
+                 activeSubTab === 'faq' ? 'Часто задаваемые вопросы (B2B FAQ)' :
+                 activeSubTab === 'users' ? 'Управление учетными записями и правами доступа (RBAC)' :
                  activeSubTab === 'email' ? 'Конфигурация корпоративного SMTP сервера' :
-                 activeSubTab === 'notifications' ? 'Настройка каналов мгновенных уведомлений (Telegram, Email, MAX, Pop-up)' : 'Раздел личного кабинета'}
+                 activeSubTab === 'logs' ? 'Системный журнал событий и аудит действий' : 'Раздел личного кабинета'}
               </h2>
             </div>
 
           </div>
-          
-          {/* Specific module renders */}
-          {activeModule === 'sales' && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {activeSubTab === 'dashboard' && (
-                <CrmDashboard 
-                  onNavigateToSchedule={() => {
-                    setActiveModule('docs');
-                    setActiveSubTab('arshin-schedule');
-                  }} 
-                />
-              )}
-              {activeSubTab === 'funnels' && <CrmPanel activeTab="funnels" />}
-              {activeSubTab === 'analytics' && <CrmPanel activeTab="analytics" />}
-              {activeSubTab === 'proposals' && <ProposalsRegistry deals={deals} />}
-              {activeSubTab === 'tasks' && <ManagerTasksTab />}
-              {activeSubTab === 'contact-center' && <ContactCenterTab />}
+
+          {/* Admin B2B Portal Notice */}
+          {hasCrmAccess && activeModule === 'docs' && (
+            <div className="p-3.5 sm:p-4 mb-4 rounded-xl bg-gradient-to-r from-blue-50 to-slate-50 dark:from-slate-800 dark:to-slate-800/80 border border-blue-200/80 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-2xs animate-in fade-in duration-200">
+              <div className="flex items-start sm:items-center gap-2.5 text-blue-950 dark:text-blue-100 min-w-0">
+                <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5 sm:mt-0" />
+                <div className="min-w-0">
+                  <span className="font-black text-blue-900 dark:text-blue-200">Режим служебных реестров:</span>
+                  <span className="text-slate-600 dark:text-slate-300 ml-1">
+                    Вы просматриваете служебные реестры договоров, лицензий и сервисных заявок. Для работы со сделками и воронкой продаж перейдите в CRM.
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  sessionStorage.setItem('ds_crm_active_tab', 'dashboard');
+                  navigateTo('crm');
+                }}
+                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors cursor-pointer shrink-0 whitespace-nowrap shadow-xs flex items-center gap-1.5"
+              >
+                <Briefcase className="w-3.5 h-3.5" />
+                <span>Единая среда CRM</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           )}
-
+          
+          {/* Specific module renders */}
           {activeModule === 'admin' && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
               {activeSubTab === 'users' && <UserManagementPanel />}
-              {activeSubTab === 'bot-settings' && <BotSettingsView />}
-              {activeSubTab === 'email' && <EmailSettingsView />}
-              {activeSubTab === 'notifications' && <NotificationSettingsView />}
+              {activeSubTab === 'email' && <UnifiedCommunicationsHub contextMode="account" initialTab="smtp" />}
+              {activeSubTab === 'logs' && <CrmRealtimeLogsView />}
             </div>
           )}
 
           {activeModule === 'knowledge' && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {activeSubTab === 'guide' && (
-                <CrmManualView 
-                  onNavigateToTab={(tab) => {
-                    const salesTabs = ['funnels', 'contact-center', 'proposals', 'tasks', 'analytics'];
-                    const docsTabs = ['contracts', 'licenses', 'tickets', 'fleet', 'arshin-schedule', 'metrology-reports', 'certificates', 'requests'];
-                    const adminTabs = ['users', 'bot-settings', 'email', 'notifications'];
-                    const knowledgeTabs = ['faq', 'guide'];
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
+              {/* If user is Staff/Manager: Show dedicated Staff Cabinet Manual */}
+              {hasCrmAccess ? (
+                <StaffCabinetManualView />
+              ) : (
+                /* If user is Client: Show ONLY Client-Safe Guide and FAQ */
+                <>
+                  {/* B2B Client Portal Guide */}
+                  {activeSubTab === 'guide' && (
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-7 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6">
+                      <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                          <BookOpen className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                            Руководство пользователя личного кабинета ООО «ДС-Инжиниринг»
+                          </h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Инструкции по работе с договорами, электронными ключами ПО и сервисными заявками
+                          </p>
+                        </div>
+                      </div>
 
-                    if (salesTabs.includes(tab)) {
-                      setActiveModule('sales');
-                      setActiveSubTab(tab);
-                    } else if (docsTabs.includes(tab)) {
-                      setActiveModule('docs');
-                      setActiveSubTab(tab);
-                    } else if (adminTabs.includes(tab)) {
-                      setActiveModule('admin');
-                      setActiveSubTab(tab);
-                    } else if (knowledgeTabs.includes(tab)) {
-                      setActiveModule('knowledge');
-                      setActiveSubTab(tab);
-                    }
-                  }}
-                  onNavigateAccountTab={(tab) => {
-                    const salesTabs = ['funnels', 'contact-center', 'proposals', 'tasks', 'analytics'];
-                    const docsTabs = ['contracts', 'licenses', 'tickets', 'fleet', 'arshin-schedule', 'metrology-reports', 'certificates', 'requests'];
-                    const adminTabs = ['users', 'bot-settings', 'email', 'notifications'];
-                    const knowledgeTabs = ['faq', 'guide'];
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Section 1 */}
+                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-xs uppercase tracking-wider">
+                            <Briefcase className="w-4 h-4" />
+                            <span>1. Договоры и проекты</span>
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">Отслеживание статуса поставок и услуг</h4>
+                          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                            В разделе «Договоры и проекты» вы можете просматривать спецификации оборудования, текущие этапы исполнения, календарные графики отгрузок и сопутствующие документы.
+                          </p>
+                        </div>
 
-                    if (salesTabs.includes(tab)) {
-                      setActiveModule('sales');
-                      setActiveSubTab(tab);
-                    } else if (docsTabs.includes(tab)) {
-                      setActiveModule('docs');
-                      setActiveSubTab(tab);
-                    } else if (adminTabs.includes(tab)) {
-                      setActiveModule('admin');
-                      setActiveSubTab(tab);
-                    } else if (knowledgeTabs.includes(tab)) {
-                      setActiveModule('knowledge');
-                      setActiveSubTab(tab);
-                    }
-                  }}
-                />
+                        {/* Section 2 */}
+                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                          <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400 font-bold text-xs uppercase tracking-wider">
+                            <KeyRound className="w-4 h-4" />
+                            <span>2. Лицензии и ПО</span>
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">Управление ключами Geomagic / PolyWorks</h4>
+                          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Здесь хранятся номера аппаратных USB-ключей (Dongle ID), файлы лицензий `.lic` и ссылки на загрузку официальных дистрибутивов PolyWorks|Inspector, Geomagic и TopSolid.
+                          </p>
+                        </div>
+
+                        {/* Section 3 */}
+                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-xs uppercase tracking-wider">
+                            <MessageSquare className="w-4 h-4" />
+                            <span>3. Техническая поддержка</span>
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">Подача сервисных заявок и консультаций</h4>
+                          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Для решения вопросов по калибровке КИМ, вызову сервисного инженера или настройке ПО создайте новое обращение в разделе «Техподдержка».
+                          </p>
+                        </div>
+
+                        {/* Section 4 */}
+                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                          <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400 font-bold text-xs uppercase tracking-wider">
+                            <ClipboardCheck className="w-4 h-4" />
+                            <span>4. Метрология и Сертификаты</span>
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">Протоколы измерений и ФГИС «АРШИН»</h4>
+                          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Загружайте официальные протоколы контроля геометрических параметров (GD&T) и проверяйте номера поверок вашего оборудования в государственном реестре ФГИС «АРШИН».
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeSubTab === 'faq' && <ClientFaqSection />}
+                </>
               )}
-              {activeSubTab === 'faq' && <ManagerFaqSection items={MANAGER_FAQ_DATA} />}
-            </div>
-          )}
-
-          {activeModule === 'docs' && activeSubTab === 'fleet' && hasCrmAccess && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <CompanyFleetRegistry />
-            </div>
-          )}
-
-          {activeModule === 'docs' && activeSubTab === 'arshin-schedule' && hasCrmAccess && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <ArshinVerificationSchedule 
-                onBackToCrm={() => {
-                  setActiveModule('sales');
-                  setActiveSubTab('dashboard');
-                }}
-              />
             </div>
           )}
 
@@ -1421,83 +1604,125 @@ export const AccountPage: React.FC = () => {
 
           {activeModule === 'docs' && activeSubTab === 'client-dashboard' && !hasCrmAccess && currentUser && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <ClientDashboard currentUser={currentUser} />
+              <ClientDashboard 
+                currentUser={currentUser}
+                onCreateTicket={() => {
+                  setEditingTicket(null);
+                  setTicketModalOpen(true);
+                }}
+                onOpenRfqModal={() => setIsNewRfqModalOpen(true)}
+                onNavigateToSubTab={(subTab) => handleSelectSubTab('docs', subTab)}
+              />
             </div>
           )}
 
-          {/* Original old views will follow below */}
-{/* ------------------------------------------------------------- */}
-      {/* TAB: CRM */}
-      {/* ------------------------------------------------------------- */}
-      
+          {/* TAB: MY REQUESTS & RFQs */}
+          {/* ------------------------------------------------------------- */}
+          {activeModule === 'docs' && activeSubTab === 'requests' && !hasCrmAccess && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">Мои заявки и расчеты стоимости</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Отслеживание статусов коммерческих предложений, калькуляций и заявок на инженерные услуги
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => navigateTo('services')}
+                    className="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Calculator className="w-4 h-4 text-emerald-600" />
+                    <span>Услуги и расчет</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsNewRfqModalOpen(true)}
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Новая заявка на расчет</span>
+                  </button>
+                </div>
+              </div>
 
-
-      {/* ------------------------------------------------------------- */}
-
-      {/* ------------------------------------------------------------- */}
-      {/* TAB: USERS & PERMISSIONS */}
-      {/* ------------------------------------------------------------- */}
-      
-
-
-      {/* ------------------------------------------------------------- */}
-      {/* TAB: MY REQUESTS & RFQs */}
-      {/* ------------------------------------------------------------- */}
-      {activeModule === 'docs' && activeSubTab === 'requests' && !hasCrmAccess && (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900">Мои заявки и расчеты стоимости</h2>
-          </div>
-          {(!rfqs || rfqs.length === 0) ? (
-            <div className="p-8 text-center bg-slate-50 border border-dashed border-gray-300 rounded-xl text-gray-500 text-sm font-medium">
-              У вас пока нет активных заявок.
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {rfqs.map((r) => (
-                <div key={r.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4 justify-between sm:items-center">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-100">
-                        {r.id}
-                      </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-slate-500">
-                        {new Date(r.createdAt).toLocaleDateString('ru-RU')}
-                      </span>
-                    </div>
-                    <h3 className="font-bold text-gray-900 text-sm">
-                      {r.serviceType === 'software' ? 'Заявка на ПО' : 
-                       r.serviceType === 'demo' ? 'Заказ демонстрации' : 
-                       r.serviceType === 'consultation' ? 'Консультация инженера' : 
-                       'Заявка: ' + r.serviceType}
-                    </h3>
-                    {r.details && (
-                      <p className="text-xs text-slate-500 line-clamp-2 max-w-2xl">{r.details}</p>
-                    )}
+              {(!rfqs || rfqs.length === 0) ? (
+                <div className="p-8 text-center bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl space-y-4">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
+                    <Calculator className="w-6 h-6" />
                   </div>
-                  <div className="shrink-0">
-                    <span
-                      className={`px-4 py-1.5 text-xs font-semibold rounded-lg border ${
-                        r.status === 'completed' || r.status === 'closed'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : r.status === 'in_progress'
-                          ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : 'bg-amber-50 text-amber-700 border-amber-200'
-                      }`}
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">У вас пока нет активных заявок</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+                      Создайте новую заявку на расчет стоимости проекта, внедрение ПО или поставку оборудования, либо воспользуйтесь интерактивным калькулятором.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsNewRfqModalOpen(true)}
+                      className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
                     >
-                      {r.status === 'completed' || r.status === 'closed'
-                        ? 'Завершено'
-                        : r.status === 'in_progress'
-                        ? 'В работе'
-                        : 'На рассмотрении'}
-                    </span>
+                      <Plus className="w-4 h-4" />
+                      <span>Подать заявку на расчет ТКП</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigateTo('services')}
+                      className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <Calculator className="w-4 h-4 text-emerald-600" />
+                      <span>Инженерные услуги и расчет</span>
+                    </button>
                   </div>
                 </div>
-              ))}
+              ) : (
+                <div className="grid gap-4">
+                  {rfqs.map((r, idx) => (
+                    <div key={r.id ? `${r.id}-${idx}` : `rfq-${idx}`} className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row gap-4 justify-between sm:items-center">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-100 dark:border-blue-900">
+                            {r.id}
+                          </span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                            {new Date(r.createdAt || Date.now()).toLocaleDateString('ru-RU')}
+                          </span>
+                        </div>
+                        <h3 className="font-bold text-gray-900 dark:text-white text-sm">
+                          {r.serviceType === 'software' ? 'Заявка на ПО' : 
+                           r.serviceType === 'demo' ? 'Заказ демонстрации' : 
+                           r.serviceType === 'consultation' ? 'Консультация инженера' : 
+                           r.serviceType}
+                        </h3>
+                        {r.details && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 max-w-2xl">{r.details}</p>
+                        )}
+                      </div>
+                      <div className="shrink-0">
+                        <span
+                          className={`px-4 py-1.5 text-xs font-semibold rounded-lg border ${
+                            r.status === 'completed' || r.status === 'closed'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                              : r.status === 'in_progress'
+                              ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800'
+                              : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
+                          }`}
+                        >
+                          {r.status === 'completed' || r.status === 'closed'
+                            ? 'Завершено'
+                            : r.status === 'in_progress'
+                            ? 'В работе'
+                            : 'На рассмотрении'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
       {/* ------------------------------------------------------------- */}
       {/* TAB 1: CONTRACTS & PROJECTS (WITH FULL FILE MANAGEMENT) */}
@@ -1522,6 +1747,35 @@ export const AccountPage: React.FC = () => {
           }))}
           canManageLicenses={canManageLicenses}
           onAdd={() => { setEditingLicense(null); setLicenseModalOpen(true); }}
+          onRequestSupportExtension={(lic) => {
+            const product = lic.title || 'ПО САПР/КИМ';
+            const haspInfo = lic.haspId ? ` [HASP/Ключ: ${lic.haspId}]` : '';
+            const newReqTicket: SupportTicketItem = {
+              id: `req-ext-${Date.now()}`,
+              subject: `Запрос продления техподдержки: ${product}${haspInfo}`,
+              product: (lic.title || '').toLowerCase().includes('polyworks') ? 'PolyWorks' : (lic.title || '').toLowerCase().includes('topsolid') ? 'TopSolid 7' : 'TopSolid 7',
+              clientCompany: currentUser?.company || 'Заказчик',
+              clientName: currentUser?.fullName || 'Представитель предприятия',
+              date: new Date().toISOString().slice(0, 10),
+              status: 'open',
+              priority: 'Высокий',
+              description: `Запрос продления техподдержки для лицензии «${lic.title}». HASP ID: ${lic.haspId || 'не указан'}. Текущий срок поддержки: ${lic.supportUntil || 'истекает'}.`,
+              assignedEngineer: 'Скобелев Александр Сергеевич (TopSolid / Постпроцессоры)',
+              messages: [
+                {
+                  id: `msg-${Date.now()}`,
+                  author: currentUser?.fullName || 'Представитель предприятия',
+                  authorRole: 'client',
+                  date: new Date().toLocaleString('ru-RU'),
+                  text: `Прошу подготовить коммерческое предложение и счет на продление технической поддержки и обновлений для лицензии «${lic.title}» (HASP ID: ${lic.haspId || 'не указан'}, текущий срок: ${lic.supportUntil || 'истекает'}).`,
+                }
+              ],
+              attachments: []
+            };
+            setEditingTicket(newReqTicket);
+            setTicketModalOpen(true);
+            showToast(`Форма запроса продления для «${lic.title}» подготовлена`);
+          }}
           onEdit={(lic) => { 
             const orig = licenses.find(l => l.id === lic.id);
             setEditingLicense(orig || null); 
@@ -1686,6 +1940,21 @@ export const AccountPage: React.FC = () => {
           }}
         />
       )}
+
+      {/* Client RFQ Calculation Modal */}
+      {isNewRfqModalOpen && (
+        <ClientRfqModal
+          currentUser={currentUser}
+          onClose={() => setIsNewRfqModalOpen(false)}
+          onSuccess={(newRfq) => {
+            setRfqs(prev => [newRfq, ...prev]);
+            showToast('Заявка на расчет успешно отправлена в коммерческий отдел!');
+          }}
+        />
+      )}
     </div>
   );
 };
+
+export default AccountPage;
+

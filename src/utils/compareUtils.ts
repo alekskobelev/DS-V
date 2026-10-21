@@ -20,19 +20,20 @@ export interface SpecCategory {
 const SPEC_CATEGORY_KEYWORDS: Record<string, string[]> = {
   metrology: [
     'точность', 'погрешность', 'mpe', 'повторяемость', 'разрешение', 'шаг', 'калибровка',
-    'госреестр', 'аршин', 'класс точности', 'пределы допускаемой', 'сфера', 'щуп'
+    'госреестр', 'аршин', 'класс точности', 'пределы допускаемой', 'сфера', 'щуп', 'gd&t', 'базы'
   ],
   dimensions: [
     'диапазон', 'поле', 'зона', 'дистанция', 'габарит', 'масса', 'вес', 'размер',
-    'ход', 'объем', 'глубина', 'фокус', 'рабочая зона', 'угол'
+    'ход', 'объем', 'глубина', 'фокус', 'рабочая зона', 'угол', 'длина'
   ],
   optics: [
     'лазер', 'камера', 'свет', 'подсветка', 'кадр', 'скорость', 'линз', 'сенсор',
-    'проектор', 'длина волны', 'класс лазера', 'частота', 'датчик', 'сканирование'
+    'проектор', 'длина волны', 'класс лазера', 'частота', 'датчик', 'сканирование', 'точек/сек', 'fps'
   ],
   software: [
     'по', 'софт', 'программ', 'формат', 'экспорт', 'импорт', 'интерфейс', 'ос',
-    'windows', 'совместим', 'драйвер', 'cad', 'cam', 'caq', 'разрядность', 'память', 'процессор'
+    'windows', 'совместим', 'драйвер', 'cad', 'cam', 'caq', 'разрядность', 'память', 'процессор',
+    'модул', 'чпу', 'постпроцессор', 'step', 'iges', 'parasolid', 'catia', 'solidworks', 'лицензи'
   ],
   environment: [
     'температур', 'влажность', 'питание', 'ip', 'защит', 'аккумулятор', 'батаре',
@@ -100,7 +101,7 @@ export function buildCategorizedSpecs(products: (Product | null)[]): SpecCategor
   categoryBuckets.overview.push({
     key: '__brand',
     label: 'Производитель / Бренд',
-    isDifferent: checkIfDifferent(brandValues),
+    isDifferent: checkIfDifferent(products, brandValues),
     values: brandValues,
   });
 
@@ -108,7 +109,7 @@ export function buildCategorizedSpecs(products: (Product | null)[]): SpecCategor
   categoryBuckets.overview.push({
     key: '__category',
     label: 'Категория оборудования',
-    isDifferent: checkIfDifferent(categoryValues),
+    isDifferent: checkIfDifferent(products, categoryValues),
     values: categoryValues,
   });
 
@@ -123,7 +124,7 @@ export function buildCategorizedSpecs(products: (Product | null)[]): SpecCategor
   categoryBuckets.overview.push({
     key: '__technology',
     label: 'Технология измерений / Тип',
-    isDifferent: checkIfDifferent(techValues),
+    isDifferent: checkIfDifferent(products, techValues),
     values: techValues,
   });
 
@@ -134,7 +135,7 @@ export function buildCategorizedSpecs(products: (Product | null)[]): SpecCategor
   categoryBuckets.overview.push({
     key: '__inStock',
     label: 'Доступность',
-    isDifferent: checkIfDifferent(inStockValues),
+    isDifferent: checkIfDifferent(products, inStockValues),
     values: inStockValues,
   });
 
@@ -166,7 +167,7 @@ export function buildCategorizedSpecs(products: (Product | null)[]): SpecCategor
       return undefined;
     });
 
-    const isDifferent = checkIfDifferent(values);
+    const isDifferent = checkIfDifferent(products, values);
     const catId = getSpecCategoryId(key);
 
     categoryBuckets[catId].push({
@@ -229,12 +230,22 @@ export function buildCategorizedSpecs(products: (Product | null)[]): SpecCategor
 /**
  * Checks if values across active products are genuinely different
  */
-function checkIfDifferent(values: (string | undefined)[]): boolean {
-  const presentValues = values.filter((v): v is string => v !== undefined && v !== null && v.trim() !== '');
-  if (presentValues.length <= 1) return true; // if one has it and other doesn't, it's a difference
+function checkIfDifferent(products: (Product | null)[], values: (string | undefined)[]): boolean {
+  const activeEntries = products
+    .map((p, idx) => ({ active: p !== null, val: values[idx] }))
+    .filter((e) => e.active);
 
-  const first = presentValues[0].trim().toLowerCase();
-  return presentValues.some((v) => v.trim().toLowerCase() !== first);
+  if (activeEntries.length < 2) return false;
+
+  const normalized = activeEntries.map((e) =>
+    e.val !== undefined && e.val !== null ? e.val.trim().toLowerCase() : ''
+  );
+
+  // If all active products have empty/blank values, not considered different
+  if (normalized.every((v) => v === '')) return false;
+
+  const first = normalized[0];
+  return normalized.some((v) => v !== first);
 }
 
 /**

@@ -44,6 +44,10 @@ MAX_WEBHOOK_URL="https://max.internal.ds-enginering.ru/api/webhooks/leads"
 
 # Аналитика и счетчики
 VITE_YANDEX_METRICA_ID="112028524"
+
+# 3. Интеграция с DaData API (ЕГРЮЛ, поиск организаций и Cleaner API)
+DADATA_API_KEY="83fae9eac3fa6c77946d93a32d86482088cf28e0"
+DADATA_SECRET_KEY="f9d8ee50262497a928702a78fce4f3cce0fc8998"
 ```
 
 ## 4. Инициализация и обновление структуры таблиц (Миграции)
@@ -86,9 +90,21 @@ docker exec -t ds_engineering_db pg_dumpall -c -U ds_admin > ds_engineering_dump
 - `service_requests` — выездные заявки на 3D-контроль, калибровку и сервис КИМ.
 - `crm_fleet_devices` — реестр средств измерений и физического парка приборов (КИМ типа «рука», сканеры, лазерные трекеры) со сроками поверки ФГИС «АРШИН».
 - `crm_certificates` — реестр свидетельств об обучении, инструктажах по ТБ и аттестации метрологов (REST API `/api/crm/certificates`).
+- `price_categories` — иерархический справочник категорий и подкатегорий номенклатуры (ПО, Оборудование, Услуги, Оснастка, Непрофильные).
+- `price_items` — номенклатурный справочник и прайс-лист CRM с поддержкой юнит-экономики, себестоимости закупки, маржинальности, 5 категорий и REST API `/api/crm/price-items` (подробно: `docs/PRICE_LISTS_MODULE.md`).
+- `price_history` — версионный аудит цен, хронология изменений себестоимости и цен продажи с дельтами %, причинами и ответственными менеджерами.
+- `price_tier_rules` — матрица клиентских тарифных сеток и порогов скидок (Розница, Интеграторы, Партнеры, ГОЗ/Корпорации).
 - `cms_store` / `text_constants` / `company_positions` — персистентное хранилище конфигураций CMS, специализированная SQL-таблица текстовых констант сайта (`text_constants` с эндпоинтом `/api/text-constants`), глобальные настройки (`site_text_constants`) и общекорпоративный справочник должностей сотрудников компании.
 
-При автономной работе или временной недоступности PostgreSQL сервер автоматически сохраняет состояние в JSON-файлы с дисковой персистентностью в папке `data/` (`data/crm_fleet_devices.json`, `data/certificates.json`, `data/serviceRequests.json`, `data/botTopics.json`, `data/company_positions.json`, `data/site_texts.json`).
+### 7.1. Синхронизация с Google Cloud Firestore (`src/services/PriceService.ts`)
+Для распределенного взаимодействия, реактивных подписок в реальном времени и мобильного/клиентского доступа используется сервис `PriceService.ts` на базе Google Cloud Firestore:
+- **Коллекции Firestore**: `price_items`, `price_categories`, `price_history`, `price_tier_rules`.
+- **Правила безопасности**: `firestore.rules` (развернуты в проект).
+- **Схема и ограничения**: `firebase-blueprint.json`.
+- **Реактивные слушатели**: `onSnapshot` для автоматического обновления списков цен и истории изменений без перезагрузки интерфейса.
+
+При автономной работе или временной недоступности PostgreSQL сервер автоматически сохраняет состояние в JSON-файлы с дисковой персистентностью в папке `data/` (`data/price_items.json`, `data/crm_fleet_devices.json`, `data/certificates.json`, `data/serviceRequests.json`, `data/botTopics.json`, `data/company_positions.json`, `data/site_texts.json`).
+
 
 ## 8. Таблица `text_constants`, REST API и обработка ошибок подключения к БД
 
@@ -141,6 +157,7 @@ docker exec -t ds_engineering_db pg_dumpall -c -U ds_admin > ds_engineering_dump
 - **`GET /api/db-health`:** Экспресс-проверка статуса СУБД PostgreSQL 17 и пула соединений. Возвращает `{ status: 'ok', database: 'postgresql', pool: 'active', latencyMs: N }` для строки статуса CMS.
 - **`GET /api/cms/state` & `POST /api/cms/state`:** Комплексное чтение и атомарная запись полного состояния контента (пользовательские страницы, каталог ПО, каталог оборудования, направления услуг, глобальные контакты).
 - **`GET /api/knowledge-base`:** Доступ к техническим статьям, стандартам ГОСТ/ISO и методикам метрологического контроля.
+- **Справочники предприятий и вех развития (`industrialClientsData.ts`, `InteractiveCompanyTimeline.tsx`):** Реестр 22 промышленных заказчиков РФ (с отраслями, городами, ключевыми проектами) и 14 исторических вех (1995–2026) с динамической фильтрацией и поддержкой гибридной персистентности.
 - **Хранилище MinIO S3 Vault:** Интеграция бакета `cad-models-3d` для трехмерных CAD-моделей (STEP, IGES, STL) с проверкой квот и доступности.
 
 ## 12. Разграничение ролей, профили доступа и персистентность пользователей
@@ -151,3 +168,31 @@ docker exec -t ds_engineering_db pg_dumpall -c -U ds_admin > ds_engineering_dump
 - **Блокировка эскалации привилегий:** панель переключения профилей скрыта от клиентов и доступна исключительно супер-администратору в режиме безопасной сессионной эмуляции.
 - **Персистентность в файловом хранилище `data/users.json`:** при недоступности PostgreSQL сервер автоматически сохраняет учетные записи в `data/users.json`, гарантируя сохранность созданных пользователей между перезагрузками страницы и рестартами контейнера.
 - **Мгновенные оповещения:** при регистрации сервер рассылает оповещения дежурным администраторам (Telegram, Email, аудио-алерт и лог аудита безопасности).
+
+## 13. Руководство по установке на ASUSTOR NAS и внешние VPS/VDS
+Подробные пошаговые инструкции по настройке контейнеризации, пробросу портов, выпуску SSL Let's Encrypt и настройке Nginx для сетевых накопителей **ASUSTOR NAS (ADM)** и **VPS-серверов под управлением Linux (Ubuntu/Debian)** вынесены в отдельный документ:
+👉 **[`docs/SERVER_DEPLOYMENT_GUIDE.md`](./SERVER_DEPLOYMENT_GUIDE.md)**
+
+## 16. Схема данных и модель документов CRM (Commercial Proposals & Project Documents)
+- **Каноническая модель документов (`ProjectDocument`, `CommercialProposal`)**:
+  - В схеме данных `src/types.ts` и `src/db/schema.ts` стандартизированы структуры документов проектов, коммерческих предложений и договоров.
+  - Поля включают: уникальный ID, исходящий номер (`outgoingNumber`), дату регистрации, реквизиты заказчика, ответственного инженера, детальные спецификации с расчетом НДС (22%), статусы согласования, прикрепленные версии файлов (`ProposalVersion`) и связанные сделки/договоры.
+  - Персистентность обеспечивается в таблице `commercial_proposals` с резервированием в `data/` и синхронизацией через REST API.
+- **Поддержка мультивалютности в сделках (`currency: CurrencyCode`)**:
+  - В таблице сделок `crm_deals` и карточках Канбана сохраняется валюта проекта: `RUB` (рубли, символ `₽`), `USD` (доллары, `$`), `EUR` (евро, `€`), `CNY` (юани, `¥`).
+  - Форматирование сумм осуществляется через каноническую функцию `formatCurrency(amount, currency)`, сохраняя финансовую точность и корректную привязку к валютным контрактам.
+- **Модель данных корпоративной телефонии (`CallRecord`) и журнала звонков (CDR)**:
+  - Структура записи звонка: `id`, `type` (`inbound` | `outbound` | `missed`), `callerNumber`, `callerName`, `companyName`, `dealId`, `managerName`, `extension` (доб. номер), `durationSeconds`, `status` (`answered` | `missed` | `busy`), `recordingUrl` (аудиозапись переговоров), `disposition` (результат звонка) и `notes`.
+  - Позволяет осуществлять Click-to-Call вызовы, привязку звонков к сделкам B2B CRM и аудит соблюдения нормативов первого ответа (SLA < 15 сек).
+- **Модель бронирования метрологической лаборатории и демо-центра (`DemoBooking`)**:
+  - Структура бронирования: `id`, `companyName`, `contactPerson`, `phone`, `equipmentType` (КИМ Mitutoyo, сканеры Scantech, трекер Leica), `partType` (образец детали заказчика), `testingGoal`, `date`, `timeSlot`, `assignedEngineer`, `status`, `passPermitStatus` (служебная записка на пропуск) и `participantsCount`.
+
+## 17. Справочник номенклатуры и прейскурант (`price_items`) с поддержкой CSV-импорта
+- **Таблица PostgreSQL (`price_items`) и файловая реплика (`data/price_items.json`)**:
+  - Содержит полную актуальную номенклатуру «ДС-Инжиниринг» (78 позиций, из них 52 позиции оборудования сайта: КИМ PMT серии FUTURE/PRIME/LOONG, PMT GAMMA+, PMT Alpha Arm, 3D-сканеры ScanLine 3D EasyScan Omni/Combo/HX, Shining 3D, Leica Geosystems, Renishaw);
+  - Поля: `sku`, `name`, `category`, `categoryLabel`, `subCategory`, `manufacturer`, `costPriceRub`, `priceRub`, `vatRate` (22%), `maxDiscountPercent`, `inStock`, `leadTimeDays`, `warrantyMonths`, `isPopular`, `isActive`;
+- **REST API эндпоинты**:
+  - `GET /api/crm/price-items` — выгрузка номенклатуры с поддержкой поиска, фильтрации по категориям и статусу активности;
+  - `POST /api/crm/price-items/import-csv` — импорт из CSV с поддержкой режимов `merge` (обновление по SKU) и `replace` (полная перезапись), автоопределением разделителей и проверкой CSRF-токена.
+
+

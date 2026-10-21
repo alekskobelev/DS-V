@@ -103,7 +103,7 @@ export const BulkTaskModal: React.FC<BulkTaskModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 backdrop-blur-xs overflow-y-auto">
+    <div className="fixed inset-0 z-[500] flex items-start justify-center bg-black/60 p-4 backdrop-blur-xs overflow-y-auto">
       <div 
         id="bulk-task-modal"
         className="bg-white rounded-lg shadow-sm border border-gray-100 w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-4 sm:my-8"

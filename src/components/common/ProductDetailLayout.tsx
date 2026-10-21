@@ -20,10 +20,12 @@ import {
   PhoneCall,
   Mail,
   FileCheck,
-  Sparkles,
+  Wrench,
   Info,
   X,
-  Link2
+  Link2,
+  Gauge,
+  TrendingUp
 } from 'lucide-react';
 import { Product } from '../../types';
 import { useApp } from '../../context/AppContext';
@@ -38,6 +40,7 @@ import { FeatureList } from './FeatureList';
 import { ProductFaqSection } from './ProductFaqSection';
 import { TopSolidModulesExplorer } from '../software/TopSolidModulesExplorer';
 import { generatePrintableHTML } from '../../utils/printProductSpec';
+import { ProductSpecPrintOverlay } from './ProductSpecPrintOverlay';
 
 export interface ProductDetailLayoutProps {
   product: Product;
@@ -54,6 +57,8 @@ export const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     removeFromCompare,
     isInCompare,
     openContactModal,
+    openConfiguratorModal,
+    openRoiCalculatorModal,
     showToast,
   } = useApp();
 
@@ -107,7 +112,7 @@ export const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     setTimeout(() => {
       setIsCopied(false);
     }, 2500);
-    showToast('Copied!');
+    showToast('Ссылка на товар скопирована в буфер обмена');
   };
 
   const handleShare = handleCopyLink;
@@ -253,8 +258,8 @@ export const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
                 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-400 dark:border-emerald-700 shadow-xs'
                 : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
             }`}
-            title="Copy link / Скопировать ссылку на страницу"
-            aria-label="Copy link"
+            title="Скопировать ссылку на страницу"
+            aria-label="Скопировать ссылку на страницу"
             data-testid="copy-link-button"
           >
             {isCopied ? (
@@ -262,7 +267,7 @@ export const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
             ) : (
               <Link2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             )}
-            <span>{isCopied ? 'Copied!' : 'Copy link'}</span>
+            <span>{isCopied ? 'Скопировано!' : 'Скопировать ссылку'}</span>
           </button>
         </div>
       </div>
@@ -409,22 +414,46 @@ export const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
                     ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-400 dark:border-emerald-700'
                     : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700'
                 }`}
-                title="Copy link / Скопировать ссылку на продукт"
-                aria-label="Copy link"
+                title="Скопировать ссылку на товар"
+                aria-label="Скопировать ссылку на товар"
                 data-testid="copy-link-cta-button"
               >
                 {isCopied ? (
                   <>
                     <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span className="font-bold text-emerald-600 dark:text-emerald-400">Copied!</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">Скопировано!</span>
                   </>
                 ) : (
                   <>
                     <Link2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <span>Скопировать ссылку (Copy link)</span>
+                    <span>Скопировать ссылку на товар</span>
                   </>
                 )}
               </button>
+
+              {/* Direct Metrology Configurator & ROI Calculator Buttons */}
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-2">
+                <button
+                  type="button"
+                  onClick={openConfiguratorModal}
+                  className="w-full py-2.5 px-4 bg-blue-50/90 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/70 text-blue-700 dark:text-blue-300 font-bold rounded-xl text-xs border border-blue-200 dark:border-blue-800 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                >
+                  <Gauge className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span>Метрологический конфигуратор оборудования СИ</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={openRoiCalculatorModal}
+                  className="w-full py-2.5 px-4 bg-amber-50/90 hover:bg-amber-100 dark:bg-amber-950/50 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-bold rounded-xl text-xs border border-amber-300/70 dark:border-amber-800/70 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                >
+                  <TrendingUp className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <span>Калькулятор окупаемости внедрения СИ (ROI)</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/30 text-amber-800 dark:text-amber-300 font-extrabold border border-amber-400/40">
+                    Beta
+                  </span>
+                </button>
+              </div>
             </div>
 
             {/* Official Developer / Manufacturer Resources Box */}
@@ -562,15 +591,15 @@ export const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
                   </button>
                 </div>
 
-                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto no-scrollbar shadow-xs bg-white dark:bg-slate-900 text-xs">
-                  <table className="min-w-[600px] w-full text-left border-collapse">
+                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto no-scrollbar shadow-xs bg-white dark:bg-slate-900 text-xs print-avoid-break">
+                  <table className="product-spec-table min-w-[600px] w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-800 text-white divide-x divide-slate-700">
                         <th className="py-3 px-4 font-bold w-1/3">Характеристика / Параметр</th>
                         <th className="py-3 px-4 font-bold text-center w-1/3 bg-blue-950/80">
                           {product.dualModeSpecs.modeTitle1 || 'Лазерное сканирование'}
                         </th>
-                        <th className="py-3 px-4 font-bold text-center w-1/3 bg-indigo-950/80">
+                        <th className="py-3 px-4 font-bold text-center w-1/3 bg-slate-900">
                           {product.dualModeSpecs.modeTitle2 || 'Инфракрасное сканирование (VCSEL)'}
                         </th>
                       </tr>
@@ -597,7 +626,7 @@ export const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
                               <td className="py-2.5 px-4 text-slate-900 dark:text-white font-mono text-center border-r border-slate-200 dark:border-slate-800 bg-blue-50/20 dark:bg-blue-950/10">
                                 {row.laserVal || '—'}
                               </td>
-                              <td className="py-2.5 px-4 text-slate-900 dark:text-white font-mono text-center bg-indigo-50/20 dark:bg-indigo-950/10">
+                              <td className="py-2.5 px-4 text-slate-900 dark:text-white font-mono text-center bg-slate-100/50 dark:bg-slate-800/50">
                                 {row.irVal || '—'}
                               </td>
                             </>
@@ -636,8 +665,8 @@ export const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
                   </button>
                 </div>
 
-                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto no-scrollbar text-xs shadow-xs bg-white dark:bg-slate-900">
-                  <table className="min-w-[400px] sm:w-full text-left border-collapse">
+                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto no-scrollbar text-xs shadow-xs bg-white dark:bg-slate-900 print-avoid-break">
+                  <table className="product-spec-table min-w-[400px] sm:w-full text-left border-collapse">
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                       {Object.entries(product.specs).map(([label, val], idx) => (
                         <tr
@@ -766,7 +795,7 @@ export const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
           <section className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white rounded-xl p-6 sm:p-8 shadow-sm border border-blue-800/40 space-y-4">
             <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="w-4 h-4" />
+              <Wrench className="w-4 h-4 text-amber-400" />
               <span>Комплексные инженерные услуги TopSolid</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-white">
@@ -908,7 +937,7 @@ export const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
                     { id: 'premium', label: 'PREMIUM', color: 'emerald' },
                     { id: 'standard', label: 'STANDARD', color: 'blue' },
                     { id: 'probingPlus', label: 'PROBING++', color: 'amber' },
-                    { id: 'probing', label: 'PROBING', color: 'purple' },
+                    { id: 'probing', label: 'PROBING', color: 'teal' },
                     { id: 'gauging', label: 'GAUGING', color: 'slate' },
                   ].map((col) => {
                     const isColActive = selectedPolyworksEdition === col.id;
@@ -1113,116 +1142,13 @@ export const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
       </section>
 
       {/* ========================================================================= */}
-      {/* 9. PRINT SPECIFICATION MODAL                                              */}
+      {/* 9. PRINT SPECIFICATION OVERLAY (CSS A4 PAGINATION & READABILITY ENGINE)   */}
       {/* ========================================================================= */}
-      {isPrintModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95">
-            {/* Modal Header */}
-            <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/80">
-              <div className="flex items-center gap-2">
-                <Printer className="w-5 h-5 text-blue-600" />
-                <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
-                  Паспорт и техническая спецификация: {product.name}
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsPrintModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-500 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Modal Body: Embedded Preview */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 dark:bg-slate-950">
-              <div className="max-w-2xl mx-auto bg-white text-slate-900 p-6 sm:p-8 rounded-xl shadow-md border border-slate-200 text-xs space-y-4">
-                <div className="flex items-start justify-between border-b-2 border-blue-900 pb-3">
-                  <div>
-                    <div className="font-extrabold text-base text-blue-900">ООО «ДС-Инжиниринг»</div>
-                    <div className="text-[10px] text-slate-500 font-semibold">Промышленная метрология • 3D-контроль • CAD/CAM</div>
-                  </div>
-                  <div className="text-right text-[10px] text-slate-500">
-                    Тел: +7 (846) 219-24-64<br />
-                    www.ds-eng.ru
-                  </div>
-                </div>
-
-                <div className="text-center font-bold text-sm uppercase bg-slate-100 p-2 rounded">
-                  Официальный технический паспорт изделия
-                </div>
-
-                <div>
-                  <h4 className="font-black text-base text-blue-950">{product.name}</h4>
-                  <div className="text-[11px] text-slate-500 mt-0.5">
-                    Бренд: <strong>{product.brand}</strong> | Категория: <strong>{product.categoryLabel || product.category}</strong>
-                  </div>
-                  <p className="mt-2 text-slate-700 leading-relaxed text-justify">
-                    {product.fullDescription || product.shortDescription}
-                  </p>
-                </div>
-
-                <div className="border border-slate-300 rounded overflow-hidden">
-                  <div className="bg-slate-800 text-white font-bold p-2 text-[11px]">
-                    Метрологические и технические параметры
-                  </div>
-                  <table className="w-full text-left border-collapse text-[11px]">
-                    <tbody>
-                      {isDualSpecs && product.dualModeSpecs ? (
-                        product.dualModeSpecs.rows.map((r, i) => (
-                          <tr key={i} className={i % 2 === 0 ? 'bg-slate-50' : 'bg-white'}>
-                            <td className="p-2 font-bold border-b border-r border-slate-200 w-2/5">{r.label}</td>
-                            <td className="p-2 border-b border-slate-200 font-mono">
-                              {r.singleVal || `${r.laserVal || ''} / ${r.irVal || ''}`}
-                            </td>
-                          </tr>
-                        ))
-                      ) : product.specs ? (
-                        Object.entries(product.specs).map(([k, v], i) => (
-                          <tr key={i} className={i % 2 === 0 ? 'bg-slate-50' : 'bg-white'}>
-                            <td className="p-2 font-bold border-b border-r border-slate-200 w-2/5">{k}</td>
-                            <td className="p-2 border-b border-slate-200 font-mono">{v}</td>
-                          </tr>
-                        ))
-                      ) : null}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="pt-4 border-t border-slate-300 flex items-center justify-between text-[10px] text-slate-500">
-                  <div className="border border-dashed border-blue-900 text-blue-900 px-4 py-1 font-bold rounded">
-                    МЕТРОЛОГИЧЕСКИЙ КОНТРОЛЬ ДС-ИНЖИНИРИНГ
-                  </div>
-                  <div>Дата: {new Date().toLocaleDateString('ru-RU')}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer Controls */}
-            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-wrap items-center justify-between gap-3">
-              <div className="text-xs text-slate-500">
-                Формат документа: А4 (книжная ориентация, ISO)
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleDownloadHTML}
-                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Скачать HTML</span>
-                </button>
-                <button
-                  onClick={handlePrintDirectWindow}
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md cursor-pointer"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span>Распечатать / Сохранить в PDF</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ProductSpecPrintOverlay
+        product={product}
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+      />
     </div>
   );
 };
