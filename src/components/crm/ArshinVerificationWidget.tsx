@@ -22,8 +22,7 @@ import { useApp } from '../../context/AppContext';
 import { 
   getAllMonitoredEquipment, 
   ArshinEquipmentItem, 
-  VerificationStatusType,
-  REFERENCE_DATE 
+  VerificationStatusType
 } from '../../utils/arshinScheduleHelper';
 
 interface ArshinVerificationWidgetProps {
@@ -46,7 +45,8 @@ export const ArshinVerificationWidget: React.FC<ArshinVerificationWidgetProps> =
 
   // Combine and sort all equipment
   const allEquipment = useMemo(() => {
-    return getAllMonitoredEquipment(fleetDevices, deals, REFERENCE_DATE);
+    // «сегодня» берётся из фактической даты (см. src/utils/verificationStatus.ts)
+    return getAllMonitoredEquipment(fleetDevices, deals);
   }, [fleetDevices, deals]);
 
   // KPI counters
@@ -71,7 +71,10 @@ export const ArshinVerificationWidget: React.FC<ArshinVerificationWidgetProps> =
 
       // Urgency filter
       if (urgencyFilter === 'expired' && item.status !== 'expired') return false;
-      if (urgencyFilter === 'attention_only' && item.status !== 'expired' && item.status !== 'critical') return false;
+      // «Внимание» = просрочено, срочно, а также неизвестный срок: прибор с битой/пустой
+      // датой нельзя считать плановым — на экране «График поверок» он виден, и виджет
+      // не должен его скрывать (иначе два экрана снова расходятся).
+      if (urgencyFilter === 'attention_only' && item.status !== 'expired' && item.status !== 'critical' && item.status !== 'unknown') return false;
 
       // Search query
       if (searchQuery.trim()) {
