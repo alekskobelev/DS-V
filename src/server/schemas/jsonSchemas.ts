@@ -59,6 +59,16 @@ export const JSON_SCHEMAS: Record<string, SchemaDefinition> = {
         maxLength: 100,
         description: 'Город предприятия (Самара, Тольятти, Москва и др.)'
       },
+      department: {
+        type: 'string',
+        maxLength: 120,
+        description: 'Отдел/направление обращения — сохраняется в карточке заявки'
+      },
+      sourcePage: {
+        type: 'string',
+        maxLength: 300,
+        description: 'Страница отправки формы (атрибуция лида)'
+      },
       message: {
         type: 'string',
         maxLength: 5000,
@@ -275,6 +285,20 @@ export const JSON_SCHEMAS: Record<string, SchemaDefinition> = {
         type: 'string',
         maxLength: 200,
         description: 'Модель КИМ, измерительной руки или версия CAD/CAM'
+      },
+      attachments: {
+        type: 'array',
+        maxItems: 20,
+        description: 'Файлы-спецификации к обращению',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', maxLength: 250 },
+            url: { type: 'string', maxLength: 800 },
+            size: { type: 'number' },
+            type: { type: 'string', maxLength: 100 }
+          }
+        }
       },
       equipmentSerial: {
         type: 'string',
@@ -787,6 +811,11 @@ export const JSON_SCHEMAS: Record<string, SchemaDefinition> = {
     type: 'object',
     required: ['path'],
     properties: {
+      userAgent: {
+        type: 'string',
+        maxLength: 400,
+        description: 'User-Agent: обработчик читает его из тела, поле должно быть описано в схеме'
+      },
       path: {
         type: 'string',
         minLength: 1,

@@ -141,6 +141,33 @@ export function resetCorporateEmailTemplates(): CorporateEmailTemplate[] {
   return corporateTemplatesStore;
 }
 
+/**
+ * Реквизиты SMTP берутся только из окружения процесса. Пароли приложения Яндекс 360
+ * раньше были литералами в этом файле, а файл лежит в публичном репозитории — т. е.
+ * любой, кто его клонировал, мог отправлять почту от лица компании.
+ *
+ *   DS_SMTP_APP_PASSWORDS='{"adm-01":"…","adm-02":"…"}'   — карта по managerId
+ *   DS_SMTP_APP_PASSWORD_ADM_01='…'                        — либо переменная на сотрудника
+ */
+const SMTP_APP_PASSWORD_MAP: Record<string, string> = (() => {
+  const raw = (process.env.DS_SMTP_APP_PASSWORDS || '').trim();
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, string>) : {};
+  } catch {
+    console.warn('[email] DS_SMTP_APP_PASSWORDS: ожидался JSON-объект {"adm-01":"…"}, конфигурация игнорируется');
+    return {};
+  }
+})();
+
+export function appPasswordFor(managerId: string): string {
+  const fromMap = SMTP_APP_PASSWORD_MAP[managerId];
+  if (fromMap) return fromMap;
+  const envKey = `DS_SMTP_APP_PASSWORD_${managerId.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}`;
+  return (process.env[envKey] || '').trim();
+}
+
 // Default initial corporate managers SMTP profiles for DS-Engineering (Yandex 360)
 let managerSmtpAccounts: ManagerSmtpAccount[] = [
   {
@@ -154,7 +181,7 @@ let managerSmtpAccounts: ManagerSmtpAccount[] = [
     secure: true,
     authType: 'yandex_app_password',
     user: 'info@ds-enginering.ru',
-    pass: 'ds_app_nekrasov_2026',
+    pass: appPasswordFor('adm-01'),
     fromName: 'ООО «ДС‑Инжиниринг» | Некрасов С.Ю.',
     replyTo: 'info@ds-enginering.ru',
     isDirector: true,
@@ -173,7 +200,7 @@ let managerSmtpAccounts: ManagerSmtpAccount[] = [
     secure: true,
     authType: 'yandex_app_password',
     user: 'a.skobelev@ds-enginering.ru',
-    pass: 'ds_app_skobelev_2026',
+    pass: appPasswordFor('adm-02'),
     fromName: 'Скобелев Александр Сергеевич | ДС‑Инжиниринг',
     replyTo: 'a.skobelev@ds-enginering.ru',
     isDirector: false,
@@ -192,7 +219,7 @@ let managerSmtpAccounts: ManagerSmtpAccount[] = [
     secure: true,
     authType: 'yandex_app_password',
     user: 'i.yarish@ds-enginering.ru',
-    pass: 'ds_app_yarish_iv_2026',
+    pass: appPasswordFor('adm-03'),
     fromName: 'Ярыш Иван Владимирович | ДС‑Инжиниринг',
     replyTo: 'i.yarish@ds-enginering.ru',
     isDirector: false,
@@ -211,7 +238,7 @@ let managerSmtpAccounts: ManagerSmtpAccount[] = [
     secure: true,
     authType: 'yandex_app_password',
     user: 'a.yarish@ds-enginering.ru',
-    pass: 'ds_app_yarish_av_2026',
+    pass: appPasswordFor('adm-04'),
     fromName: 'Ярыш Александр Владимирович | ДС‑Инжиниринг',
     replyTo: 'a.yarish@ds-enginering.ru',
     isDirector: false,
@@ -230,7 +257,7 @@ let managerSmtpAccounts: ManagerSmtpAccount[] = [
     secure: true,
     authType: 'yandex_app_password',
     user: 'v.morozov@ds-enginering.ru',
-    pass: 'ds_app_morozov_2026',
+    pass: appPasswordFor('adm-05'),
     fromName: 'Морозов Владимир Георгиевич | ДС‑Инжиниринг',
     replyTo: 'v.morozov@ds-enginering.ru',
     isDirector: false,
@@ -249,7 +276,7 @@ let managerSmtpAccounts: ManagerSmtpAccount[] = [
     secure: true,
     authType: 'yandex_app_password',
     user: 'support@ds-enginering.ru',
-    pass: 'ds_app_support_2026',
+    pass: appPasswordFor('adm-06'),
     fromName: 'Служба техподдержки | ДС‑Инжиниринг',
     replyTo: 'support@ds-enginering.ru',
     isDirector: false,
@@ -265,7 +292,7 @@ let currentSmtpSettings: SmtpSettings = {
   port: 465,
   secure: true,
   user: 'info@ds-enginering.ru',
-  pass: 'ds_app_nekrasov_2026',
+  pass: (process.env.SMTP_PASS || '').trim(),
   fromName: 'ООО «ДС‑Инжиниринг» | Некрасов С.Ю.',
   fromEmail: 'info@ds-enginering.ru',
   replyTo: 'info@ds-enginering.ru',
@@ -332,13 +359,24 @@ let outboxLogs: EmailOutboxItem[] = [
 ];
 
 export function getSmtpSettings(): SmtpSettings {
+  // Маска была аддитивной: рядом с passMasked уходил и настоящий pass. Теперь паролей
+  // в этом объекте нет вовсе — отправка (sendEmailMessage) читает currentSmtpSettings
+  // напрямую, а публичные роуты получают только признак «пароль задан».
   return {
     ...currentSmtpSettings,
+    pass: '',
+    passMasked: currentSmtpSettings.pass ? '••••••••••••••••' : '',
     managerAccounts: managerSmtpAccounts.map(acc => ({
       ...acc,
+      pass: '',
       passMasked: acc.pass ? '••••••••••••••••' : ''
     }))
-  };
+  } as unknown as SmtpSettings;
+}
+
+/** Задан ли реальный пароль SMTP в окружении (для индикатора в настройках). */
+export function isSmtpPasswordConfigured(): boolean {
+  return Boolean((process.env.SMTP_PASS || '').trim() || currentSmtpSettings.pass);
 }
 
 export function updateSmtpSettings(newSettings: Partial<SmtpSettings>): SmtpSettings {

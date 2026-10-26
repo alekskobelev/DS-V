@@ -10,6 +10,15 @@ const ajv = new Ajv({
   coerceTypes: false,
   useDefaults: true,
   strict: false,
+  // removeAdditional: 'all' здесь ВЫКЛЮЧЕН намеренно. Он закрыл бы mass-assignment
+  // (обработчики с {...current, ...payload}), но молча потерял бы поля, которые
+  // обработчики читают, а схемы не описывают: analyticsEvent.userAgent,
+  // ticketCreate.attachments, contactForm.department / contactForm.sourcePage.
+  // Порядок включения строгости: (1) дополнить схемы этими полями и свободными
+  // вложенностями (details/specifications объявить через patternProperties), (2)
+  // прогнать контрактовые тесты всех четырёх роутов, (3) затем включать опцию.
+  // Сейчас подмена полей закрыта на границах: sanitizeUserInput, SMTP-белый список,
+  // белый список полей прайс-листа (см. priceListsModule).
 });
 
 // Add standard JSON Schema formats (email, uri, date-time, etc.)

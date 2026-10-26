@@ -2,7 +2,12 @@
  * Real-Time Diagnostic Logger for CRM & Online Engineer Gateway
  * Provides structured real-time tracing of all incoming client requests,
  * engineer/manager messages, DB persistence statuses, and notification dispatches.
+ *
+ * ВАЖНО: в stdout терминала/контейнера дублируется замаскированная копия details —
+ * без этого логи процесса становятся вторым, не контролированным по доступу
+ * хранилищем персональных данных заявителей.
  */
+import { redactPii, redactText } from './security.ts';
 
 export interface RealtimeLogEntry {
   id: string;
@@ -57,16 +62,20 @@ export function logRealtimeEvent(entry: Omit<RealtimeLogEntry, 'id' | 'timestamp
   const dbPart = entry.dbStatus ? ` [DB: ${entry.dbStatus}]` : '';
   const durPart = entry.durationMs !== undefined ? ` (${entry.durationMs}ms)` : '';
 
-  const logMessage = `[${fullEntry.timestamp}] ${tag} ${levelTag} ${entry.action}${sessionPart}${dbPart}${durPart} — ${entry.summary}`;
+  const logMessage = `[${fullEntry.timestamp}] ${tag} ${levelTag} ${entry.action}${sessionPart}${dbPart}${durPart} — ${redactText(entry.summary)}`;
+
+  const detailsForConsole = entry.details && Object.keys(entry.details).length > 0
+    ? JSON.stringify(redactPii(entry.details))
+    : '';
 
   if (entry.level === 'ERROR') {
-    console.error(logMessage, entry.details ? JSON.stringify(entry.details, null, 2) : '');
+    console.error(logMessage, detailsForConsole);
   } else if (entry.level === 'WARN') {
-    console.warn(logMessage, entry.details ? JSON.stringify(entry.details) : '');
+    console.warn(logMessage, detailsForConsole);
   } else {
     console.log(logMessage);
-    if (entry.details && Object.keys(entry.details).length > 0) {
-      console.log(`   ↳ Payload:`, JSON.stringify(entry.details));
+    if (detailsForConsole) {
+      console.log(`   ↳ Payload:`, detailsForConsole);
     }
   }
 

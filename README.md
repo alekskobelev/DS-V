@@ -195,3 +195,12 @@ npm run lint
 # 8. Сборка производственной версии (Vite + esbuild)
 npm run build
 ```
+
+> **Для production обязательно** (иначе сервер сознательно отказывается выполнять опасные действия):
+> `ADMIN_API_TOKEN` — заголовок `x-admin-token` для настроек почты и DaData, прав пользователей,
+> очистки журнала и записи в CMS-стор; `DADATA_API_KEY` + `DADATA_SECRET_KEY` — ключи контрагентов
+> (в коде их больше нет, без них `/api/dadata/*` отвечает `503`); `DS_SMTP_APP_PASSWORDS` (или
+> `SMTP_PASS`) — пароли приложения Яндекс 360. Неприменимые без явного флага опции:
+> `SMTP_ALLOW_CUSTOM_SETTINGS` (смена хоста и учётных данных SMTP), `ALLOW_USER_SYNC_RESET`
+> (сброс таблицы пользователей), `TRUST_PROXY_DEPTH` (доверие `X-Forwarded-For` в лимитере, `1` за nginx).
+> `data/crm_settings.json` с реквизитами исключён из git.
