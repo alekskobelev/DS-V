@@ -1,5 +1,22 @@
 # История изменений
 
+## [1.3.139] - 26.10.2026
+### Устранение ошибок типизации, деградации контактной формы и устаревшего теста
+- **Статическая типизация (`npm run lint` / `tsc --noEmit`): 8 ошибок → 0**
+  - `src/components/home/EquipmentToleranceAdvisor.tsx`: поле `catalogPage` (и неиспользуемый `servicePage`) описаны как `PageId` вместо `string`: переход `navigateTo(recommendation.catalogPage)` проверяется компилятором, несуществующий маршрут теперь невозможен;
+  - `src/components/home/IndustryFocusSelector.tsx`: `actionTarget.page` в `IndustryProfile.recommendedSolutions` переведён на `PageId`, навигация «Подробнее» из отраслевых карточек проверяется компилятором;
+  - `src/components/home/HeroSlider.tsx`: у карточки слайда «Постпроцессоры ЧПУ» задан обязательный `onCardClick` (переход в `/services` → `postprocessors-dev`); ранее `activeSlide.card.onCardClick` вызывал `undefined` — клик по карточке 6-го слайда не работал;
+  - `src/types.ts`: в `FaqItem.group` удалён несуществующий вариант `'general'`, введён общий тип `FaqGroupId = Exclude<FaqCategoryGroup, 'all'>`; расхождение типов `FaqItem.group` и состояния `useState<FaqCategoryGroup>` в `KnowledgeBasePage.tsx:182` устранено.
+- **Контактная форма: возвращена предзаполка текста заявки**
+  - `src/context/AppContext.tsx` (`openContactModal`): конфигурация `customMessage` не переносилась в состояние, из-за чего `MetrologyEquipmentConfigurator.tsx` и `MetrologyRoiCalculator.tsx` теряли сформированный бриф (габариты изделия, допуск ±мкм, рекомендация прибора, расчёт ТЭО и срок окупаемости) — в модальном окне `ContactModal.tsx` подставлялся пустой текст.
+- **Вызовы `openContactModal`: приведены к контрактному типу `Partial<ContactModalConfig>`**
+  - 4 обращения в модулях первого экрана (`EquipmentToleranceAdvisor`, `IndustryFocusSelector` ×3) передавали заголовок голой строкой, что игнорировалось контекстом (всегда открывалась дефолтная «Запросить консультацию» без `formType`); теперь передаётся `{ title, formType }` с корректным типом формы (`quote`, `consultation`).
+- **Стабилизация тестов (`npm run test:unit`)**
+  - `src/utils/__tests__/seo.test.ts`: проверка FAQ JSON-LD на вхождение маркетинговой фразы «3D-сканирования и реверс-инжиниринга» (падающий тест после правки текстов базы знаний) заменена структурной валидацией внедряемого документа: `@context`, `@type: FAQPage`, `inLanguage: ru-RU`, `mainEntity.length >= 5`, у каждой записи — `@type: Question`, непустой `name` и `acceptedAnswer.@type: Answer` с непустым текстом.
+- **Результаты контрольного прогона:** `tsc --noEmit` — 0 ошибок; Vitest — 109/109 успешно (10 файлов); `vite build` — успешно (18.3 с); СКТ `scripts/run_comprehensive_tests.ts` — 24/24 успешно.
+- **Актуализация нормативной документации (согласно `AGENTS.md`)**
+  - Обновлены `docs/SITE_PASSPORT.md` (v2.9.289-PROD), `docs/CHANGELOG.md`, `docs/README.md` и корневой `README.md`. Изменений интерфейса, бизнес-логики расчётов и схемы БД нет, поэтому `docs/USER_MANUAL.md` и `docs/DATABASE_DEPLOYMENT.md` сохранены без правок.
+
 ## [1.3.138] - 21.10.2026
 ### Разработка комплексной Карты пути пользователя (CJM) и визуализация форматов сдачи работ
 - **Официальная Карта пути пользователя (`docs/CUSTOMER_JOURNEY_MAP.md`)**:

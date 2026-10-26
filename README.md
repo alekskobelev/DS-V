@@ -9,7 +9,7 @@
 ## 📚 Быстрая навигация по документации (`/docs/`)
 
 * **[`docs/README.md`](./docs/README.md)** — Главный реестр и руководство по документации.
-* **[`docs/SITE_PASSPORT.md`](./docs/SITE_PASSPORT.md)** — Технический паспорт сайта (v2.9.288-PROD), архитектура и модули.
+* **[`docs/SITE_PASSPORT.md`](./docs/SITE_PASSPORT.md)** — Технический паспорт сайта (v2.9.289-PROD), архитектура и модули.
 * **[`docs/CUSTOMER_JOURNEY_MAP.md`](./docs/CUSTOMER_JOURNEY_MAP.md)** — Карта пути пользователя (CJM) для 5 целевых B2B-персон и 7 сквозных стадий.
 * **[`docs/USER_MANUAL.md`](./docs/USER_MANUAL.md)** — Руководство по эксплуатации и управлению в CMS.
 * **[`docs/CHANGELOG.md`](./docs/CHANGELOG.md)** — Полный журнал изменений и версий проекта.

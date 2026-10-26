@@ -412,9 +412,23 @@ describe('SEO Utilities Tests (src/utils/seo.ts)', () => {
 
       const faqScript = document.getElementById('dynamic-faq-schema');
       expect(faqScript).toBeDefined();
-      expect(faqScript?.textContent).toContain('"@type": "FAQPage"');
-      expect(faqScript?.textContent).toContain('acceptedAnswer');
-      expect(faqScript?.textContent).toContain('3D-сканирования и реверс-инжиниринга');
+
+      // Проверяем, что внедрённый JSON-LD — валидный и структурно полный FAQPage,
+      // а не совпадение по конкретной маркетинговой фразе (такие проверки устаревают
+      // при каждой правке текстов и не ловят реальных ошибок генерации).
+      const faqSchema = JSON.parse(faqScript!.textContent || '{}');
+      expect(faqSchema['@context']).toBe('https://schema.org');
+      expect(faqSchema['@type']).toBe('FAQPage');
+      expect(faqSchema.inLanguage).toBe('ru-RU');
+      expect(Array.isArray(faqSchema.mainEntity)).toBe(true);
+      expect(faqSchema.mainEntity.length).toBeGreaterThanOrEqual(5);
+      for (const entry of faqSchema.mainEntity) {
+        expect(entry['@type']).toBe('Question');
+        expect(typeof entry.name).toBe('string');
+        expect(entry.name.trim().length).toBeGreaterThan(0);
+        expect(entry.acceptedAnswer?.['@type']).toBe('Answer');
+        expect(entry.acceptedAnswer?.text?.trim().length).toBeGreaterThan(0);
+      }
     });
 
     it('generates valid FAQPage schema object with generateFaqPageSchema', () => {

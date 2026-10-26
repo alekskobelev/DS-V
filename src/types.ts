@@ -672,6 +672,9 @@ export type FaqCategoryGroup =
   | 'metrology_arshin' // КИМ, помещения и ФГИС «АРШИН»
   | 'software_licenses'; // Лицензирование ПО и ЧПУ
 
+/** Ключ группы FAQ (все группы, кроме служебной «все вопросы») */
+export type FaqGroupId = Exclude<FaqCategoryGroup, 'all'>;
+
 export interface FaqGroupDefinition {
   id: FaqCategoryGroup;
   label: string;
@@ -683,7 +686,7 @@ export interface FaqItem {
   id: string;
   category: 'software' | 'hardware' | 'services' | 'postprocessors' | 'training' | 'metrology';
   categoryLabel: string;
-  group?: 'dispatch_nda' | 'scanning_cad' | 'metrology_arshin' | 'software_licenses' | 'general';
+  group?: FaqGroupId;
   groupLabel?: string;
   tags?: string[];
   question: string;
