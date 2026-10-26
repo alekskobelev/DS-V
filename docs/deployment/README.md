@@ -11,6 +11,7 @@
 | :--- | :--- | :--- |
 | **[`DATABASE_DEPLOYMENT.md`](./DATABASE_DEPLOYMENT.md)** | **Развертывание СУБД PostgreSQL 17** | Руководство по запуску контейнера `postgres:17-alpine`, миграциям Drizzle ORM (`npm run db:push`), резервному копированию, пулу соединений `pg` и Drizzle Studio. |
 | **[`SERVER_DEPLOYMENT_GUIDE.md`](./SERVER_DEPLOYMENT_GUIDE.md)** | **Развертывание на ASUSTOR NAS и VPS** | Пошаговое руководство по развертыванию платформы на сетевых хранилищах ASUSTOR NAS (ADM/Docker) и облачных VPS Linux с Nginx, SSL Let's Encrypt и systemd/Docker Compose. |
+| **[`AI_NETWORK_ACCESS.md`](./AI_NETWORK_ACCESS.md)** | **Сетевой доступ к ИИ-сервисам (DNS, DoH, прокси)** | Рабочие публичные DNS-серверы, настройка DoH/DoT на сервере и в Docker, прокси для исходящих вызовов Gemini API, диагностика блокировок (DPI, geo-ограничения) и чек-лист администратора. |
 
 ---
 
