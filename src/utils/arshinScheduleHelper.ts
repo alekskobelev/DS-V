@@ -1,7 +1,8 @@
 import { CompanyFleetDevice } from '../types';
 import { ExtendedDeal } from '../data/mockCrmData';
+import { assessVerification, VERIFICATION_CRITICAL_DAYS, VERIFICATION_WARNING_DAYS } from './verificationStatus';
 
-export type VerificationStatusType = 'expired' | 'critical' | 'warning' | 'valid';
+export type VerificationStatusType = 'expired' | 'critical' | 'warning' | 'valid' | 'unknown';
 
 export interface ArshinEquipmentItem {
   id: string;
@@ -34,50 +35,67 @@ export interface ArshinEquipmentItem {
   notes?: string;
 }
 
-// Fixed baseline date for deterministic simulation: 2026-09-15
+// Единый расчёт состояния поверки: src/utils/verificationStatus.ts
+//
+// Ранее «сегодня» было захардкожено датой 2026-09-15 (REFERENCE_DATE), из-за чего график
+// расходился с реальностью на 1 сутки за сутки: прибор со сроком до 20.11.2026 показывал
+// «Действует (66 дн.)» вместо «Истекает через 25 дн.!», а просроченный на 25 дней —
+// «Истекает через 16 дн.!». Ровно эта ошибка и была причиной расхождения KPI с экраном
+// «Парк оборудования», где дата бралась из new Date().
+//
+// REFERENCE_DATE оставлен только как экспорт для старых импортов и детерминированных
+// тестов (передается в assessVerification вторым аргументом); по умолчанию используется
+// фактическая дата.
 export const REFERENCE_DATE = new Date('2026-09-15T00:00:00Z');
 
-export const calculateVerificationStatus = (validUntilStr: string, refDate: Date = REFERENCE_DATE) => {
-  if (!validUntilStr) {
+/** @deprecated Используйте фактическую дату: assessVerification(value) без refDate. */
+export type VerificationThresholds = { criticalDays: number; warningDays: number };
+export const VERIFICATION_THRESHOLDS = {
+  criticalDays: VERIFICATION_CRITICAL_DAYS,
+  warningDays: VERIFICATION_WARNING_DAYS
+};
+
+export const calculateVerificationStatus = (validUntilStr: string, refDate: Date = new Date()) => {
+  const assessment = assessVerification(validUntilStr, refDate);
+
+  if (assessment.status === 'unknown') {
     return {
-      status: 'valid' as VerificationStatusType,
-      daysLeft: 999,
-      statusLabel: 'Срок не указан',
+      status: 'unknown' as VerificationStatusType,
+      daysLeft: 0,
+      statusLabel: assessment.unparsable
+        ? `Не распознана дата «${validUntilStr}»`
+        : 'Срок не указан',
       badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
-      rowHighlightClass: ''
+      rowHighlightClass: 'bg-slate-50/60 dark:bg-slate-900/30'
     };
   }
 
-  const validUntil = new Date(validUntilStr);
-  const diffMs = validUntil.getTime() - refDate.getTime();
-  const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-  if (daysLeft < 0) {
-    const overdueDays = Math.abs(daysLeft);
+  if (assessment.status === 'expired') {
+    const overdueDays = Math.abs(assessment.daysLeft);
     return {
       status: 'expired' as VerificationStatusType,
-      daysLeft,
+      daysLeft: assessment.daysLeft,
       statusLabel: `Просрочено на ${overdueDays} дн.!`,
       badgeClass: 'bg-rose-600 text-white border-rose-700 shadow-xs font-bold animate-pulse',
       rowHighlightClass: 'bg-rose-50/90 dark:bg-rose-950/40 border-l-4 border-l-rose-600 text-rose-950 dark:text-rose-100 font-medium'
     };
   }
 
-  if (daysLeft <= 30) {
+  if (assessment.status === 'critical') {
     return {
       status: 'critical' as VerificationStatusType,
-      daysLeft,
-      statusLabel: `Истекает через ${daysLeft} дн.!`,
+      daysLeft: assessment.daysLeft,
+      statusLabel: `Истекает через ${assessment.daysLeft} дн.!`,
       badgeClass: 'bg-red-500 text-white border-red-600 shadow-xs font-bold',
       rowHighlightClass: 'bg-red-50/70 dark:bg-red-950/30 border-l-4 border-l-red-500'
     };
   }
 
-  if (daysLeft <= 60) {
+  if (assessment.status === 'warning') {
     return {
       status: 'warning' as VerificationStatusType,
-      daysLeft,
-      statusLabel: `Истекает через ${daysLeft} дн.`,
+      daysLeft: assessment.daysLeft,
+      statusLabel: `Истекает через ${assessment.daysLeft} дн.`,
       badgeClass: 'bg-amber-100 text-amber-900 border-amber-300 font-semibold',
       rowHighlightClass: 'bg-amber-50/50 dark:bg-amber-950/20 border-l-4 border-l-amber-400'
     };
@@ -85,8 +103,8 @@ export const calculateVerificationStatus = (validUntilStr: string, refDate: Date
 
   return {
     status: 'valid' as VerificationStatusType,
-    daysLeft,
-    statusLabel: `Действует (${daysLeft} дн.)`,
+    daysLeft: assessment.daysLeft,
+    statusLabel: `Действует (${assessment.daysLeft} дн.)`,
     badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
     rowHighlightClass: ''
   };
@@ -337,7 +355,7 @@ export const ADDITIONAL_COMPANY_DEVICES: Omit<ArshinEquipmentItem, 'status' | 'd
 export const getAllMonitoredEquipment = (
   fleetDevices: CompanyFleetDevice[],
   deals: ExtendedDeal[],
-  refDate: Date = REFERENCE_DATE
+  refDate: Date = new Date()
 ): ArshinEquipmentItem[] => {
   const result: ArshinEquipmentItem[] = [];
   const processedSerials = new Set<string>();
@@ -482,7 +500,7 @@ export const exportScheduleToCsv = (items: ArshinEquipmentItem[]): void => {
   ];
 
   const rows = items.map(i => [
-    `"${i.status === 'expired' ? 'ПРОСРОЧЕНО' : i.status === 'critical' ? 'СРОЧНО (до 30 дн.)' : i.status === 'warning' ? 'Внимание (до 60 дн.)' : 'Действует'}"`,
+    `"${i.status === 'expired' ? 'ПРОСРОЧЕНО' : i.status === 'critical' ? 'СРОЧНО (до ' + VERIFICATION_CRITICAL_DAYS + ' дн.)' : i.status === 'warning' ? 'Внимание (до ' + VERIFICATION_WARNING_DAYS + ' дн.)' : i.status === 'unknown' ? 'СРОК НЕ УКАЗАН' : 'Действует'}"`,
     i.daysLeft,
     `"${(i.ownerName || '').replace(/"/g, '""')}"`,
     `"${i.ownerInn || ''}"`,

@@ -39,13 +39,19 @@ import {
   getAllMonitoredEquipment, 
   ArshinEquipmentItem, 
   VerificationStatusType, 
-  REFERENCE_DATE,
   exportScheduleToCsv,
   formatArshinUrl,
   calculateVerificationStatus
 } from '../../utils/arshinScheduleHelper';
 import { CompanyFleetDevice } from '../../types';
 import { exportTableToPdf } from '../../utils/exportTablePdf';
+import { parseVerificationDate } from '../../utils/verificationStatus';
+
+// Окно диаграммы Ганта строится от фактической даты: 8 месяцев, из которых 2 — уже прошедшие,
+// чтобы просроченные поверки были видны слева от маркера «сегодня», а не прижимались к границе.
+const TIMELINE_MONTH_COUNT = 8;
+const TIMELINE_BACKFILL_MONTHS = 2;
+const MONTH_LABELS_SHORT_RU = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
 
 interface ArshinVerificationScheduleProps {
   onBackToCrm?: () => void;
@@ -91,7 +97,8 @@ export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProp
 
   // Calculate combined items
   const allItems = useMemo(() => {
-    return getAllMonitoredEquipment(fleetDevices, deals, REFERENCE_DATE);
+    // «сегодня» — фактическая дата (единый расчёт: src/utils/verificationStatus.ts)
+    return getAllMonitoredEquipment(fleetDevices, deals);
   }, [fleetDevices, deals]);
 
   // Aggregate stats
@@ -101,10 +108,11 @@ export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProp
     const critical = allItems.filter(i => i.status === 'critical').length;
     const warning = allItems.filter(i => i.status === 'warning').length;
     const valid = allItems.filter(i => i.status === 'valid').length;
+    const unknown = allItems.filter(i => i.status === 'unknown').length;
     const companyCount = allItems.filter(i => i.ownerType === 'company').length;
     const clientCount = allItems.filter(i => i.ownerType === 'client').length;
 
-    return { total, expired, critical, warning, valid, companyCount, clientCount };
+    return { total, expired, critical, warning, valid, unknown, companyCount, clientCount };
   }, [allItems]);
 
   // Filtered items
@@ -136,17 +144,40 @@ export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProp
     });
   }, [allItems, parkFilter, urgencyFilter, searchQuery]);
 
-  // Timeline months definition for Gantt (Aug 2026 to Mar 2027)
-  const timelineMonths = useMemo(() => [
-    { key: '2026-08', label: 'Авг 2026', start: new Date('2026-08-01'), end: new Date('2026-08-31') },
-    { key: '2026-09', label: 'Сен 2026', start: new Date('2026-09-01'), end: new Date('2026-09-30'), isCurrent: true },
-    { key: '2026-10', label: 'Окт 2026', start: new Date('2026-10-01'), end: new Date('2026-10-31') },
-    { key: '2026-11', label: 'Ноя 2026', start: new Date('2026-11-01'), end: new Date('2026-11-30') },
-    { key: '2026-12', label: 'Дек 2026', start: new Date('2026-12-01'), end: new Date('2026-12-31') },
-    { key: '2027-01', label: 'Янв 2027', start: new Date('2027-01-01'), end: new Date('2027-01-31') },
-    { key: '2027-02', label: 'Фев 2027', start: new Date('2027-02-01'), end: new Date('2027-02-28') },
-    { key: '2027-03', label: 'Мар 2027', start: new Date('2027-03-01'), end: new Date('2027-03-31') },
-  ], []);
+  // Окно графика и позиции маркеров — считаются один раз за монтирование экрана
+  const scheduleWindow = useMemo(() => {
+    const now = new Date();
+    const startMonth = new Date(now.getFullYear(), now.getMonth() - TIMELINE_BACKFILL_MONTHS, 1);
+    const months = Array.from({ length: TIMELINE_MONTH_COUNT }, (_, i) => {
+      const first = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1);
+      const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
+      return {
+        key: `${first.getFullYear()}-${String(first.getMonth() + 1).padStart(2, '0')}`,
+        label: `${MONTH_LABELS_SHORT_RU[first.getMonth()]} ${first.getFullYear()}`,
+        start: first,
+        end: last,
+        isCurrent: first.getFullYear() === now.getFullYear() && first.getMonth() === now.getMonth()
+      };
+    });
+
+    const rangeStart = months[0].start.getTime();
+    const rangeEnd = new Date(
+      months[months.length - 1].start.getFullYear(),
+      months[months.length - 1].start.getMonth() + 1,
+      1
+    ).getTime();
+    const span = rangeEnd - rangeStart;
+
+    return {
+      months,
+      rangeStart,
+      rangeEnd,
+      todayPercent: Math.min(98, Math.max(2, ((now.getTime() - rangeStart) / span) * 100)),
+      todayLabel: now.toLocaleDateString('ru-RU')
+    };
+  }, []);
+
+  const timelineMonths = scheduleWindow.months;
 
   // Handle Quick Service Deal Creation
   const handleCreateVerificationDeal = (item: ArshinEquipmentItem) => {
@@ -302,7 +333,7 @@ export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProp
       setSelectedItem({
         ...selectedItem,
         ...editingItem,
-        ...calculateVerificationStatus(editingItem.verificationValidUntil, REFERENCE_DATE),
+        ...calculateVerificationStatus(editingItem.verificationValidUntil),
         arshinUrl: formatArshinUrl(editingItem.verificationNumber, editingItem.serialNumber)
       });
     }
@@ -323,18 +354,24 @@ export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProp
   };
 
   // Helper for Gantt bar positioning
-  const getTimelineBarPosition = (validUntilStr: string) => {
-    if (!validUntilStr) return { left: '0%', width: '10%' };
-    const validUntil = new Date(validUntilStr);
-    const rangeStart = new Date('2026-08-01').getTime();
-    const rangeEnd = new Date('2027-03-31').getTime();
-    const totalMs = rangeEnd - rangeStart;
+  /**
+   * Позиция маркера срока поверки на шкале графика (в %).
+   *
+   * Ранее окно было захардкожено (01.08.2026…31.03.2027), из-за чего любое значение вне
+   * диапазона прижималось к 2 %/98 % — просроченный на год прибор выглядел «на границе
+   * плана». Теперь окно следует за фактической датой (см. scheduleWindow).
+   * Возвращает всегда число: прежний вариант для пустой даты отдавал объект
+   * `{ left: '0%', width: '10%' }`, и в `style={{ left: `${markerPercent}%` }}`
+   * подставлялось «[object Object]%'».
+   */
+  const getTimelineBarPosition = (validUntilStr?: string): number => {
+    const parsed = parseVerificationDate(validUntilStr);
+    if (!parsed) return 0;
 
-    const targetMs = validUntil.getTime();
-    let percent = ((targetMs - rangeStart) / totalMs) * 100;
+    const totalMs = scheduleWindow.rangeEnd - scheduleWindow.rangeStart;
+    let percent = ((parsed.getTime() - scheduleWindow.rangeStart) / totalMs) * 100;
     if (percent < 2) percent = 2;
     if (percent > 98) percent = 98;
-
     return percent;
   };
 
@@ -361,11 +398,14 @@ export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProp
           { text: item.serialNumber, subtext: item.inventoryNumber ? `Инв: ${item.inventoryNumber}` : undefined },
           String(item.ownerName || 'ООО «ДС-Инжиниринг»'),
           { text: item.verificationValidUntil, subtext: item.verificationNumber ? `№ ${item.verificationNumber}` : undefined },
-          String(item.daysLeft > 0 ? `${item.daysLeft} дн.` : `Просрочено на ${Math.abs(item.daysLeft)} дн.`),
+          String(item.status === 'unknown' ? '—' : item.daysLeft > 0 ? `${item.daysLeft} дн.` : `Просрочено на ${Math.abs(item.daysLeft)} дн.`),
           {
             text: item.statusLabel,
             badge: true,
-            color: item.status === 'expired' || item.status === 'critical' ? 'rose' : item.status === 'warning' ? 'amber' : 'emerald'
+            color: item.status === 'expired' || item.status === 'critical' ? 'rose'
+              : item.status === 'warning' ? 'amber'
+              : item.status === 'unknown' ? 'slate'
+              : 'emerald'
           }
         ]),
         columnAlignments: ['center', 'left', 'left', 'left', 'center', 'center', 'center'],
@@ -789,8 +829,8 @@ export const ArshinVerificationSchedule: React.FC<ArshinVerificationScheduleProp
                           {/* Vertical today line marker */}
                           <div 
                             className="absolute top-0 bottom-0 w-0.5 bg-blue-500/70 z-10 pointer-events-none"
-                            style={{ left: '18.75%' }} // Middle of Sept 2026 (Month #2)
-                            title="Текущая дата: 15 сентября 2026 г."
+                            style={{ left: `${scheduleWindow.todayPercent.toFixed(2)}%` }} // доля текущего месяца, прошедшая с начала окна
+                            title={`Текущая дата: ${scheduleWindow.todayLabel}`}
                           />
 
                           {/* Background month dividers */}

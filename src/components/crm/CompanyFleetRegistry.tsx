@@ -1,12 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { 
   Search, Plus, Download, Upload, Wrench, Shield, Calendar, 
-  MapPin, User, AlertTriangle, CheckCircle2, Clock, 
+  MapPin, User, AlertTriangle, CheckCircle2, Clock, CalendarClock, 
   Edit3, Trash2, ExternalLink, Filter, FileCheck, 
   ArrowUpRight, Eye, RefreshCw, Sparkles, Building2, Tag, Hash,
   LayoutGrid, Table as TableIcon, List as ListIcon, FileSpreadsheet, FileText, Loader2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { assessVerification } from '../../utils/verificationStatus';
 import { CompanyFleetDevice, FleetDeviceStatus } from '../../types';
 import { FleetDeviceModal } from './FleetDeviceModal';
 import { HorizontalScrollContainer } from '../common/HorizontalScrollContainer';
@@ -24,40 +25,48 @@ export const CompanyFleetRegistry: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDevice, setEditingDevice] = useState<CompanyFleetDevice | null>(null);
 
-  // Verification calculations
-  const now = new Date();
-
+  // Verification calculations — единый расчёт для всего портала: src/utils/verificationStatus.ts
   const getVerificationState = (validUntilStr?: string) => {
-    if (!validUntilStr) return { status: 'unknown', label: 'Не указана', color: 'gray', days: 0 };
-    const validUntil = new Date(validUntilStr);
-    const diffMs = validUntil.getTime() - now.getTime();
-    const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const assessment = assessVerification(validUntilStr);
 
-    if (days < 0) {
-      return { 
-        status: 'expired', 
-        label: `Просрочена на ${Math.abs(days)} дн.`, 
-        badgeClass: 'bg-red-100 text-red-700 border-red-200',
-        icon: AlertTriangle,
-        days 
-      };
+    switch (assessment.bucket) {
+      case 'expired':
+        return {
+          status: 'expired' as const,
+          label: `Просрочена на ${Math.abs(assessment.daysLeft)} дн.`,
+          color: 'red',
+          badgeClass: 'bg-red-100 text-red-700 border-red-200',
+          icon: AlertTriangle,
+          days: assessment.daysLeft
+        };
+      case 'expiring':
+        return {
+          status: 'expiring' as const,
+          label: `Истекает через ${assessment.daysLeft} дн.`,
+          color: 'amber',
+          badgeClass: 'bg-amber-100 text-amber-800 border-amber-300',
+          icon: Clock,
+          days: assessment.daysLeft
+        };
+      case 'valid':
+        return {
+          status: 'valid' as const,
+          label: `Действует (осталось ${assessment.daysLeft} дн.)`,
+          color: 'emerald',
+          badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+          icon: CheckCircle2,
+          days: assessment.daysLeft
+        };
+      default:
+        return {
+          status: 'unknown' as const,
+          label: assessment.unparsable ? `Дата не распознана («${validUntilStr}»)` : 'Не указана',
+          color: 'gray',
+          badgeClass: 'bg-slate-100 text-slate-600 border-slate-200',
+          icon: CalendarClock,
+          days: 0
+        };
     }
-    if (days <= 30) {
-      return { 
-        status: 'expiring', 
-        label: `Истекает через ${days} дн.`, 
-        badgeClass: 'bg-amber-100 text-amber-800 border-amber-300',
-        icon: Clock,
-        days 
-      };
-    }
-    return { 
-      status: 'valid', 
-      label: `Действует (осталось ${days} дн.)`, 
-      badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-      icon: CheckCircle2,
-      days 
-    };
   };
 
   const getStatusBadge = (status: FleetDeviceStatus) => {
