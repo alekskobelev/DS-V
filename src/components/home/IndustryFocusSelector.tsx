@@ -14,6 +14,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { PageId } from '../../types';
 
 export interface IndustryProfile {
   id: string;
@@ -34,7 +35,7 @@ export interface IndustryProfile {
     type: 'equipment' | 'service' | 'software';
     tag: string;
     desc: string;
-    actionTarget: { page: string; subTab?: string };
+    actionTarget: { page: PageId; subTab?: string };
   }[];
   standards: string[];
   deliverables: string[];
@@ -281,7 +282,10 @@ export const IndustryFocusSelector: React.FC = () => {
             if (el) {
               el.scrollIntoView({ behavior: 'smooth' });
             } else {
-              openContactModal(`Оценка ТЗ под отрасль: ${currentProfile.name}`);
+              openContactModal({
+                title: `Оценка ТЗ под отрасль: ${currentProfile.name}`,
+                formType: 'quote'
+              });
             }
           }}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm shrink-0 self-start md:self-auto cursor-pointer"
@@ -351,7 +355,10 @@ export const IndustryFocusSelector: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
-              onClick={() => openContactModal(`Консультация по отрасли: ${currentProfile.name}`)}
+              onClick={() => openContactModal({
+                title: `Консультация по отрасли: ${currentProfile.name}`,
+                formType: 'consultation'
+              })}
               className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
             >
               <span>Консультация инженера отрасли</span>
@@ -481,7 +488,10 @@ export const IndustryFocusSelector: React.FC = () => {
                   if (quickSec) {
                     quickSec.scrollIntoView({ behavior: 'smooth' });
                   } else {
-                    openContactModal(`Запрос ТКП по направлению: ${currentProfile.name}`);
+                    openContactModal({
+                      title: `Запрос ТКП по направлению: ${currentProfile.name}`,
+                      formType: 'quote'
+                    });
                   }
                 }}
                 className="px-4 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs shadow-md transition-all shrink-0 cursor-pointer flex items-center gap-2"

@@ -2355,6 +2355,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       subtitle: config?.subtitle || 'Инженеры компании свяжутся с вами для квалифицированной консультации и расчета',
       defaultProduct: config?.defaultProduct,
       defaultService: config?.defaultService,
+      customMessage: config?.customMessage,
       formType: config?.formType || 'consultation',
       camSystem: config?.camSystem,
       isLicensedCam: config?.isLicensedCam,

@@ -252,6 +252,7 @@ export const HeroSlider: React.FC = () => {
         spec2Label: 'Стойки управления',
         spec2Value: 'Fanuc, Sinumerik, Heidenhain, Балт-Систем',
         actionText: 'Заказать постпроцессор',
+        onCardClick: () => navigateTo('services', 'postprocessors-dev')
       }
     }
   ];

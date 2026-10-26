@@ -16,6 +16,7 @@ import {
   Info
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { PageId } from '../../types';
 
 export type DimensionBand = 'small' | 'medium' | 'large' | 'massive';
 export type ToleranceBand = 'ultra' | 'high' | 'standard' | 'coarse';
@@ -32,8 +33,8 @@ interface RecommendationResult {
   whyThisMatches: string;
   highlights: string[];
   deliverables: string[];
-  catalogPage: string;
-  servicePage?: string;
+  catalogPage: PageId;
+  servicePage?: PageId;
   imageUrl?: string;
 }
 
@@ -460,7 +461,10 @@ export const EquipmentToleranceAdvisor: React.FC = () => {
             </button>
 
             <button
-              onClick={() => openContactModal(`Запрос расчета / демо: ${recommendation.title}`)}
+              onClick={() => openContactModal({
+                title: `Запрос расчета / демо: ${recommendation.title}`,
+                formType: 'quote'
+              })}
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md cursor-pointer"
             >
               <span>Запросить расчет под мою деталь</span>
