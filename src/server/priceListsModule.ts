@@ -1,4 +1,5 @@
 import { Express, Request, Response } from 'express';
+import { pickAllowed } from './security.ts';
 import { eq, desc, asc, and, sql } from 'drizzle-orm';
 import fs from 'fs';
 import path from 'path';
@@ -168,6 +169,42 @@ async function syncPriceItemsToDb(items: PriceItem[]) {
 setTimeout(() => {
   syncPriceItemsToDb(priceItemsStore).catch(e => console.warn(e));
 }, 2000);
+
+/** Поля позиции прайса, которые принимает PUT (id, createdAt и пересчётные метрики — нет). */
+const PRICE_ITEM_WRITABLE_FIELDS = [
+  'sku',
+  'name',
+  'model',
+  'itemType',
+  'categoryId',
+  'category',
+  'categoryLabel',
+  'subCategory',
+  'manufacturer',
+  'description',
+  'unit',
+  'currency',
+  'costPriceRub',
+  'priceRub',
+  'partnerPriceRub',
+  'priceUsd',
+  'priceEur',
+  'vatRate',
+  'maxDiscountPercent',
+  'discount',
+  'inStock',
+  'leadTimeDays',
+  'warrantyMonths',
+  'specifications',
+  'notes',
+  'isPopular',
+  'isActive',
+  'supplierName',
+  'supplierContact',
+  'minOrderQty',
+  'tags',
+  'currentVersion',
+] as const;
 
 export function registerPriceListsRoutes(app: Express) {
   /**
@@ -373,6 +410,10 @@ export function registerPriceListsRoutes(app: Express) {
       }
 
       const current = priceItemsStore[index];
+      // Белый список вместо {...current, ...payload}: раньше в сохранённую позицию можно
+      // было дописать любое поле (id, createdAt, служебные флаги), потому что схема
+      // не ограничивала additionalProperties, а Ajv лишние поля не вырезает.
+      const safePayload = pickAllowed(payload, PRICE_ITEM_WRITABLE_FIELDS as readonly string[]);
       const costPrice = payload.costPriceRub !== undefined ? Number(payload.costPriceRub) : current.costPriceRub;
       const salePrice = payload.priceRub !== undefined ? Number(payload.priceRub) : current.priceRub;
       const econ = calculateItemEconomics(costPrice, salePrice);
@@ -387,7 +428,7 @@ export function registerPriceListsRoutes(app: Express) {
 
       const updatedItem: PriceItem = {
         ...current,
-        ...payload,
+        ...(safePayload as Partial<PriceItem>),
         sku: payload.sku ? String(payload.sku).trim().toUpperCase() : current.sku,
         name: payload.name ? String(payload.name).trim() : current.name,
         category: payload.category || current.category,

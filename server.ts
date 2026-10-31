@@ -31,10 +31,30 @@ import {
   getCorporateEmailTemplates,
   updateCorporateEmailTemplate,
   resetCorporateEmailTemplates,
-  deleteCorporateEmailTemplate
+  deleteCorporateEmailTemplate,
+  isSmtpPasswordConfigured,
 } from "./src/server/emailModule.ts";
 import { registerCrmRoutes } from "./src/server/crmModule.ts";
 import { csrfProtectionMiddleware, registerCsrfRoutes } from "./src/server/csrfModule.ts";
+import {
+  evaluateAdminAccess,
+  readAdminToken,
+  adminAccessMessage,
+  stripSecrets,
+  redactText,
+  maskFullName,
+  maskPhone,
+  maskEmail,
+  pickAllowed,
+  sanitizeUserInput,
+  redactPii,
+  isDadataCredentialFormat,
+  SMTP_ALWAYS_WRITABLE,
+  SMTP_PRIVILEGED,
+  SMTP_PUBLIC_FIELDS,
+  PUBLIC_DOC_FILES,
+  RESTRICTED_DOC_FILES,
+} from "./src/server/security.ts";
 import { registerNotificationRoutes, dispatchManagerNotification, dispatchContactFormEmail } from "./src/server/notificationModule.ts";
 import { register3DModelsRoutes } from "./src/server/models3dModule.ts";
 import { logRealtimeEvent, getRealtimeLogs, clearRealtimeLogs } from "./src/server/logger.ts";
@@ -298,6 +318,36 @@ function sanitizeInput(input: string): string {
     .trim();
 }
 
+// === SECURITY: GATE FOR ADMIN-ONLY / DESTRUCTIVE ENDPOINTS ===
+// Политика: токен задаётся одной пере окружения ADMIN_API_TOKEN. В production без
+// токена опасные эндпоинты закрыты (503), в dev/preview — открыты с предупреждением,
+// чтобы локальный осмотр админки не требовал настройки ключа.
+const ADMIN_API_TOKEN = (process.env.ADMIN_API_TOKEN || '').trim();
+let adminGuardNoticePrinted = false;
+
+const requireAdmin = (req: express.Request, res: express.Response, next: express.NextFunction): void => {
+  const decision = evaluateAdminAccess(readAdminToken(req.headers as Record<string, unknown>), {
+    expectedToken: ADMIN_API_TOKEN,
+    nodeEnv: process.env.NODE_ENV,
+  });
+  if (decision.ok) {
+    if (decision.reason === 'permissive-env' && !adminGuardNoticePrinted) {
+      adminGuardNoticePrinted = true;
+      console.warn(
+        "[security] ADMIN_API_TOKEN не задан — админские эндпоинты (почта, DaData, пользователи, CMS-стор, журнал) открыты без токена. Так работают dev и preview; для production это 503.",
+      );
+    }
+    next();
+    return;
+  }
+  res.status(decision.reason === 'no-token-configured' ? 503 : 403).json({
+    success: false,
+    error: adminAccessMessage(decision.reason),
+  });
+};
+
+const destructiveResetAllowed = (): boolean => process.env.ALLOW_USER_SYNC_RESET === 'true';
+
 // Simple in-memory rate limiter per IP for POST endpoints
 const rateLimitMap = new Map<string, { count: number; firstRequestTime: number }>();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
@@ -306,7 +356,14 @@ const MAX_POST_REQUESTS_PER_MIN = 120; // 120 requests per minute allows legitim
 function rateLimiterMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
   if (req.method !== 'POST') return next();
   
-  const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown-ip';
+  // X-Forwarded-For подделывается клиентом, а по этому значению работает лимитер —
+  // т. е. одна машина обходила лимит заголовком. Доверяем заголовку только когда явно
+  // указано число доверенных прокси спереди (TRUST_PROXY_DEPTH=1 за nginx).
+  const proxyDepth = Number(process.env.TRUST_PROXY_DEPTH || 0);
+  const forwardedFor = String(req.headers['x-forwarded-for'] || '');
+  const ip = proxyDepth > 0 && forwardedFor
+    ? (forwardedFor.split(',').map((part) => part.trim()).filter(Boolean).reverse()[proxyDepth - 1] || req.socket.remoteAddress || 'unknown-ip')
+    : (req.socket.remoteAddress || 'unknown-ip');
   const now = Date.now();
   const record = rateLimitMap.get(ip);
 
@@ -871,7 +928,10 @@ async function startServer() {
 // ==========================================
 // CMS STORE API (Replaces localStorage)
 // ==========================================
-const memoryCmsStore = new Map();
+const memoryCmsStore = new Map<string, unknown>();
+// Память процесса не должна расти от одного POST: ограничение на значение и на число ключей.
+const CMS_STORE_MAX_VALUE_BYTES = 512 * 1024;
+const CMS_STORE_MAX_KEYS = 200;
 
 app.get('/api/cms/store/:key', async (req, res) => {
   try {
@@ -899,11 +959,20 @@ app.get('/api/cms/store/:key', async (req, res) => {
   }
 });
 
-app.post('/api/cms/store/:key', async (req, res) => {
+app.post('/api/cms/store/:key', requireAdmin, async (req, res) => {
   try {
     const { key } = req.params;
     const value = req.body;
-    
+
+    const valueSize = Buffer.byteLength(JSON.stringify(value ?? null), 'utf8');
+    if (valueSize > CMS_STORE_MAX_VALUE_BYTES) {
+      return res.status(413).json({ error: `Значение ${valueSize} Б превышает лимит ${CMS_STORE_MAX_VALUE_BYTES} Б на ключ` });
+    }
+    if (!memoryCmsStore.has(key) && memoryCmsStore.size >= CMS_STORE_MAX_KEYS) {
+      const oldest = memoryCmsStore.keys().next().value;
+      if (oldest !== undefined) memoryCmsStore.delete(oldest);
+    }
+
     // Always save to memory
     memoryCmsStore.set(key, value);
     
@@ -1059,7 +1128,7 @@ app.post('/api/seo/keywords', async (req, res) => {
         level: 'INFO',
         requestId,
         action: 'INCOMING_CALCULATOR_RFQ',
-        summary: `Поступила заявка на расчет от ${customerName} (${companyName || 'Частное лицо'}), тел: ${phone}`,
+        summary: `Поступила заявка на расчет от ${maskFullName(customerName)} (${companyName || 'Частное лицо'}), тел: ${maskPhone(phone)}`,
         details: {
           requestId,
           customerName,
@@ -1222,7 +1291,7 @@ app.post('/api/seo/keywords', async (req, res) => {
         level: 'INFO',
         requestId,
         action: 'INCOMING_CONTACT_FORM',
-        summary: `Поступило обращение с контактной формы: ${cleanName} (${cleanCompany}), тел: ${cleanPhone}`,
+        summary: `Поступило обращение с контактной формы: ${maskFullName(cleanName)} (${cleanCompany}), тел: ${maskPhone(cleanPhone)}`,
         details: {
           requestId,
           name: cleanName,
@@ -1566,36 +1635,46 @@ app.post('/api/seo/keywords', async (req, res) => {
   // === EMAIL NOTIFICATIONS & SMTP INTEGRATION API ===
   app.get("/api/email/settings", (_req, res) => {
     try {
-      const settings = getSmtpSettings();
-      res.json({ 
-        success: true, 
-        data: {
-          ...settings,
-          passMasked: settings.pass ? '••••••••••••••••' : ''
-        } 
+      const settings = getSmtpSettings() as unknown as Record<string, unknown>;
+      // Раньше сюда попадал {...settings} целиком, т. е. и реальный пароль SMTP, и пароли
+      // всех шести менеджеров в managerAccounts. Наружу идут только безопасные поля,
+      // а наличие пароля показано булевым флагом.
+      const safe = pickAllowed(settings, SMTP_PUBLIC_FIELDS as readonly string[]) as Record<string, unknown>;
+      safe.passConfigured = isSmtpPasswordConfigured();
+      const accounts = Array.isArray(settings.managerAccounts) ? settings.managerAccounts : [];
+      safe.managerAccounts = accounts.map((acc) => {
+        const item = (acc ?? {}) as Record<string, unknown>;
+        return { ...stripSecrets(item), passConfigured: Boolean(item.pass) };
       });
+      res.json({ success: true, data: safe });
     } catch (error) {
       res.status(500).json({ success: false, error: "Failed to get email settings" });
     }
   });
 
-  app.post("/api/email/settings", (req, res) => {
+  app.post("/api/email/settings", requireAdmin, (req, res) => {
     try {
-      const { host, port, secure, user, pass, fromName, fromEmail, replyTo, enabled, provider, triggers } = req.body;
-      const updated = updateSmtpSettings({
-        host: host || 'smtp.yandex.ru',
-        port: Number(port) || 465,
-        secure: secure !== false,
-        user: user || 'info@ds-enginering.ru',
-        ...(pass ? { pass } : {}),
-        fromName: fromName || 'ООО «ДС-Инжиниринг» | Некрасов С.Ю.',
-        fromEmail: fromEmail || 'info@ds-enginering.ru',
-        replyTo: replyTo || 'info@ds-enginering.ru',
-        enabled: Boolean(enabled),
-        provider: provider || 'yandex_360',
-        triggers: triggers || {}
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const allowTransportChange = process.env.SMTP_ALLOW_CUSTOM_SETTINGS === 'true';
+      const fields = allowTransportChange
+        ? [...SMTP_ALWAYS_WRITABLE, ...SMTP_PRIVILEGED]
+        : [...SMTP_ALWAYS_WRITABLE];
+      const patch = pickAllowed(body, fields as readonly string[]);
+      if (Object.keys(patch).length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: allowTransportChange
+            ? 'Нет разрешённых полей для сохранения.'
+            : 'Смена SMTP-хоста, порта и учётных данных выключена: включите SMTP_ALLOW_CUSTOM_SETTINGS=true на сервере. Адреса отправителя и триггеры можно менять и так.',
+        });
+      }
+      if (patch.port !== undefined) patch.port = Number(patch.port) || 465;
+      const updated = updateSmtpSettings(patch as any);
+      res.json({
+        success: true,
+        message: "Настройки корпоративной почты успешно сохранены",
+        data: stripSecrets(updated as unknown as Record<string, unknown>),
       });
-      res.json({ success: true, message: "Настройки корпоративной почты успешно сохранены", data: updated });
     } catch (error) {
       console.error("POST /api/email/settings error:", error);
       res.status(500).json({ success: false, error: "Failed to save email settings" });
@@ -1606,14 +1685,14 @@ app.post('/api/seo/keywords', async (req, res) => {
   app.get("/api/email/manager-accounts", (_req, res) => {
     try {
       const accounts = getManagerSmtpAccounts();
-      res.json({ success: true, count: accounts.length, data: accounts });
+      res.json({ success: true, count: accounts.length, data: stripSecrets(accounts) });
     } catch (error) {
       res.status(500).json({ success: false, error: "Failed to get manager email accounts" });
     }
   });
 
   // Update specific manager's Yandex SMTP App Password & profile
-  app.post("/api/email/manager-account", (req, res) => {
+  app.post("/api/email/manager-account", requireAdmin, (req, res) => {
     try {
       const { managerId, id, fullName, roleTitle, email, host, port, secure, user, pass, fromName, replyTo, isDirector } = req.body;
       if (!managerId && !id && !email) {
@@ -1635,14 +1714,14 @@ app.post('/api/seo/keywords', async (req, res) => {
         replyTo,
         isDirector: Boolean(isDirector)
       });
-      res.json({ success: true, message: `Почтовый ящик ${updated.email} успешно обновлен`, data: updated });
+      res.json({ success: true, message: `Почтовый ящик ${updated.email} успешно обновлен`, data: stripSecrets(updated as unknown as Record<string, unknown>) });
     } catch (error) {
       console.error("POST /api/email/manager-account error:", error);
       res.status(500).json({ success: false, error: "Failed to update manager email account" });
     }
   });
 
-  app.post("/api/email/test", async (req, res) => {
+  app.post("/api/email/test", requireAdmin, async (req, res) => {
     try {
       const { testEmail, recipientName, managerId, senderEmail } = req.body;
       const accounts = getManagerSmtpAccounts();
@@ -1689,8 +1768,8 @@ app.post('/api/seo/keywords', async (req, res) => {
 
       res.json({ 
         success: true, 
-        message: `Тестовое письмо сформировано для ${targetEmail} от ${currentAccount.email}`, 
-        managerAccount: currentAccount,
+        message: `Тестовое письмо сформировано для ${targetEmail} от ${currentAccount.email}`,
+        managerAccount: stripSecrets(currentAccount as unknown as Record<string, unknown>),
         ...result 
       });
     } catch (error: any) {
@@ -1766,7 +1845,7 @@ app.post('/api/seo/keywords', async (req, res) => {
     }
   });
 
-  app.get("/api/email/outbox", (_req, res) => {
+  app.get("/api/email/outbox", requireAdmin, (_req, res) => {
     try {
       const logs = getOutboxLogs();
       res.json({ success: true, count: logs.length, data: logs });
@@ -2105,7 +2184,7 @@ app.post('/api/seo/keywords', async (req, res) => {
           sessionId: session.id,
           requestId: newLeadId,
           action: 'CHAT_LEAD_GENERATED',
-          summary: `Создан новый лид CRM ${newLeadId} из чата для клиента ${session.visitorName} (${session.contactPhone || session.contactEmail})`,
+          summary: `Создан новый лид CRM ${newLeadId} из чата для клиента ${maskFullName(session.visitorName)} (${maskPhone(session.contactPhone) || maskEmail(session.contactEmail)})`,
           details: { leadId: newLeadId, customer: session.visitorName, phone: session.contactPhone }
         });
 
@@ -2606,16 +2685,38 @@ app.post('/api/seo/keywords', async (req, res) => {
         typeof category === 'string' ? category : undefined, 
         limit ? Math.min(Number(limit), 200) : 50
       );
-      res.json({ success: true, count: logs.length, data: logs });
+      // Журнал доступен и без токена (им пользуется панель live-уведомлений), поэтому
+      // персональные данные заявителей в ответе маскируются: инициалы, хвост телефона,
+      // домен почты. Полная карточка контакта остаётся в разделе заявок.
+      const safeLogs = logs.map((entry: any) => ({
+        ...entry,
+        summary: redactText(entry?.summary),
+        details: redactPii(entry?.details ?? {}),
+      }));
+      res.json({ success: true, count: safeLogs.length, data: safeLogs });
     } catch (error: any) {
       res.status(500).json({ success: false, error: "Failed to get realtime logs" });
     }
   });
 
-  app.post("/api/crm/realtime-logs/clear", (_req, res) => {
+  app.post("/api/crm/realtime-logs/clear", requireAdmin, (_req, res) => {
     try {
+      // Очистка буфера не должна уничтожать след событий: снимок уходит в архив на диске.
+      try {
+        const archiveDir = path.join(process.cwd(), 'data', 'logs');
+        if (!fs.existsSync(archiveDir)) fs.mkdirSync(archiveDir, { recursive: true });
+        const snapshot = getRealtimeLogs(undefined, 200);
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+        fs.appendFileSync(
+          path.join(archiveDir, `realtime-archive-${stamp}.jsonl`),
+          snapshot.map((entry: any) => JSON.stringify(entry)).join('\n') + '\n',
+          'utf8',
+        );
+      } catch (archiveErr: any) {
+        console.error("realtime-logs archive failed:", archiveErr?.message);
+      }
       clearRealtimeLogs();
-      res.json({ success: true, message: "Журнал реального времени очищен" });
+      res.json({ success: true, message: "Журнал реального времени очищен (снимок сохранён в data/logs)" });
     } catch (error: any) {
       res.status(500).json({ success: false, error: "Failed to clear realtime logs" });
     }
@@ -2823,7 +2924,9 @@ app.post('/api/seo/keywords', async (req, res) => {
   app.get("/api/users", async (_req, res) => {
     try {
       const data = await getAllDbUsers();
-      res.json({ success: true, count: data.length, data });
+      // В getAllDbUsers пароль кладётся в каждую запись (fallback '123456'), поэтому
+      // список отдаётся без секретных полей.
+      res.json({ success: true, count: data.length, data: stripSecrets(data) });
     } catch (error) {
       console.error("GET /api/users error:", error);
       res.status(500).json({ success: false, error: "Database error" });
@@ -2837,7 +2940,7 @@ app.post('/api/seo/keywords', async (req, res) => {
       if (!user) {
         return res.status(404).json({ success: false, error: "User not found" });
       }
-      res.json({ success: true, data: user });
+      res.json({ success: true, data: stripSecrets(user) });
     } catch (error) {
       console.error("GET /api/users/:id error:", error);
       res.status(500).json({ success: false, error: "Database error" });
@@ -2847,7 +2950,8 @@ app.post('/api/seo/keywords', async (req, res) => {
   // Create new user in Database
   app.post("/api/users", async (req, res) => {
     try {
-      const { id, email, fullName, company, position, phone, role, permissions, password, contractNumber, avatar } = req.body;
+      const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+      const fullName = typeof req.body?.fullName === 'string' ? req.body.fullName.trim() : '';
       if (!email || !fullName) {
         return res.status(400).json({ success: false, error: "Email и ФИО обязательны для создания пользователя." });
       }
@@ -2857,19 +2961,14 @@ app.post('/api/seo/keywords', async (req, res) => {
         return res.status(400).json({ success: false, error: "Пользователь с таким email уже существует в базе данных." });
       }
 
-      const newUser = await createDbUser({
-        id,
-        email,
-        fullName,
-        company,
-        position,
-        phone,
-        role: role || 'client',
-        permissions,
-        password,
-        contractNumber,
-        avatar,
-      });
+      // Роль, права и идентификатор не принимаются из публичного запроса: иначе форма
+      // саморегистрации позволяет завестись superadmin'ом и писать от чужого id.
+      const adminCaller = evaluateAdminAccess(readAdminToken(req.headers as Record<string, unknown>), {
+        expectedToken: ADMIN_API_TOKEN,
+        nodeEnv: process.env.NODE_ENV,
+      }).reason === 'token'; // «permissive-env» (dev без токена) прав на роль не даёт
+      const payload = sanitizeUserInput(req.body, { isAdmin: adminCaller });
+      const newUser = await createDbUser(payload as any);
 
       // Broadcast instant manager live notification (Popup chime, Telegram, Email, MAX-bot)
       dispatchManagerNotification({
@@ -2887,7 +2986,7 @@ app.post('/api/seo/keywords', async (req, res) => {
         category: 'SECURITY',
         level: 'SUCCESS',
         action: 'USER_REGISTERED',
-        summary: `Зарегистрирован новый пользователь ${newUser.email} (${newUser.company || 'Частное лицо'})`,
+        summary: `Зарегистрирован новый пользователь ${maskEmail(newUser.email)} (${newUser.company || 'Частное лицо'})`,
         details: {
           userId: newUser.id,
           fullName: newUser.fullName,
@@ -2900,7 +2999,7 @@ app.post('/api/seo/keywords', async (req, res) => {
       res.status(201).json({ 
         success: true, 
         message: `Пользователь ${newUser.fullName} успешно сохранен в базе данных.`,
-        data: newUser 
+        data: stripSecrets(newUser as unknown as Record<string, unknown>)
       });
     } catch (error) {
       console.error("POST /api/users error:", error);
@@ -2909,10 +3008,13 @@ app.post('/api/seo/keywords', async (req, res) => {
   });
 
   // Update user fields in Database
-  app.patch("/api/users/:id", async (req, res) => {
+  app.patch("/api/users/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const updates = req.body;
+      const updates = sanitizeUserInput(req.body, { isAdmin: true });
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ success: false, error: "Нет разрешённых полей для обновления." });
+      }
       const updatedUser = await updateDbUser(id, updates);
       if (!updatedUser) {
         return res.status(404).json({ success: false, error: "Пользователь не найден в базе данных." });
@@ -2920,7 +3022,7 @@ app.post('/api/seo/keywords', async (req, res) => {
       res.json({ 
         success: true, 
         message: "Данные пользователя успешно обновлены в базе данных.",
-        data: updatedUser 
+        data: stripSecrets(updatedUser as unknown as Record<string, unknown>) 
       });
     } catch (error) {
       console.error("PATCH /api/users/:id error:", error);
@@ -2929,7 +3031,7 @@ app.post('/api/seo/keywords', async (req, res) => {
   });
 
   // Update specifically user permissions (RBAC) in Database
-  app.patch("/api/users/:id/permissions", async (req, res) => {
+  app.patch("/api/users/:id/permissions", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const { permissions } = req.body;
@@ -2945,7 +3047,7 @@ app.post('/api/seo/keywords', async (req, res) => {
       res.json({ 
         success: true, 
         message: "Права доступа пользователя успешно сохранены в базе данных PostgreSQL.",
-        data: updatedUser 
+        data: stripSecrets(updatedUser as unknown as Record<string, unknown>) 
       });
     } catch (error) {
       console.error("PATCH /api/users/:id/permissions error:", error);
@@ -2954,7 +3056,7 @@ app.post('/api/seo/keywords', async (req, res) => {
   });
 
   // Delete user from Database
-  app.delete("/api/users/:id", async (req, res) => {
+  app.delete("/api/users/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       if (id === 'adm-01' || id === 's.nekrasov@ds-enginering.ru') {
@@ -2974,24 +3076,33 @@ app.post('/api/seo/keywords', async (req, res) => {
   });
 
   // Bulk sync/seed users endpoint
-  app.post("/api/users/sync", async (req, res) => {
+  app.post("/api/users/sync", requireAdmin, async (req, res) => {
     try {
       const { users: incomingUsers, resetToDefaults } = req.body || {};
       if (resetToDefaults === true) {
+        // Полная перетёртка таблицы пользователей из HTTP-запроса — единственный
+        // необратимый эндпоинт в API. Требует отдельного явного разрешения.
+        if (!destructiveResetAllowed()) {
+          return res.status(403).json({
+            success: false,
+            error: "Сброс таблицы пользователей выключен. Если это плановая инициализация — запустите сервер с ALLOW_USER_SYNC_RESET=true и уберите флаг после.",
+          });
+        }
         await db.delete(schema.users);
         await seedInitialUsersIfEmpty(DEFAULT_SYSTEM_USERS);
       } else if (Array.isArray(incomingUsers) && incomingUsers.length > 0) {
         for (const u of incomingUsers) {
-          const existing = await getDbUserByIdOrEmail(u.id || u.email);
+          const safeUser = sanitizeUserInput(u, { isAdmin: true });
+          const existing = await getDbUserByIdOrEmail(String(safeUser.id || safeUser.email || ''));
           if (existing) {
-            await updateDbUser(existing.id, u);
+            await updateDbUser(existing.id, safeUser);
           } else {
-            await createDbUser(u);
+            await createDbUser(safeUser as any);
           }
         }
       }
       const allUsers = await getAllDbUsers();
-      res.json({ success: true, message: "Синхронизация с базой данных завершена.", data: allUsers });
+      res.json({ success: true, message: "Синхронизация с базой данных завершена.", data: stripSecrets(allUsers) });
     } catch (error) {
       console.error("POST /api/users/sync error:", error);
       res.status(500).json({ success: false, error: "Database error" });
@@ -3549,20 +3660,20 @@ app.post('/api/seo/keywords', async (req, res) => {
     return {};
   };
 
-  // Helper to resolve DaData credentials with strict priority and fallback to working suggestions token
-  const getDadataCredentials = (reqBody?: any, reqQuery?: any) => {
+  // Helper to resolve DaData credentials from server-side configuration only.
+  // Токены раньше лежали здесь литералами и подхватывались, если env пуст; ключ также
+  // можно было передать в теле/строке запроса. И то, и другое убрано: реквизиты только
+  // на сервере (data/crm_settings.json → .env → process.env), список заблокированных
+  // ключей — из DADATA_DISABLED_KEYS через запятую.
+  const getDadataCredentials = (): { dadataKey: string; dadataSecret: string } => {
     const fileEnv = readEnvFileDirectly();
 
-    // Known tokens where suggestions are disabled (e.g. secret keys or tokens with unverified email)
-    const DISABLED_SUGGESTION_KEYS = new Set([
-      'f9d8ee50262497a928702a78fce4f3cce0fc8998'
-    ]);
-    const DEFAULT_DADATA_API_KEY = '83fae9eac3fa6c77946d93a32d86482088cf28e0';
-    const DEFAULT_DADATA_SECRET_KEY = 'f9d8ee50262497a928702a78fce4f3cce0fc8998';
+    const DISABLED_SUGGESTION_KEYS = new Set(
+      (process.env.DADATA_DISABLED_KEYS || '').split(',').map((v) => v.trim()).filter(Boolean)
+    );
 
-    // 1. Explicit request body/query
-    let candidateKey = (reqBody?.apiKey || reqQuery?.apiKey || '').trim();
-    let candidateSecret = (reqBody?.secretKey || reqQuery?.secretKey || '').trim();
+    let candidateKey = '';
+    let candidateSecret = '';
 
     // 2. Settings file (data/crm_settings.json)
     if (!candidateKey) {
@@ -3607,12 +3718,13 @@ app.post('/api/seo/keywords', async (req, res) => {
       candidateSecret = (process.env.DADATA_SECRET_KEY || process.env.DADATA_SECRET || '').trim();
     }
 
-    // Fallback to verified working DaData suggestions key
-    if (!candidateKey || DISABLED_SUGGESTION_KEYS.has(candidateKey) || (candidateSecret && candidateKey === candidateSecret)) {
-      candidateKey = DEFAULT_DADATA_API_KEY;
+    // Прогардированный ключ с отключёнными подсказками не подменяется «рабочим» из кода:
+    // вместо этого наружу идёт понятная ошибка конфигурации.
+    if (candidateKey && DISABLED_SUGGESTION_KEYS.has(candidateKey)) {
+      candidateKey = '';
     }
-    if (!candidateSecret) {
-      candidateSecret = DEFAULT_DADATA_SECRET_KEY;
+    if (candidateSecret && candidateKey === candidateSecret) {
+      candidateSecret = '';
     }
 
     return { dadataKey: candidateKey, dadataSecret: candidateSecret };
@@ -3646,12 +3758,16 @@ app.post('/api/seo/keywords', async (req, res) => {
         isNumericQuery
       );
 
-      const DEFAULT_WORKING_TOKEN = '83fae9eac3fa6c77946d93a32d86482088cf28e0';
-      const DEFAULT_WORKING_SECRET = 'f9d8ee50262497a928702a78fce4f3cce0fc8998';
-
-      const creds = getDadataCredentials(req.body, req.query);
+      const creds = getDadataCredentials();
       let activeToken = creds.dadataKey;
       let activeSecret = creds.dadataSecret;
+
+      if (!activeToken) {
+        return res.status(503).json({
+          success: false,
+          error: 'DaData не настроен на сервере. Задайте DADATA_API_KEY и DADATA_SECRET_KEY в окружении (или в настройках интеграций) — поиск контрагентов без ключа недоступен.',
+        });
+      }
 
       const executeDaDataQueries = async (token: string, secret?: string) => {
         const headers: Record<string, string> = {
@@ -3734,15 +3850,8 @@ app.post('/api/seo/keywords', async (req, res) => {
       let { suggestions: externalSuggestions, errorMsg: dadataApiError, statusCode: dadataStatusCode } = 
         await executeDaDataQueries(activeToken, activeSecret);
 
-      // If token failed with 401 or 403 and wasn't using default working token, retry with default working token
-      if (externalSuggestions.length === 0 && (dadataStatusCode === 401 || dadataStatusCode === 403 || dadataStatusCode === null) && activeToken !== DEFAULT_WORKING_TOKEN) {
-        console.warn(`[Dadata Proxy] Token ${activeToken.slice(0, 6)}... failed with ${dadataStatusCode}, retrying with verified working token...`);
-        const fallbackRes = await executeDaDataQueries(DEFAULT_WORKING_TOKEN, DEFAULT_WORKING_SECRET);
-        if (fallbackRes.suggestions.length > 0) {
-          externalSuggestions = fallbackRes.suggestions;
-          dadataApiError = null;
-          dadataStatusCode = 200;
-        }
+      if (dadataStatusCode === 401 || dadataStatusCode === 403) {
+        console.warn(`[Dadata Proxy] Настроенный ключ отклонён DaData (${dadataStatusCode}); проверьте статус токена и подтверждённый e-mail в кабинете dadata.ru.`);
       }
 
       if (externalSuggestions.length > 0) {
@@ -3837,76 +3946,70 @@ app.post('/api/seo/keywords', async (req, res) => {
   });
 
   // POST /api/dadata/settings - Сохранение API-ключа и Секрета DaData
-  app.post('/api/dadata/settings', (req, res) => {
+  app.post('/api/dadata/settings', requireAdmin, (req, res) => {
     try {
-      const { apiKey, secretKey } = req.body;
-      const settingsPath = path.join(process.cwd(), 'data', 'crm_settings.json');
-      let currentData: any = {};
+      const { apiKey, secretKey } = (req.body ?? {}) as { apiKey?: unknown; secretKey?: unknown };
+      if (typeof apiKey !== 'string' && typeof secretKey !== 'string') {
+        return res.status(400).json({ success: false, error: 'Укажите apiKey и/или secretKey.' });
+      }
+
+      const nextValues: Record<string, string> = {};
+      if (typeof apiKey === 'string') {
+        const v = apiKey.trim();
+        if (!isDadataCredentialFormat(v)) {
+          return res.status(400).json({ success: false, error: 'apiKey DaData — 40 шестнадцатеричных символов из кабинета dadata.ru.' });
+        }
+        nextValues.dadataApiKey = v;
+      }
+      if (typeof secretKey === 'string') {
+        const v = secretKey.trim();
+        if (!isDadataCredentialFormat(v)) {
+          return res.status(400).json({ success: false, error: 'secretKey DaData — 40 шестнадцатеричных символов из кабинета dadata.ru.' });
+        }
+        nextValues.dadataSecretKey = v;
+      }
+
+      const dataDir = path.join(process.cwd(), 'data');
+      const settingsPath = path.join(dataDir, 'crm_settings.json');
+      let currentData: Record<string, unknown> = {};
       if (fs.existsSync(settingsPath)) {
         try {
-          currentData = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+          currentData = JSON.parse(fs.readFileSync(settingsPath, 'utf8')) || {};
         } catch {
           currentData = {};
         }
       }
+      Object.assign(currentData, nextValues);
+      if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
-      if (typeof apiKey === 'string') {
-        currentData.dadataApiKey = apiKey.trim();
-        process.env.DADATA_API_KEY = apiKey.trim();
-      }
-      if (typeof secretKey === 'string') {
-        currentData.dadataSecretKey = secretKey.trim();
-        process.env.DADATA_SECRET_KEY = secretKey.trim();
-      }
-
-      const dataDir = path.join(process.cwd(), 'data');
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
-      }
-      fs.writeFileSync(settingsPath, JSON.stringify(currentData, null, 2), 'utf8');
-
-      // Также синхронизируем в .env на диске
-      try {
-        const envPath = path.join(process.cwd(), '.env');
-        if (fs.existsSync(envPath)) {
-          let envContent = fs.readFileSync(envPath, 'utf8');
-          if (typeof apiKey === 'string') {
-            if (/^DADATA_API_KEY=/m.test(envContent)) {
-              envContent = envContent.replace(/^DADATA_API_KEY=.*$/m, `DADATA_API_KEY="${apiKey.trim()}"`);
-            } else {
-              envContent += `\nDADATA_API_KEY="${apiKey.trim()}"`;
-            }
-          }
-          if (typeof secretKey === 'string') {
-            if (/^DADATA_SECRET_KEY=/m.test(envContent)) {
-              envContent = envContent.replace(/^DADATA_SECRET_KEY=.*$/m, `DADATA_SECRET_KEY="${secretKey.trim()}"`);
-            } else {
-              envContent += `\nDADATA_SECRET_KEY="${secretKey.trim()}"`;
-            }
-          }
-          fs.writeFileSync(envPath, envContent, 'utf8');
-        }
-      } catch (envWriteErr) {
-        // silent fallback to crm_settings.json
-      }
+      // Атомарная запись: обрыв посредине файла оставлял обрезанный JSON, из-за чего
+      // settings не читались вообще. В process.env и в .env больше не пишем — иначе
+      // один запрос перегонял корпоративные аналитические реквизиты в чужой аккаунт
+      // на всё время жизни процесса и попадали в репозиторий при следующем git add -A.
+      const tmpPath = `${settingsPath}.${process.pid}.tmp`;
+      fs.writeFileSync(tmpPath, JSON.stringify(currentData, null, 2), 'utf8');
+      fs.renameSync(tmpPath, settingsPath);
 
       res.json({
         success: true,
-        message: 'Настройки DaData успешно сохранены',
-        isConfigured: Boolean(currentData.dadataApiKey)
+        message: 'Ключи DaData сохранены в data/crm_settings.json. Для production этот файл должен быть в .gitignore.',
+        maskedKey: nextValues.dadataApiKey
+          ? `${nextValues.dadataApiKey.slice(0, 4)}...${nextValues.dadataApiKey.slice(-4)}`
+          : null,
       });
-    } catch (e: any) {
-      res.status(500).json({ success: false, error: e?.message });
+    } catch (error: any) {
+      console.error("POST /api/dadata/settings error:", error);
+      res.status(500).json({ success: false, error: "Не удалось сохранить ключи DaData" });
     }
   });
 
   // POST /api/dadata/verify - Тестирование API-ключа в реальном времени
-  app.post('/api/dadata/verify', async (req, res) => {
+  app.post('/api/dadata/verify', requireAdmin, async (req, res) => {
     try {
-      const { apiKey, secretKey } = req.body;
-      const { dadataKey, dadataSecret } = getDadataCredentials({ apiKey }, { secretKey });
-      const keyToTest = apiKey ? apiKey.trim() : dadataKey;
-      const secretToTest = secretKey ? secretKey.trim() : dadataSecret;
+      const { apiKey, secretKey } = (req.body ?? {}) as { apiKey?: unknown; secretKey?: unknown };
+      const configured = getDadataCredentials();
+      const keyToTest = typeof apiKey === 'string' && apiKey.trim() ? apiKey.trim() : configured.dadataKey;
+      const secretToTest = typeof secretKey === 'string' && secretKey.trim() ? secretKey.trim() : configured.dadataSecret;
 
       if (!keyToTest) {
         return res.status(400).json({ success: false, valid: false, error: 'API-ключ DaData не указан.' });
@@ -3969,7 +4072,7 @@ app.post('/api/seo/keywords', async (req, res) => {
         return res.status(400).json({ success: false, error: 'Не указано имя для стандартизации.' });
       }
 
-      const { dadataKey, dadataSecret } = getDadataCredentials(req.body, req.query);
+      const { dadataKey, dadataSecret } = getDadataCredentials();
 
       // Если есть ключ и секрет, пробуем официальный DaData Cleaner API
       if (dadataKey && dadataSecret) {
@@ -4050,7 +4153,34 @@ app.post('/api/seo/keywords', async (req, res) => {
 
 
   // --- SERVE DOCS ENDPOINT ---
-  app.use('/api/docs', express.static(path.join(process.cwd(), 'docs')));
+  // express.static по каталогу docs/ отдавал наружу не только руководство пользователя,
+  // но и внутренний паспорт сайта, отчёты аудитов и артефакты тестирования. Viewer CMS
+  // знает фиксированный список файлов — отдаём только их и по точному имени.
+  app.get('/api/docs/:file', (req, res) => {
+    const fileName = String(req.params.file || '');
+    const isPublicDoc = (PUBLIC_DOC_FILES as readonly string[]).includes(fileName);
+    const isRestrictedDoc = (RESTRICTED_DOC_FILES as readonly string[]).includes(fileName);
+    if (!isPublicDoc && !isRestrictedDoc) {
+      return res.status(404).json({ success: false, error: 'Документ не найден.' });
+    }
+    if (isRestrictedDoc) {
+      const decision = evaluateAdminAccess(readAdminToken(req.headers as Record<string, unknown>), {
+        expectedToken: ADMIN_API_TOKEN,
+        nodeEnv: process.env.NODE_ENV,
+      });
+      if (!decision.ok) {
+        return res.status(decision.reason === 'no-token-configured' ? 503 : 403).json({
+          success: false,
+          error: 'Документ служебный: доступен только с ADMIN_API_TOKEN (заголовок x-admin-token).',
+        });
+      }
+    }
+    res.sendFile(path.join(process.cwd(), 'docs', fileName), (err) => {
+      if (err && !res.headersSent) {
+        res.status(404).json({ success: false, error: 'Документ не найден.' });
+      }
+    });
+  });
   // -------------------------
 
   // Always serve static /assets from dist in production to avoid HTML fallback for compiled JS/CSS

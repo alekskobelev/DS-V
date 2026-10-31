@@ -5,3 +5,6 @@ coverage/
 bun.lock
 .env*
 !.env.example
+
+# Локальные настройки интеграций — содержат реквизиты (DaData и т. п.), в git не кладутся
+data/crm_settings.json
